@@ -1,0 +1,13 @@
+.nav li a { height:18px !important; }
+#categories_filter, #categories_info { float: left;
+    position: relative;
+    margin-left: 10%;
+    margin-bottom: 20px;
+}
+#categories_info { margin-top:20px; }
+
+#categories_paginate .pagination { float:right;  margin-right: 10%; margin-top:20px; }
+#categories_paginate ul li{
+  display: inline;
+margin:0 5px; }
+}

@@ -1,0 +1,155 @@
+@import url(fonts.css);
+/*
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+*/
+/* 
+    Created on : May 6, 2015, 9:51:28 AM
+    Author     : Sherlynn Gail Parreno
+*/
+/* 
+    Created on : Apr 21, 2015, 11:54:52 AM
+    Author     : Sherlynn Gail Parreno
+*/
+#MobileWidget, .WS500 {
+  display: none !important;
+}
+
+.WH500 {
+  display: block !important;
+}
+
+/*------------------------------
+	  MOBILE WIDGET
+------------------------------*/
+#newpost, #newpost02, #newpost03 {
+  bottom: 58px;
+  z-index: 100;
+  float: left;
+  background: #f6f6f6;
+  padding: 10px 12px;
+  width: 100%;
+  height: auto;
+  color: #000;
+  position: fixed;
+  border-top: 1px #d6d6d6 solid;
+  font-size: 13px;
+  font-family: 'AvenirLTStd-Roman';
+  font-weight: 500;
+  line-height: 19px;
+  /* overflow: scroll; */
+}
+
+#newpost02 a {
+  color: #000;
+  line-height: 25px;
+}
+
+#newpost ul, #newpost03 ul {
+  list-style: none;
+  margin: 0;
+}
+
+#newpost ul, #newpost03 p, #newpost p {
+  margin-bottom: 0;
+}
+
+#newpost li, #newpost03 li {
+  border-bottom: 1px #ececec solid;
+  padding: 4px 0;
+  width: 100%;
+  float: left;
+}
+
+#newpost li:last-child, #newpost03 li:last-child {
+  border-bottom: none;
+}
+
+#newpost li a, #newpost03 li a {
+  font-size: 13px;
+  color: #000;
+  width: 100%;
+  float: left;
+}
+
+#newpost a:hover, #newpost02 a:hover, #newpost03 a:hover {
+  color: #f50000;
+}
+
+@media screen and (max-width: 500px) {
+  #MobileWidget {
+    display: block !important;
+  }
+
+  .Widget {
+    width: 100%;
+    float: left;
+    background: #f6f6f6;
+    position: fixed;
+    bottom: 0;
+    z-index: 1000;
+    border-top: 1px #c9c9c9 solid;
+  }
+
+  footer {
+    margin-bottom: 60px;
+  }
+
+  .Widget ul {
+    margin-left: 0;
+  }
+
+  .Widget li {
+    width: 25%;
+    display: inline;
+    float: left;
+    padding: 10px 5px;
+    list-style: none;
+  }
+
+  .Widget li:hover {
+    background: #e9e9e9;
+    border-left: 1px #c9c9c9 solid;
+    border-right: 1px #c9c9c9 solid;
+  }
+
+  .Widget li p {
+    text-align: center;
+    color: #3a3a3a;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 0;
+    font-family: OpenSans, san-serif;
+  }
+
+  .WH500 {
+    display: none !important;
+  }
+
+  .WS500 {
+    display: block !important;
+  }
+
+  .MobileView .TopLeft input {
+    width: 140px;
+  }
+
+  #newpost02 .large-4 {
+    width: 33.333333%;
+    float: left;
+  }
+
+.Block .WH500 {
+    display: block !important;
+}
+.Block h1.WH500 {
+    display: none !important;
+}
+#HBlock .Block {
+    background-image: auto !important;
+    background-position: left bottom !important;
+    background-size: 100% auto !important;
+    height: 360px;
+}
+}

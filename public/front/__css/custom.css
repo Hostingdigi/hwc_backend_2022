@@ -1,0 +1,104 @@
+/*--------------------------------------------------------------
+# Menu section
+--------------------------------------------------------------*/
+
+.sidenav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 3;	
+  top: 194px;
+  left: 0;
+  background-color: #fff;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 11px;
+}
+.m-menu { padding:0px 0px 10px 15px; font-size:20px; }
+
+
+.sidenav .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav {padding-top: 15px;}
+  .sidenav a {font-size: 18px;}
+}
+
+.slinky-theme-default {
+	background-color: #fff;
+}
+.slinky-theme-default a:not(.back) {
+	padding: 5px;
+	color: #111;
+}
+.slinky-theme-default .next::after{
+	background: none;
+}
+.slinky-theme-default .back::before  {
+	color:#fff;
+}
+.sub-menu li a span i {
+	float: right;
+}
+
+.caption { margin-bottom:40px; }
+.sub-menu li a span i { color:#111 !important; }
+.header a { color:#000;}
+.slinky-menu ul {   
+
+}
+
+.slinky-menu ul li a {}
+
+@media (min-width: 576px) {
+.card-deck { margin-bottom:15px; } 
+.card-body { margin-bottom:20px; }
+}
+
+@media (max-width: 600px) {
+	.sidenav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 3;	
+  top: 168px;
+  left: 0;
+  background-color: #fff;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 60px;
+}
+}
+@media only screen and (max-width: 480px) and (min-width: 300px){
+	 top: 0px;
+}
+
+/* Bala */
+.main-menu { text-transform: uppercase; }
+.dancer { text-align:center; color:red; font-weight:bold; }
+form form input[type=email], form input[type=password] {
+    border: 1px solid #dddddd;
+    width: 100%;
+    height: 44px;
+    padding-left: 15px;
+    margin-bottom: 35px;
+}
+form textarea {
+	border: 1px solid #dddddd;
+    width: 100%;
+    height: 75px;
+    padding-left: 15px;
+    margin-bottom: 35px;
+}
+.error { color:red; margin-left:14px; }
+.account-links .link { text-decoration:none; padding:10px 0px; }
+.account-links h5 { margin-bottom: 10px; }
+.success { color: green; font-weight:bold; text-align:center; }
+.hidden { display: none; }
+h4 strong { color:white; }

@@ -1,0 +1,745 @@
+@import url(fonts.css);
+/* 
+    Created on : Apr 21, 2015, 11:54:52 AM
+    Author     : Sherlynn Gail Parreno
+*/
+/* 
+    Created on : Apr 21, 2015, 11:54:52 AM
+    Author     : Sherlynn Gail Parreno
+*/
+body {
+  color: #333333;
+  font-family: OpenSans, san-serif;
+}
+body p {
+  font-size: 17px;
+}
+body h1, body h2 {
+  font-size: 30px;
+  font-family: OpenSans, san-serif;
+}
+body h1 {
+  text-transform: normal;
+}
+body ul {
+  margin-left: 0;
+  margin-bottom: 0;
+}
+body form {
+  margin-bottom: 0;
+}
+
+#TopInfo, #TopWrapper, #NavigationWrapper, #SliderWrapper, #HBlock, .Block,
+.HBottom, .MailingList, .CopyRight, footer, .SearchWrap {
+  width: 100%;
+  float: left;
+}
+
+#TopInfo {
+  padding: 3px 0;
+  background: #8d8d8d;
+}
+#TopInfo p {
+  margin-bottom: 0;
+  text-align: center;
+  color: #fff;
+}
+#TopInfo p a {
+  color: #fff000;
+  text-decoration: underline;
+}
+
+#TopWrapper {
+  background: #3a3a3a;
+}
+#TopWrapper .Cart {
+  background: url(../images/cart.jpg) no-repeat;
+  background-position: center;
+  float: left;
+  padding: 15px 20px 15px 60px;
+  font-family: OpenSans, san-serif;
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff000;
+}
+#TopWrapper .Cart a {
+  color: #fff000;
+}
+#TopWrapper .Cart:hover {
+  background: url(../images/carth.jpg) no-repeat;
+  background-position: center;
+}
+#TopWrapper .Info {
+  float: left;
+  padding: 0;
+  width: 400px;
+  font-size: 12px;
+  font-family: OpenSans, san-serif;
+  color: #fff;
+}
+#TopWrapper .Info a {
+  color: #fff;font-size:14px;
+}
+#TopWrapper .Info .Contact .large-7 {
+  padding: 6px 10px;
+}
+#TopWrapper .Info .Contact .large-12 {
+  background: #fff000;
+  padding: 6px 10px;
+  color: #000;
+  text-align: right;
+}
+#TopWrapper .Info .Contact .large-12 a {
+  color: #000;font-size:14px;
+}
+#TopWrapper .Info .Contact .large-5 {
+  background: #fff000;
+  padding: 4px 10px;
+  color: #000;
+  text-align: center;
+}
+#TopWrapper .Info .Register .large-7, #TopWrapper .Info .Register .large-5 {
+  padding: 0;
+}
+#TopWrapper .Info .Register .large-7 {
+  background: #8d8d8d;
+  font-size: 14px;
+}
+#TopWrapper .Info .Register .large-7 span {
+  float: left;
+  width: 189px;
+  padding: 12px;
+}
+#TopWrapper .Info .Register .large-5 span {
+  float: left;
+  width: 122px;
+  padding: 12px;
+  color: #fff000;
+}
+#TopWrapper .Info .Register a:hover {
+  font-weight: 600;
+}
+#TopWrapper .Info .TopLeft ul {
+  line-height: 16px;
+}
+#TopWrapper .Info .TopLeft li {
+  background: #fff000;
+  padding: 0;
+  color: #000;
+  text-align: center;
+  float: left;
+  font-size: 12px;
+  font-family: OpenSans, san-serif;
+  list-style: none;
+}
+#TopWrapper .Info .TopLeft li ul {
+  display: none;
+}
+#TopWrapper .Info .TopLeft li:hover ul {
+  display: block;
+  position: absolute;
+  width: 150px;
+  margin-left: 0;
+  margin-right: 50px;
+  float: left;
+  right: -50px;
+  padding-top: 10px;
+  z-index: 100;
+}
+#TopWrapper .Info .TopLeft li ul li {
+  display: inline;
+  float: left;
+  width: 100%;
+  text-align: left;
+  border-bottom: 1px #ededed solid;
+  padding: 0;
+  background: #ffffff;
+}
+#TopWrapper .Info .TopLeft li ul li a {
+  color: #000;
+  float: left;
+  width: 100%;
+  padding: 6px 10px;
+}
+#TopWrapper .Info .TopLeft li ul li a:hover {
+  background: #f6f6f6;
+}
+
+
+
+#NavigationWrapper .SearchWrap input, #NavigationWrapper .SearchWrap button{
+    width: 100%;
+    float: left;
+    height: 42px;
+    margin-bottom: 0;
+    border:none
+}
+
+#NavigationWrapper .SearchWrap .large-9{
+    padding-right: 0;
+}
+
+#NavigationWrapper .SearchWrap .large-3{
+    padding: 0
+}
+
+#NavigationWrapper .SearchWrap .BtnSearch{
+    width:100%; 
+    float:left; 
+    background:#fff000; 
+    height:42px;
+}
+
+#NavigationWrapper .SearchWrap button{
+    background-position: center;
+}
+
+#NavigationWrapper {
+  background: #efefec;
+}
+#NavigationWrapper .Navigation .top-bar {
+  background: #efefec;
+  height: 42px !important;
+}
+#NavigationWrapper .Navigation .top-bar ul {
+  margin-bottom: 0;
+  background: transparent !important;
+}
+#NavigationWrapper .Navigation .top-bar li {
+  text-align: center;
+  width: 25%;
+  padding: 0;
+}
+#NavigationWrapper .Navigation .top-bar li a {
+  font-size: 17px;
+  font-weight: bold;
+  font-family: OpenSans, san-serif;
+  line-height: 18px;
+  padding: 12px 5px;
+}
+#NavigationWrapper .Navigation .top-bar li a:hover {
+  background: #fff000;
+  font-size: 16px;
+}
+#NavigationWrapper .Navigation .top-bar-section li a {
+  background: #efefec;
+  color: #000;
+}
+#NavigationWrapper .Navigation .has-dropdown li {
+  width: 100%;
+}
+#NavigationWrapper .Navigation .has-dropdown li a {
+  background: rgba(58, 58, 58, 0.8);
+  color: #fff;
+}
+#NavigationWrapper .Navigation .has-dropdown li a:hover {
+  color: #000;
+  font-size: 14px;
+}
+#NavigationWrapper .Navigation .SecondLevel {
+  display: none;
+}
+#NavigationWrapper .Navigation .SecondLevel .BtnYellow {
+  padding: 0;
+  margin: 0 12px;
+}
+#NavigationWrapper .Navigation .SecondLevel .BtnYellow a {
+  text-align: center;
+  width: 100%;
+  float: left;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+}
+#NavigationWrapper .Navigation .SecondLevel h4 {
+  font-size: 14px;
+  line-height: 18px;
+  text-transform: capitalize;
+  font-family: OpenSans, san-serif;
+  font-weight: bold;
+  border-bottom: 1px #e2e2e2 solid;
+}
+#NavigationWrapper .Navigation .SecondLevel ul {
+  margin-left: 0;
+}
+#NavigationWrapper .Navigation .SecondLevel li {
+  float: left;
+  display: block;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  border-bottom: 1px #e2e2e2 solid;
+  padding: 4px;
+}
+#NavigationWrapper .Navigation .SecondLevel li a {
+  font-size: 16px;
+  line-height: 17px;
+  font-weight: 100;
+  padding: 0;
+  background: none;
+}
+#NavigationWrapper .Navigation .SecondLevel li ul.catmegamenu li a{
+font-size: 13px;	
+}
+#NavigationWrapper .Navigation .SecondLevel li ul.catmegamenu li a:hover{
+color: #fff000;	
+}
+#NavigationWrapper .Navigation .SecondLevel li a:hover {
+  background: none;
+}
+#NavigationWrapper .Navigation .SecondLevel .large-6 {
+  height: 150px;
+}
+#NavigationWrapper .Navigation .SecondLevel .large-3 {
+  width: 20%;
+  float: left;
+  margin-bottom: 12px;
+}
+#NavigationWrapper .Navigation .SecondLevel button {
+  margin-bottom: 0;
+}
+#NavigationWrapper .Navigation li:hover .SecondLevel {
+  display: block;
+  position: absolute;
+  width: 500px;
+  margin-left: 0;
+  float: left;
+  padding-top: 10px;
+  z-index: 100;
+  text-align: left;
+  background: #fff;
+  top: 42px;
+  border: 1px #efefec solid;
+  border-top: 0;
+}
+#NavigationWrapper .Navigation .SecondLevel li{
+  
+  background: #fff;
+  
+  border: 1px #efefec solid;
+  border-top: 0;
+}
+#NavigationWrapper .Navigation .SecondLevel .has-dropdown li a {
+ 
+  color: #000;
+}
+
+#NavigationWrapper .Navigation li:hover .catMenu {
+  display: block;
+  width: 220px;
+  background: #efefec;
+  border: 1px #efefec solid;
+  border-top: 0;
+}
+#NavigationWrapper .Navigation .catMenu li{
+  background: #efefec;
+}
+#NavigationWrapper .Navigation  .catMenu ul.dropdown li{
+  display: block;
+  width: 750px;
+  border:0;
+  background: #efefec;
+  
+  padding-top:2px;
+  padding-bottom:2px;
+  
+}
+#NavigationWrapper .Navigation .catMenu li{
+	padding-top:10px;
+	padding-bottom:10px;
+}
+#NavigationWrapper .Navigation .catMenu .large-6 {
+  height: auto;
+}
+#NavigationWrapper .Navigation .catMenu .large-3 {
+  width: 20%;
+  
+}
+#NavigationWrapper .Navigation .catMenu ul.catmegamenu li{
+	width:100%;
+}
+.cat_title{
+	border-bottom: 1px #efefec solid;
+}
+
+
+#SliderWrapper {
+  border-bottom: 20px #d5d5d5 solid;
+}
+
+#HBlock {
+  background: url(../images/bg-gray.jpg) repeat-x top;
+  min-height: 26px;
+}
+#HBlock .large-6:nth-child(odd) {
+  padding-left: 0 !important;
+}
+#HBlock .large-6:nth-child(even) {
+  padding-right: 0 !important;
+}
+#HBlock .Block {
+  padding: 15px 0 0 15px;
+  border: 1px #d5d5d5 solid;
+  height: 188px;
+}
+#HBlock .Block .large-5, #HBlock .Block large-7 {
+  padding-left: 0;
+}
+#HBlock .Block .large-5 p, #HBlock .Block large-7 p {
+  margin-bottom: 5px;
+  font-family: OpenSans, san-serif;
+  font-size: 14px;
+  line-height: 17px;
+}
+#HBlock h1 {
+  font-family: OpenSans, san-serif;
+  color: #3a3a3a;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.HAbout {
+  width: 100%;
+  padding: 20px 0;
+  float: left;
+}
+
+.HBottom {
+  padding: 10px 0 20px 0;
+}
+.HBottom h4 {
+  font-family: OpenSans, san-serif;
+  font-size: 16px;
+  font-weight: bold;
+}
+.HBottom .HotLine .HotlineNum {
+  width: 100%;
+  float: left;
+  background: url(../images/icon-pips.jpg) no-repeat black;
+  height: 81px;
+  margin-bottom: 15px;
+  padding: 10px 10px 10px 90px;
+  font-size: 17px;
+  font-family: OpenSans, san-serif;
+  font-weight: bold;
+  color: #fff;
+  line-height: 55px;
+  text-align: center;
+}
+.HBottom .HotLine .HotlineNum em {
+  color: #abaa9e;
+  font-size: 19px;
+  font-style: normal;
+}
+.HBottom .HotLine .large-12 {
+  padding-right: 0;
+}
+.HBottom .Links {
+  font-family: OpenSans, san-serif;
+  font-size: 14px;
+}
+.HBottom .Links .large-3 {
+  border-right: 1px #d5d5d5 solid;
+  height: 160px;
+}
+.HBottom .Links .large-3:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+.HBottom .Links ul li {
+  list-style: none;font-size:17px;
+  line-height: 25px;
+}
+.HBottom .Links p {
+  font-size: 13px;
+  margin-bottom: 0;
+}
+.HBottom .MailingList {
+  border: 1px #d5d5d5 solid;
+  padding: 20px 0;
+}
+.HBottom .MailingList .YellowBg {
+  width: 100%;
+  float: left;
+  background: #fff000;
+  padding: 10px 12px;
+  text-align: center;
+  font-family: OpenSans, san-serif;
+  font-size: 20px;
+  font-weight: bold;
+}
+.HBottom .MailingList .MailingBox {
+  padding: 10px 20px;
+  width: 100%;
+  float: left;
+  background: #f0f0ed;
+}
+.HBottom .MailingList .MailingBox p {
+  text-align: center;
+  font-family: OpenSans, san-serif;
+  font-size: 17px;
+}
+
+.BgGray {
+  background: #efefec;
+  float: left;
+  width: 100%;
+  font-family: OpenSans, san-serif;
+  height: 375px;
+}
+.BgGray .large-5 {
+  padding-right: 0;
+}
+.BgGray .large-7 {
+  padding: 17px 25px;
+}
+.BgGray h3 {
+  font-family: OpenSans, san-serif;
+  font-size: 20px;
+  font-weight: bold;
+}
+.BgGray p {
+  font-size: 17px;
+  line-height: 25px;
+}
+
+.BtnYellow, .BtnBlack {
+  padding: 10px 15px;
+  font-family: OpenSans, san-serif;
+  font-size: 15px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.BtnYellow {
+  background: #fff000;
+  color: #000;
+}
+
+.BtnYellow:hover {
+  background: #3a3a3a;
+}
+
+.BtnBlack {
+  background: #000;
+  color: #fff;
+}
+
+.BottomMargin {
+  margin-bottom: 12px;
+}
+
+.DesktopView {
+  display: block;
+}
+
+.MobileView {
+  display: none;
+}
+
+.Category {
+  padding: 10px 0;
+}
+.Category a {
+  color: #000;
+  font-size: 15px;line-height:23px;
+  text-transform: none;
+}
+.Category b a {
+  font-weight: 500;
+  font-size: 16px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+.Category b a:hover {
+  font-weight: bold;
+}
+
+footer {
+  background: #3a3a3a;
+  margin-top: 30px;
+}
+footer .CopyRight {
+  border-top: 5px #fff000 solid;
+  padding: 40px 0;
+  font-family: OpenSans, san-serif;
+}
+footer .CopyRight p {
+  margin-bottom: 0;
+  text-align: center;
+  font-size: 14px;
+  color: #fff;
+}
+footer .CopyRight p a {
+  color: #fff000;
+}
+
+@media screen and (max-width: 1024px) {
+  .DesktopView {
+    display: none;
+  }
+
+  .MobileView {
+    display: block;
+  }
+
+  #HBlock .large-6 {
+    padding: 0;
+  }
+
+  #TopWrapper .large-4 {
+    width: 60%;
+  }
+  #TopWrapper .large-8 {
+    width: 40%;
+  }
+
+  .Links .large-3 {
+    width: 25%;
+    float: left;
+  }
+
+  .HAbout .large-7, .HAbout .large-5 {
+    width: 100%;
+  }
+
+  #NavigationWrapper .large-9, #NavigationWrapper .large-3 {
+    width: 50%;
+    padding: 0;
+  }
+
+  .HotLine .large-12 {
+    padding: 0;
+  }
+
+  .BgGray {
+    height: auto;
+  }
+  .BgGray .large-7, .BgGray .large-5 {
+    width: 100%;
+  }
+  .BgGray .large-5 {
+    padding: 0;
+  }
+
+  .Category .large-4 {
+    width: 33.333333%;
+  }
+  
+  #NavigationWrapper .SearchWrap .large-9{
+    width: 80%
+  }
+
+  #NavigationWrapper .SearchWrap .large-3{
+    padding-right: 13px;
+    width: 20%
+  }
+}
+@media screen and (max-width: 800px) {
+  .Block .large-5 {
+    width: 45%;
+  }
+  .Block .large-7 {
+    width: 55%;
+  }
+}
+@media screen and (max-width: 658px) {
+  .HBottom .HotLine .HotlineNum {
+    line-height: 25px;
+  }
+}
+@media screen and (max-width: 600px) {
+  .Links .large-3 {
+    width: 50%;
+    float: left;
+  }
+  .Links .large-3:nth-child(even) {
+    border-right: 0;
+  }
+}
+
+@media screen and (max-width:550px){
+  #NavigationWrapper .SearchWrap .large-9{
+    width: 65%
+  }
+
+  #NavigationWrapper .SearchWrap .large-3{
+    padding-right: 13px;
+    width: 35%
+  }
+}
+@media screen and (max-width: 500px) {
+  .HBottom .HotLine .HotlineNum {
+    font-size: 12px;
+    line-height: 18px;
+  }
+  .HBottom .HotLine .HotlineNum em {
+    font-size: 15px;
+  }
+
+  #HBlock .large-12 {
+    padding: 0 !important;
+  }
+
+  .YellowBar {
+    background: #fff000;
+    width: 100%;
+    float: left;
+    padding: 2px 10px;
+  }
+  .YellowBar h1 {
+    font-size: 16px !important;
+    margin-bottom: 0;
+  }
+
+  .Category .large-4 {
+    width: 50%;
+  }
+
+  .top-bar {
+    height: auto;
+    background: #f6f6f6;
+    max-height: 200px;
+    overflow-y: visible;
+  }
+
+  #newpost03 li {
+    padding: 0 !important;
+  }
+
+  .top-bar-section ul li > a {
+    padding: 5px;
+    background: #f6f6f6;
+  }
+
+  .top-bar-section ul li > a:hover, .top-bar-section ul li > a.active {
+    color: white !important;
+  }
+
+  .top-bar-section .dropdown li.title h5 a {
+    color: white !important;
+  }
+  
+  #HBlock .Block {
+      height: auto;
+      background: none;
+  }
+  
+  #HBlock .Block .large-5{
+      width: 100%!important;
+  }
+}
+
+.greenfont{
+	color:#060;
+}
+.redfont{
+	color:#F00;
+}
+
+.fav-icon { display:none; margin-top:10px; right:0px;
+position:absolute;
+}
+
+.ImageWrapper:hover .fav-icon {
+    display: block;
+}

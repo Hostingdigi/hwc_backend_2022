@@ -1,0 +1,32 @@
+/*================================================================================
+	Item Name: Vuexy - Vuejs, HTML & Laravel Admin Dashboard Template
+	Version: 2.0
+	Author: PIXINVENT
+	Author URL: http://www.themeforest.net/user/pixinvent
+================================================================================
+
+NOTE:
+------
+PLACE HERE YOUR OWN SCSS CODES AND IF NEEDED, OVERRIDE THE STYLES FROM THE OTHER STYLESHEETS.
+WE WILL RELEASE FUTURE UPDATES SO IN ORDER TO NOT OVERWRITE YOUR STYLES IT'S BETTER LIKE THIS.  */
+
+body, .header-navbar{ font-family: Arial, Tahoma, Helvetica, sans-serif; }
+.header-navbar .navbar-wrapper { display: none !important; }
+.header-navbar .navbar-container ul.nav li > a.nav-link { color:#222; }
+.horizontal-menu .header-navbar.navbar-fixed { height:50px; }
+.horizontal-menu .horizontal-menu-wrapper { top: 34px; }
+.horizontal-menu .content .content-wrapper {
+    margin-top: -15px !important;
+}
+.action-btns { display: none !important; }
+.action-filters { float:left; width:100%; }
+.dataTables_length {     width: 8%;
+    float: left;
+margin-bottom: 20px; }
+.custom-select { height:30px; width:50px; }
+.form-control.form-control-sm { padding: 1rem; }
+.content-body { margin-top: -20px; }
+.horizontal-menu.navbar-floating .horizontal-menu-wrapper { background: #222 !important; }
+.horizontal-menu .horizontal-menu-wrapper .header-navbar .navbar-container { padding:0px 20px; }
+.form-group { margin-bottom: 1rem; }
+.table td { padding:0.7rem; }

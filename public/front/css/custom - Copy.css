@@ -1,0 +1,73 @@
+/*--------------------------------------------------------------
+# Menu section
+--------------------------------------------------------------*/
+
+.sidenav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 3;	
+  top: 194px;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 60px;
+}
+
+
+
+.sidenav .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+@media screen and (max-height: 450px) {
+  .sidenav {padding-top: 15px;}
+  .sidenav a {font-size: 18px;}
+}
+
+.slinky-theme-default {
+	background-color: #111;
+}
+.slinky-theme-default a:not(.back) {
+	padding: 5px;
+	color: #FFF;
+}
+.slinky-theme-default .next::after{
+	background: none;
+}
+.slinky-theme-default .back::before  {
+	background-color: #FFF;
+}
+.sub-menu li a span i {
+	float: right;
+}
+
+.caption { margin-bottom:40px; }
+
+@media (min-width: 576px) {
+.card-deck { margin-bottom:15px; } 
+.card-body { margin-bottom:20px; }
+}
+
+@media (max-width: 600px) {
+	.sidenav {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 3;	
+  top: 168px;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 60px;
+}
+}
+@media only screen and (max-width: 480px) and (min-width: 300px){
+	 top: 0px;
+}

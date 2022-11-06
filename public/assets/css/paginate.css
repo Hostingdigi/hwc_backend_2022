@@ -1,0 +1,65 @@
+.pagination {
+  /*display: inline-block;*/
+}
+
+.pagination a {
+  color: black;
+  float: left;
+  padding: 8px 16px;
+  text-decoration: none;
+}
+.pagination a.active {
+  background-color: #4CAF50;
+  color: white;
+  border-radius: 5px;
+}
+.pagination .disabled
+{
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 8px 16px;
+  
+}
+.pagination .active {
+  color: white;
+  border-radius: 5px;
+  padding: 8px 16px;
+  background: linear-gradient(118deg, #070707, rgba(7, 7, 7, 0.7));
+}
+
+.pagination a:hover:not(.active) {background-color: #babfc7;}
+
+.pagination a {
+  border-radius: 5px;
+}
+
+.pagination a.active {
+  border-radius: 5px;
+}
+
+.pagination a {
+  transition: background-color .3s;
+}
+
+.pagination a {
+  border: 1px solid #ddd; /* Gray */
+}
+.pagination a:first-child {
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+}
+
+.pagination a:last-child {
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
+
+.pagination a {
+  margin: 0 4px; /* 0 is for top and bottom. Feel free to change it */
+}
+.pagination a {
+  font-size: 12px;
+}
+.center {
+  text-align: center;
+}
