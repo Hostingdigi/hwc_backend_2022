@@ -21,13 +21,16 @@
 			<div class="col-md-6">
 				<div class="pay-meth">
 					<h5>Payment Method</h5>
+					@if(Session::has('error'))
+						<div class="alert error">{{ Session::get('error') }}</div>
+					@endif
 					<div class="pay-box">
 						<ul class="list-unstyled">
 							@if($paymentmethods)
 								@foreach($paymentmethods as $paymentmethod)
 								<li>
 									<input type="radio" id="paymethod{{ $paymentmethod->Id }}" name="paymentmethod" value="{{ $paymentmethod->Id }}" >
-									<label for="paymethod{{ $paymentmethod->Id }}"><span><i class="fa fa-circle"></i></span>{{ $paymentmethod->payment_name }}</label>
+									<label for="paymethod{{ $paymentmethod->Id }}"><span><i class="fa fa-circle"></i></span><img style="height:22px; margin:5px 0px 10px;" src="{{ url('/uploads/images/'.$paymentmethod->payment_logo) }}" /></label>
 								</li>
 								@endforeach
 							@endif
@@ -38,8 +41,7 @@
 				
 				<div class="row">
 					<div class="col-md-6 col-sm-12">
-						<button type="submit" name="button" class="ord-btn" id="placeorderbtn">Place Order</button>
-						
+						<button type="submit" name="button" class="ord-btn">Place Order</button>
 					</div>
 					<div class="col-md-6 col-sm-12">
 						@if($ordertype == 1)
@@ -72,36 +74,28 @@
 													</div>
 													<div class="col-md-9 no-pm">
 														<p>{{ $cart['productName'] }}</p>
-														<p class="hint">{{ $cart['qty'] }} X ${{ number_format($cart['price'],2) }}</p>
+														<p class="hint">{{ $cart['qty'] }} X S${{ number_format($cart['price'],2) }}</p>
 														@if($cart['productoption'])
 															<p class="hint">Option: {{ $cart['productoption'] }}</p>
 														@endif
-														@if($cart['size'])
-															<p class="hint">Size: {{ $cart['size'] }}</p>
-														@endif
-														@if($cart['productWeight'])
-															<p class="hint">Weight: {{ $cart['productWeight'] }} Kg</p>
-														@endif	
-														@if($cart['color'])
-															<p class="hint">Color: {{ $cart['color'] }}</p>
-														@endif	
+													
 														
 													</div>
 												</div>
 											</div>
 											<div class="prc">
-												<p>${{ number_format($cart['total'],2) }}</p>
+												<p>S${{ number_format($cart['total'],2) }}</p>
 											</div>
 										</li>
 										@endforeach
 									@endif
 									
-									<li class="subtot">Sub Total <span>${{ number_format(str_replace(',','',$subtotal),2) }}</span></li>
-									<li class="subtot" style="border-top: 1px solid #e5e5e5; padding-top:12px;">{{ $taxtitle }} <span>${{ number_format(str_replace(',','',$gst), 2) }}</span></li>
-									<li>Shipping ({{ $deliverytype }}) <span>${{ number_format(str_replace(',','',$deliverycost), 2) }}</span></li>
-									<li>Packaging Fee <span>${{ number_format($packingfee,2) }}</span></li>
-									@if($discount != 0 && $discounttext != '')<li id="dis">Discount({{ $discounttext }})<span>${{ number_format(str_replace(',','',$discount), 2) }}</span></li>@endif
-									<li>Grand Total <span>${{ number_format(str_replace(',','',$grandtotal),2) }}</span></li>
+									<li class="subtot">Sub Total <span>S${{ number_format(str_replace(',','',$subtotal),2) }}</span></li>
+									<li class="subtot" style="border-top: 1px solid #e5e5e5; padding-top:12px;">{{ $taxtitle }} <span>S${{ number_format(str_replace(',','',$gst), 2) }}</span></li>
+									<li>Shipping ({{ $deliverytype }}) <span>S${{ number_format(str_replace(',','',$deliverycost), 2) }}</span></li>
+									<li>Packaging Fee <span>S${{ number_format($packingfee,2) }}</span></li>
+									@if($discount != 0 && $discounttext != '')<li id="dis">Discount({{ $discounttext }})<span>S${{ number_format(str_replace(',','',$discount), 2) }}</span></li>@endif
+									<li>Grand Total <span>S${{ number_format(str_replace(',','',$grandtotal),2) }}</span></li>
 								</ul>
 							</div>
 						</div>
@@ -111,6 +105,7 @@
 			</div>
 		</div>
 	</div>
+</form>
 </section>
 <!-- End Checkout -->
 
@@ -121,14 +116,11 @@ $(document).ready(function() {
 	$('#quotation').click(function() {
 		window.location = "{{ url('/quotation') }}";
 	});
-	
 });
 function placeordervalidate() {
 	var allowsubmit = 0;
-	
 	$('input[name="paymentmethod"]').each(function(){
 		if(this.checked) {
-			console.log('paymethod:'+$('input[name="paymentmethod"]').val());
 			allowsubmit++;
 		}
 	});

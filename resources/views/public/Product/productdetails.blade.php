@@ -145,11 +145,59 @@
 						$price = new \App\Models\Price();
 						$actualprice = $price->getGroupPrice($productdetail->Id);
 						$displayprice = $price->getDiscountPrice($productdetail->Id);
+						$gstprice = $price->getGSTPrice($displayprice, 'SG');
+						$actualgstprice = $price->getGSTPrice($actualprice, 'SG');
 						//$displayprice = $price->getPrice($productdetail->Id);
 					@endphp
 					<input type="hidden" name="displayprice" id="displayprice" value="{{ $displayprice }}">
 					<input type="hidden" name="productprice" id="productprice" value="{{ $displayprice }}">
+					
+					<div class="row">
+					   <div class="col-5 prod-price-col">Price</div>
+					   @if($displayprice < $actualprice)
+					   <div class="col-5 prod-price-col-red">Promotion</div>
+						@endif
+					</div>
 					<div class="row mb-3">
+						@if($displayprice < $actualprice)
+					   <div class="col-5">
+						  <div class="oldrate flft" id="oldprice">
+							S${{ number_format($actualprice, 2) }}
+						  </div>
+						  <div class="color-grey-tax">[ before GST / local tax ]</div>
+						  <div style="clear:both"></div>
+						  <div class="oldrate flft" id="oldgstprice">
+							S${{ number_format($actualgstprice, 2) }}
+						  </div>
+						  <div class="color-grey-tax">[ w/GST / local tax ]</div>
+					   </div>
+					   
+					   <div class="col-5">
+						  <div class="newrate flft redclr" id="actualprice">
+							S${{ number_format($displayprice, 2) }}
+						  </div>
+						  <div class="color-red-tax">[ before GST / local tax ]</div>
+						  <div style="clear:both"></div>
+						  <div class="newrate flft redclr" id="actualgstprice">
+							S${{ number_format($gstprice, 2) }}
+						  </div>
+						  <div class="color-red-tax">[ w/GST / local tax ]</div>
+					   </div>
+					   @else
+						<div class="col-5">
+						  <div class="newrate flft blackclr" id="actualprice">
+							 S${{ number_format($displayprice, 2) }}
+						  </div>
+						  <div class="color-black-tax">[ before GST / local tax ]</div>
+						  <div style="clear:both"></div>
+						  <div class="newrate flft blackclr" id="actualgstprice">
+							 S${{ number_format($gstprice, 2) }}
+						  </div>
+						  <div class="color-black-tax">[ w/GST / local tax ]</div>
+					   </div>
+					   @endif
+					</div>
+					<!--div class="row mb-3">
 					@if($displayprice < $actualprice)
 					<div class="col-4">					
 						<div class="oldrate flft">
@@ -165,7 +213,7 @@
 					</div>
 					
 					
-				  </div>
+				  </div-->
 						@if(count($options) > 0)
 						<div class="row mb-3">
 							<div class="col-md-6">
@@ -182,7 +230,7 @@
 							<input type="hidden" name="optionsproduct" id="optionsproduct" value="NO">
 						@endif
 						
-						{!! $productdetail->EnShortDesc !!}
+						{!! $productdetail->ProdCode !!}
                         <!--p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since</p-->
 						
 						@if($productdetail->Quantity > 0)
@@ -203,7 +251,11 @@
 				  </div>
 				  <div class=" mt-1">
 					@if($productdetail->Quantity > 0)
+						@if($productdetail->ProdStatus == 1)
 						<a href="javascript:void(0);" onclick="addtocart('{{ $productdetail->Id }}');" class="site-btn bg-dark mx-auto textyellow">Add to Cart</a>
+						@else
+						<a href="javascript:void(0);" class="site-btn bg-dark mx-auto textyellow">Item is Not Available</a>
+						@endif
 					@else
 						<a href="javascript:void(0);" class="site-btn bg-dark mx-auto textyellow">Out of Stock</a>
 						<div class="emailus"><a href="javascript:void(0);" class="site-btn bg-dark mx-auto textyellow" data-toggle="modal" data-target="#enquiryModal">Email US for More Enquiry</a></div>
@@ -220,6 +272,12 @@
                             <li class="nav-item">
                                 <a class="nav-link" data-toggle="tab" href="#tabs-2" role="tab">Specification</a>
                             </li>
+							<li class="nav-item">
+                                <a class="nav-link" data-toggle="tab" href="#tabs-3" role="tab">Download</a>
+                            </li>
+							<li class="nav-item">
+                                <a class="nav-link" data-toggle="tab" href="#tabs-4" role="tab">Enquiry</a>
+                            </li>
                             <!--li class="nav-item">
                                 <a class="nav-link" data-toggle="tab" href="#rev" role="tab">Reviews @if(count($reviews) > 0) ({{ count($reviews) }}) @endif</a>
                             </li-->
@@ -229,13 +287,61 @@
 								<div class="row" style="margin-top:15px;">
 									
 										<div class="col-md-12 col-sm-12">
-											{!! $productdetail->EnInfo !!}
+											@if($productdetail->EnInfo) {!! $productdetail->EnInfo !!} @else N/A @endif
+											@if($productdetail->Color != '')
+												<br>Color: {{ $productdetail->Color }}
+											@endif
+											@if($productdetail->Weight != '')
+												<br>Weight(KG): {{ $productdetail->Weight }}
+											@endif
+											@if($productdetail->Dimension != '')
+												<br>Dimension: {{ $productdetail->Dimension }}
+											@endif
 										</div>
 									
 								</div>		
                             </div>
                             <div class="tab-pane" id="tabs-2" role="tabpanel">
-								{!! $productdetail->Specs !!}
+								@if($productdetail->Specs) {!! $productdetail->Specs !!} @else N/A @endif
+                            </div>
+							<div class="tab-pane" id="tabs-3" role="tabpanel">
+								@if($productdetail->Tds != '' && file_exists(public_path('/uploads/product/'.$productdetail->Tds)))
+									<img src="{{ url('/img/icon-pdf.jpg') }}"> TDS : <a href="{{ url('/uploads/product/'.$productdetail->Tds) }}" download>{{ $productdetail->EnName }}</a><br><br>
+								@endif	
+								@if($productdetail->Sds != '' && file_exists(public_path('/uploads/product/'.$productdetail->Sds)))
+									<img src="{{ url('/img/icon-pdf.jpg') }}"> SDS : <a href="{{ urldecode(url('/uploads/product/'.$productdetail->Sds)) }}" download>{{ $productdetail->EnName }}</a>
+								@endif	
+                            </div>
+							<div class="tab-pane" id="tabs-4" role="tabpanel">
+								<div class="alert" id="qamsg" style="display:none; color:green; font-weight:bold;"></div>
+								<div id="qaerror" style="display:none; color:red; text-align:center;"></div>
+								<form action="" name="qa_frm">
+									<input type="hidden" name="productname" id="productname" class="rating-value" value="{{ $productdetail->EnName }}">
+									<input type="hidden" name="productcode" id="productcode" class="rating-value" value="{{ $productdetail->ProdCode }}">	
+										<div class="row">
+											<div class="col-md-6">
+												<div >
+													<label>Name*</label>
+													<input type="text" class="form-control" required name="custname" id="custname" value="" style="margin-bottom:10px;">
+												</div>
+											</div>
+										</div>
+										<div class="row">	
+											<div class="col-md-6">
+												<div>
+													<label>Email*</label>
+													<input type="email" class="form-control" required name="custemail" id="custemail" value="" style="margin-bottom:10px;">
+												</div>
+											</div>
+										</div>
+										<div class="row">	
+											<div class="col-md-6">
+												<label>Question*</label>
+												<textarea required name="question" id="question" style="margin-bottom:10px;"></textarea>	
+												<button type="button" name="submit" class="redbtn" id="submitquestion">Submit</button>
+											</div>
+										</div>
+									</form>
                             </div>
                             <div class="tab-pane" id="rev" role="tabpanel">
 								@if($reviews)
@@ -365,15 +471,16 @@
 							@endif
 							</a>
 							<div class="product__item__text">
-								<h6 class="mt-3 mb-2 subcatlog"><a href="{{ url('/prod/'.$relatedproduct->UniqueKey) }}" alt="{{ $relatedproduct->EnName }}" title="{{ $relatedproduct->EnName }}">@if(strlen($relatedproduct->EnName) > 32){{ substr($relatedproduct->EnName, 0, 32) }}...@else {{ $relatedproduct->EnName }} @endif</a></h6>
+								<h6 class="mt-3 mb-2 subcatlog"><a href="{{ url('/prod/'.$relatedproduct->UniqueKey) }}" alt="{{ $relatedproduct->EnName }}" title="{{ $relatedproduct->EnName }}">@if(strlen($relatedproduct->EnName) > 27){{ substr($relatedproduct->EnName, 0, 27) }}...@else {{ $relatedproduct->EnName }} @endif</a></h6>
 								
 								<div class="product__price">
 								@php	
 									$rdisplayprice = $relatedproduct->Price;
 									$price = new \App\Models\Price();
 									$rdisplayprice = $price->getPrice($relatedproduct->Id);
+									$rdisplayprice = $price->getGSTPrice($rdisplayprice, 'SG');
 								@endphp
-								${{ number_format($rdisplayprice, 2) }}
+								S${{ number_format($rdisplayprice, 2) }}
 								</div>
 							</div>
 							<div class="text-center mt-3">
@@ -461,8 +568,14 @@ $(document).ready(function() {
 			headers: {'X-CSRF-TOKEN': token},		
 			success: function(response) {
 				console.log(response);
-				$('#actualprice').html('$'+response);
-				$('#productprice').val(response);
+				var result = response.split("#");
+				$('#actualprice').html('$'+result[0]);
+				$('#productprice').val(result[0]);
+				$('#actualgstprice').html('$'+result[1]);
+				if(result[2] == 1) {
+					$('#oldprice').html('$'+result[3]);
+					$('#oldgstprice').html('$'+result[4]);
+				}
 			},error: function(ts) {				
 				console.log("Error:"+ts.responseText);  
 			}
@@ -496,13 +609,48 @@ $(document).ready(function() {
 		}
 	});
 	
-	$('#enquiryemailus').click(function() {
-		var name = $('#name').val();
+	$('#submitquestion').click(function() {
+		var email = $('#custemail').val();
+		var name = $('#custname').val();
+		var question = $('#question').val();
+		var token = "{!! csrf_token() !!}";
+		var productname = $('#productname').val();
+		var productcode = $('#productcode').val();
 		
+		if(name != '' && email != '' && question != '') {
+		    if(validateEmail(email)) {
+    			$.ajax({
+    				type: "POST",
+    				url: '{{ url("/") }}/submitqa',				
+    				data: {'productname': productname, 'productcode': productcode, 'name': name, 'email': email, 'question':question},
+    				headers: {'X-CSRF-TOKEN': token},		
+    				success: function(response) {
+    					$('#qaerror').hide();
+    					$('#qamsg').html('Your Enquiry Successfully Submitted');
+    					$('#qamsg').show();
+    					$('#custemail').val('');
+    					$('#custname').val('');
+    					$('#question').val('');
+    				},error: function(ts) {				
+    					console.log("Error:"+ts.responseText);  
+    				}
+    			});
+		    } else {
+    			$('#qaerror').html('Invalid Email Format');
+    			$('#qaerror').show();
+    		}
+		} else {
+			$('#qaerror').html('All fields are required*');
+			$('#qaerror').show();
+		}
+	});
+	
+	$('#enquiryemailus').click(function() {
+		var name = $('#name').val();		
 		var email = $('#email').val();
 		var phone = $('#phone').val();
 		var message = $('#message').val();
-		var productname = '{{ $productdetail->EnName }}';
+		var productname = $('#productname').val();
 		var token = "{!! csrf_token() !!}";
 		if(name != '' && email != '' && phone != '' && message != '') {
 			if(validateEmail(email)) {
@@ -515,6 +663,10 @@ $(document).ready(function() {
 					success: function(response) {
 						$('#emailusmsg').html('Enquiry Details Successfully Submitted');
 						$('#emailusmsg').show();
+						$('#name').val('');
+						$('#email').val('');
+						$('#phone').val('');
+						$('#message').val('');
 					},error: function(ts) {				
 						console.log("Error:"+ts.responseText);  
 					}
