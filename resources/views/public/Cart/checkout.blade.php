@@ -38,10 +38,7 @@
 								<label>Phone*</label>
 								<input type="text" name="bill_mobile" required value="@if($customer){{ $customer->cust_phone }}@endif" placeholder="Your phone number">
 							</div>
-							<div class="col-md-12">
-								<label>Company Name</label>
-								<input type="text" name="bill_compname" value="@if($customer){{ $customer->cust_company }}@endif" placeholder="Your company name (optional)">
-							</div>
+							
 							<div class="col-md-12">
 								<label>Address*</label>
 								<input type="text" name="bill_ads1" required value="@if($customer){{ $customer->cust_address1 }}@endif" placeholder="Address line 1">
@@ -73,6 +70,17 @@
 							
 							<div class="col-md-12">
 								<ul class="list-unstyled">                                        
+									<li><input type="checkbox" value="1" id="bill_company" name="bill_company" data-gtm-form-interact-field-id="0"><label for="bill_company">Bill this order to Company</label></li>
+								</ul>
+							</div>
+							
+							<div class="col-md-12" style="display:none;" id="cmp_div">
+								<label>Company Name*</label>
+								<input type="text" name="bill_compname" id="bill_compname" value="" placeholder="Company name">
+							</div>
+							
+							<div class="col-md-12">
+								<ul class="list-unstyled">                                        
 									<li><input type="checkbox" value="1" id="shipaddress" name="shipaddress" checked><label for="shipaddress">Ship To Same Address?</label></li>
 								</ul>
 							</div>
@@ -99,7 +107,7 @@
 									<div class="col-md-12">
 										<label>Address*</label>
 										<input type="text" name="ship_ads1" id="ship_ads1" value="" placeholder="Address line 1">
-										<input type="text" name="bill_ads2" value="" placeholder="Address line 2">
+										<input type="text" name="ship_ads2" value="" placeholder="Address line 2">
 									</div>
 									<div class="col-md-6 contry">
 										<label>Country*</label>
@@ -138,6 +146,12 @@
 								</select>
 							
 							</div>
+
+							<div class="col-md-12 contry">
+								<label>Delivery Notes</label>								
+								<textarea name="delivery_instructions" id="delivery_instructions" value="" placeholder="Delivery Notes" rows="3" style="border-radius:0px"></textarea>
+							
+							</div>
 						</div>
 					
 				</div>
@@ -156,41 +170,32 @@
 													<div class="row">
 													<div class="col-md-3">
 														@if($cart['image'] != '')															
-															<img src="{{ url('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100%">
+															<img src="{{ env('IMG_URL').('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100%">
 														@else
 															<img src="{{ url('/images/noimage.png') }}" alt="{{ $cart['productName'] }}" width="100%">
 														@endif
 													</div>
 													<div class="col-md-9 no-pm">
 														<p>{{ $cart['productName'] }}</p>
-														<p class="hint">{{ $cart['qty'] }} X ${{ number_format($cart['price'],2) }}</p>
+														<p class="hint">{{ $cart['qty'] }} X S${{ number_format($cart['price'],2) }}</p>
 														@if($cart['productoption'])
 															<p class="hint">Option: {{ $cart['productoption'] }}</p>
 														@endif
-														@if($cart['size'])
-															<p class="hint">Size: {{ $cart['size'] }}</p>
-														@endif	
-														@if($cart['productWeight'])
-															<p class="hint">Weight: {{ $cart['productWeight'] }} Kg</p>
-														@endif	
-														@if($cart['color'])
-															<p class="hint">Color: {{ $cart['color'] }}</p>
-														@endif	
 														
 													</div>
 												</div>
 												</div>
 												<div class="prc">
-													<p>${{ number_format($cart['total'],2) }}</p>
+													<p>S${{ number_format($cart['total'],2) }}</p>
 												</div>
 											</li>
 											@endforeach
 										@endif
 										
-										<li>Sub Total <span>${{ $subtotal }}</span></li>
-										<li id="tax">{{ $taxtitle }} <span>${{ $gst }}</span></li>
+										<li id="grandtotal">Sub Total <span>S${{ $subtotal }}</span></li>
+										<!--li id="tax">{{ $taxtitle }} <span>${{ $gst }}</span></li>
 										@if($discount != 0 && $discounttext != '')<li id="dis">Discount({{ $discounttext }})<span>${{ number_format($discount, 2) }}</span></li>@endif
-										<li id="grandtotal">Grand Total <span>${{ $grandtotal }}</span></li>
+										<li id="grandtotal">Grand Total <span>${{ $grandtotal }}</span></li-->
 									</ul>
 								</div>
 							</div>
@@ -220,7 +225,19 @@
 									</ul>
 									<span id="deliveryerror" style="display:none; color:red;">Select Delivery Method!</span>
 								</div>
-							</div>								
+							</div>
+							@php
+								$selfcollectmsg = '';
+								$psettings = \App\Models\PaymentSettings::where('id', '=', '1')->select('self_collection_note')->first();
+								if($psettings) {
+									$selfcollectmsg = $psettings->self_collection_note;
+								}
+							@endphp
+							@if($selfcollectmsg != '')
+							<div class="col-md-12" style="font-size:16px; padding-top:15px; padding-bottom:0; color:red;" id="selfcollectionmsg">
+								<strong>{{ $selfcollectmsg }}</strong>								
+							</div>
+							@endif
 							<button type="submit" name="button" class="ord-btn" id="placeorder">Proceed</button>
 						</div>
 					</div>
@@ -234,7 +251,19 @@
 @include('footer')
 
 <script type="text/javascript">
-$(document).ready(function() {		
+$(document).ready(function() {	
+    
+    $("#bill_company").change(function() {
+        if($(this).is(":checked")) {
+            $('#cmp_div').show();
+            $('#bill_compname').prop('required', 'required');
+            $('#bill_compname').val(''); 
+        }else{
+            $('#bill_compname').val('');
+            $('#bill_compname').prop('required', '');
+            $('#cmp_div').hide();
+        }
+    });
 
 	$('#shipaddress').change(function() { 
 		if ($("#shipaddress").is(":checked")) {

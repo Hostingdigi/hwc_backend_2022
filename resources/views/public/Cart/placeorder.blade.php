@@ -67,7 +67,7 @@
 												<div class="row">
 													<div class="col-md-3">
 														@if($cart['image'] != '')															
-															<img src="{{ url('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100%">
+															<img src="{{ env('IMG_URL').('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100%">
 														@else
 															<img src="{{ url('/images/noimage.png') }}" alt="{{ $cart['productName'] }}" width="100%">
 														@endif

@@ -11,6 +11,7 @@ use App\Models\EmailTemplate;
 use App\Models\GrabPayFunctions;
 use App\Models\OrderDetails;
 use App\Models\OrderMaster;
+use App\Models\Paymentlog;
 use App\Models\PaymentMethods;
 use App\Models\PaymentSettings;
 use App\Models\Product;
@@ -115,9 +116,12 @@ class PaymentController extends Controller
         $discount = $cart->getDiscount($subtotal, $gst, $deliverycost, $packingfee, $discounttype, $disamount);
 
         $grandtotal = $cart->getGrandTotal($subtotal, $gst, $deliverycost, $packingfee, $discount);
-
+        if ($country == 'SG') {
+            //$subtotal = number_format(((float)str_replace(',', '', $subtotal) - (float)str_replace(',', '',$gst)),2);
+            $grandtotal = number_format(((float) str_replace(',', '', $grandtotal) - (float) str_replace(',', '', $gst)), 2);
+        }
         $stripekey = '';
-        $paymode = 'live';
+        $paymode = 'test';
         $paymentmethod = PaymentMethods::where('id', '=', '3')->orWhere('payment_name', 'LIKE', '%stripe')->first();
 
         if ($paymentmethod) {
@@ -125,7 +129,7 @@ class PaymentController extends Controller
             if ($paymode == 'live') {
                 $stripekey = $paymentmethod->api_key;
             } else {
-                $stripekey = $paymentmethod->api_key;
+                $stripekey = $paymentmethod->test_api_key;
             }
         }
 
@@ -208,7 +212,10 @@ class PaymentController extends Controller
         $discount = $cart->getDiscount($subtotal, $gst, $deliverycost, $packingfee, $discounttype, $disamount);
 
         $grandtotal = $cart->getGrandTotal($subtotal, $gst, $deliverycost, $packingfee, $discount);
-
+        if ($country == 'SG') {
+            //$subtotal = number_format(((float)str_replace(',', '', $subtotal) - (float)str_replace(',', '',$gst)),2);
+            $grandtotal = number_format(((float) str_replace(',', '', $grandtotal) - (float) str_replace(',', '', $gst)), 2);
+        }
         $subtotal = str_replace(',', '', $subtotal);
         $deliverycost = str_replace(',', '', $deliverycost);
         $packingfee = str_replace(',', '', $packingfee);
@@ -1424,6 +1431,11 @@ class PaymentController extends Controller
         $discount = $cart->getDiscount($subtotal, $gst, $deliverycost, $packingfee, $discounttype, $disamount);
         $grandtotal = $cart->getGrandTotal($subtotal, $gst, $deliverycost, $packingfee, $discount);
 
+        if ($country == 'SG') {
+            //$subtotal = number_format(((float)str_replace(',', '', $subtotal) - (float)str_replace(',', '',$gst)),2);
+            $grandtotal = number_format(((float) str_replace(',', '', $grandtotal) - (float) str_replace(',', '', $gst)), 2);
+        }
+
         $subtotal = str_replace(',', '', $subtotal);
         $deliverycost = str_replace(',', '', $deliverycost);
         $packingfee = str_replace(',', '', $packingfee);
@@ -1596,6 +1608,12 @@ class PaymentController extends Controller
             $paymode = 'test';
             $paymentmethod = PaymentMethods::where('Id', 5)->first();
 
+            Paymentlog::create([
+                'pay_method' => $paymentmethod->Id,
+                'order_id' => $orderid,
+                'sent_values' => serialize([])
+            ]);
+
             if ($paymentmethod) {
                 $paymode = $paymentmethod->payment_mode;
                 if ($paymode == 'live') {
@@ -1629,12 +1647,11 @@ class PaymentController extends Controller
             define('CONST_PARTNER_ID', '6a223ea9-f269-4fa8-986a-be0bb0035636');
             define('CONST_PARTNER_SECRET', 'XVn5d_u6axtoiBS9');
             define('CONST_MERCHANT_ID', '0a1a11c7-16e2-42c0-acf3-711b5522d01f');
-            define('ENDPOINT_URL', 'https://partner-api.grab.com/grabpay/partner/v2/');
+            define('ENDPOINT_URL', 'https://partner-api.grab.com/');
 
             define('CONST_REDIRECT_URI', url('success?orderid=' . $orderincid));
 
             $order_id = $orderincid;
-            $order_total = '0.1';
             $grabPayStagingURL = ENDPOINT_URL;
 
             //Generate HMAC Signature
@@ -1646,10 +1663,12 @@ class PaymentController extends Controller
             $payloadtoSign = json_encode([
                 'partnerTxID' => $partnerTxID,
                 'partnerGroupTxID' => "ORD_" . $order_id,
-                'amount' => $order_total * 100,
+                'amount' => (1.00 * 100),
+                // 'amount' => $grandtotal * 100,
                 'currency' => 'SGD',
                 'merchantID' => CONST_MERCHANT_ID,
                 'description' => "Order from HardwareCity",
+                'hidePaymentMethods' => ["INSTALMENT", "POSTPAID", "CARD"],
             ]);
 
             //error_log( "Payload to Sign:".$payloadtoSign );
@@ -1657,8 +1676,7 @@ class PaymentController extends Controller
 
             $gpay = new GrabPayFunctions;
             $authorizationCode = $gpay->ComputeHMAC($date, $payloadtoSign);
-
-            //$authorizationCode = base64_encode($s);
+            Session::put('gau', $authorizationCode);
 
             $cURLConnection = curl_init();
             curl_setopt($cURLConnection, CURLOPT_HTTPHEADER, [
@@ -1667,7 +1685,7 @@ class PaymentController extends Controller
                 "Date:$date",
             ]);
             curl_setopt($cURLConnection, CURLOPT_POST, 1);
-            curl_setopt($cURLConnection, CURLOPT_URL, ENDPOINT_URL . 'charge/init');
+            curl_setopt($cURLConnection, CURLOPT_URL, ENDPOINT_URL . 'grabpay/partner/v2/charge/init');
             curl_setopt($cURLConnection, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($cURLConnection, CURLOPT_SSL_VERIFYHOST, false);
             curl_setopt($cURLConnection, CURLOPT_SSL_VERIFYPEER, false);
@@ -1693,7 +1711,6 @@ class PaymentController extends Controller
                 setcookie('my_order_id', $order_id, time() + 36000);
                 header('location:' . $authorizeLink);
                 exit;
-                //return array('result'  => 'success', 'redirect'  => $authorizeLink);
             }
 
             Session::forget('cartdata');
@@ -1710,6 +1727,70 @@ class PaymentController extends Controller
 
     }
 
+    public function success2(Request $request)
+    {
+        define('CONST_CLIENT_ID', 'b72377e113cd40f280fe100ad5972b99');
+        define('CONST_CLIENT_SECRET', 'Gh6M7NCPaVi0aXud');
+        define('CONST_PARTNER_ID', '6a223ea9-f269-4fa8-986a-be0bb0035636');
+        define('CONST_PARTNER_SECRET', 'XVn5d_u6axtoiBS9');
+        define('CONST_MERCHANT_ID', '0a1a11c7-16e2-42c0-acf3-711b5522d01f');
+        define('ENDPOINT_URL', 'https://partner-api.grab.com/');
+        //define('CONST_REDIRECT_URI', url('success?orderid=' . $orderincid));
+        $orderId = '0001';
+        $orderTotal = 0.25;
+        $date = date('Y-m-d H:i:s');
+        $payloadtoSign = [
+            'partnerTxID' => "ORD_" . $orderId,
+            'partnerGroupTxID' => "ORD_" . $orderId,
+            'amount' => $orderTotal * 100,
+            'currency' => 'SGD',
+            'merchantID' => CONST_MERCHANT_ID,
+            'description' => "Order from HardwareCity",
+        ];
+        $payloadtoSignEncoded = json_encode($payloadtoSign);
+        echo $payloadtoSignEncoded . ' \n ';
+        $authorizationCode = base64_encode(hash_hmac('SHA256', CONST_PARTNER_SECRET, $payloadtoSignEncoded, true));
+        echo $authorizationCode . ' \n ';
+        echo CONST_PARTNER_ID . ":" . $authorizationCode;
+
+        $cURLConnection = curl_init();
+        curl_setopt($cURLConnection, CURLOPT_HTTPHEADER, [
+            "Content-Type: application/json",
+            "Authorization:" . CONST_PARTNER_ID . ":" . $authorizationCode,
+            "Date:$date",
+        ]);
+        curl_setopt($cURLConnection, CURLOPT_POST, 1);
+        curl_setopt($cURLConnection, CURLOPT_URL, ENDPOINT_URL . 'grabpay/partner/v2/charge/init');
+        curl_setopt($cURLConnection, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($cURLConnection, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($cURLConnection, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($cURLConnection, CURLOPT_POSTFIELDS, $payloadtoSign);
+        $output = curl_exec($cURLConnection);
+
+        print_r($output);
+/*
+if ($output === false) {
+echo 'Curl error: ' . curl_error($cURLConnection);
+} else {
+$resultObj = json_decode($output);
+error_log(print_r($resultObj, true));
+$request = isset($resultObj->request) ? $resultObj->request : '';
+if (!empty($request)) {
+$wp_session['request'] = $request;
+setcookie('grabpay_request', $request, time() + 36000);
+} else {
+$request = $_COOKIE['grabpay_request'];
+}
+$authorizeLink = $gpay->getAuthorizeLink($request);
+echo "Authorize Link:" . $authorizeLink;
+curl_close($cURLConnection);
+setcookie('my_order_id', $order_id, time() + 36000);
+header('location:' . $authorizeLink);
+exit;
+}
+ */
+    }
+
     public function success(Request $request)
     {
         Session::forget('cartdata');
@@ -1723,15 +1804,26 @@ class PaymentController extends Controller
         Session::forget('discounttype');
         Session::forget('old_order_id');
         $orderid = $request->orderid;
-        OrderMaster::where('order_id', '=', $orderid)->update(array('order_status' => '1'));
-        $order = OrderMaster::where('order_id', '=', $orderid)->select('order_type')->first();
-        if ($order) {
-            if ($order->order_type == 2) {
-                OrderMaster::where('order_id', '=', $orderid)->update(array('quotation_status' => '1'));
-            }
-        }
-        return view('public/Payment.success');
 
+        Paymentlog::where('order_id', $orderid)->update([
+            'received_values' => serialize($request->all()),
+            'status' => $request->has('error') ? 'failure' : 'success',
+        ]);
+
+        if ($request->has('error')) {
+            return redirect('cancelpayment');
+        }
+
+        if (!$request->has('error')) {
+            OrderMaster::where('order_id', '=', $orderid)->update(array('order_status' => '1'));
+            $order = OrderMaster::where('order_id', '=', $orderid)->select('order_type')->first();
+            if ($order) {
+                if ($order->order_type == 2) {
+                    OrderMaster::where('order_id', '=', $orderid)->update(array('quotation_status' => '1'));
+                }
+            }
+            return view('public/Payment.success');
+        }
     }
 
     public function paypalsuccess(Request $request)

@@ -23,6 +23,10 @@
             <!-- Text -->
             <p class="mb-7 text-gray-500">
               Your order details are shown for your personal account.
+              @if(isset($ordermastertbl->order_id))
+              <input type="hidden" name="Amount" value={{$ordermastertbl->payable_amount}}>
+              <input type="hidden" name="Order_Id" value={{$ordermastertbl->order_id}}>
+              @endif
             </p>
 
             <!-- Button -->

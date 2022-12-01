@@ -1,18 +1,8 @@
-@include('header')
-<!-- Header section end -->
-	<section id="breadcrumbs" class="breadcrumbs">
-      <div class="container">
 
-        <ol>
-          <li><a href="index.html">Home</a></li>
-		  <li><div class="pageheading">Checkout</div></li>
-        </ol>
-      </div>
-    </section>
 	
 <!-- Checkout -->
 <section class="checkout">
-	<form role="form" action="{{ url('stripePaymentProcess') }}" method="post" class="require-validation" data-cc-on-file="false" data-stripe-publishable-key="{{ $stripekey }}" id="payment-form">
+	<form role="form" action="{{ url('stripeApiPaymentProcess') }}" method="post" class="require-validation" data-cc-on-file="false" data-stripe-publishable-key="{{ $apikey }}" id="payment-form">
      @csrf
 	 <input type="hidden" name="orderincid" class="orderincid" value="{{ $orderincid }}">
 	<div class="container">
@@ -59,12 +49,12 @@
                             </div>
                         </div>
 						
-						<input type="hidden" name="cust_name" class="card-holder-name" value="{{ $billinginfo['bill_fname'].' '.$billinginfo['bill_lname'] }}">
-						<input type="hidden" name="address" class="address" value="{{ $billinginfo['bill_ads1'] }}">
-						<input type="hidden" name="city" class="city" value="{{ $billinginfo['bill_city'] }}">
-						<input type="hidden" name="state" class="state" value="{{ $billinginfo['bill_state'] }}">
-						<input type="hidden" name="country" class="country" value="{{ $billinginfo['bill_country'] }}">
-						<input type="hidden" name="zip" class="zip" value="{{ $billinginfo['bill_zip'] }}">
+						<input type="hidden" name="cust_name" class="card-holder-name" value="{{ $order->bill_fname.' '.$order->bill_lname }}">
+						<input type="hidden" name="address" class="address" value="{{ $order->bill_ads1 }}">
+						<input type="hidden" name="city" class="city" value="{{ $order->bill_city }}">
+						<input type="hidden" name="state" class="state" value="{{ $order->bill_state }}">
+						<input type="hidden" name="country" class="country" value="{{ $order->bill_country }}">
+						<input type="hidden" name="zip" class="zip" value="{{ $order->bill_zip }}">
                         
                           
                    
@@ -85,51 +75,12 @@
 							<h5>Order Summary</h5>
 							<div class="review-box">
 								<ul class="list-unstyled">
-									<li>Product <span>Total</span></li>
-									@if($cartdata)
-										@foreach($cartdata[$sesid] as $cartkey => $cart)
-										<li class="d-flex justify-content-between">
-											<div class="pro">
-												<div class="row">
-													<div class="col-md-3">
-														@if($cart['image'] != '')															
-															<img src="{{ url('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100%">
-														@else
-															<img src="{{ url('/images/noimage.png') }}" alt="{{ $cart['productName'] }}" width="100%">
-														@endif
-													</div>
-													<div class="col-md-9 no-pm">
-														<p>{{ $cart['productName'] }}</p>
-														<p class="hint">{{ $cart['qty'] }} X S${{ number_format($cart['price'],2) }}</p>
-														@if($cart['productoption'])
-															<p class="hint">Option: {{ $cart['productoption'] }}</p>
-														@endif
-														@if($cart['size'] && 1==2)
-															<p class="hint">Size: {{ $cart['size'] }}</p>
-														@endif
-														@if($cart['productWeight'] && 1==2)
-															<p class="hint">Weight: {{ $cart['productWeight'] }} Kg</p>
-														@endif	
-														@if($cart['color'] && 1==2)
-															<p class="hint">Color: {{ $cart['color'] }}</p>
-														@endif	
-														
-													</div>
-												</div>
-											</div>
-											<div class="prc">
-												<p>S${{ number_format($cart['total'],2) }}</p>
-											</div>
-										</li>
-										@endforeach
-									@endif
 									
-									<li class="subtot">Sub Total <span>S${{ number_format(str_replace(',','',$subtotal), 2) }}</span></li>
-									<li class="subtot" style="border-top: 1px solid #e5e5e5;">{{ $taxtitle }} <span>S${{ number_format(str_replace(',','',$gst), 2) }}</span></li>
-									<li>Shipping ({{ $deliverytype }}) <span>S${{ number_format(str_replace(',','',$deliverycost), 2) }}</span></li>
-									<li>Packaging Fee <span>S${{ number_format(str_replace(',','',$packingfee), 2) }}</span></li>
-									@if($discount != 0 && $discounttext != '')<li id="dis">Discount({{ $discounttext }})<span>S${{ number_format(str_replace(',','',$discount), 2) }}</span></li>@endif
-									<li>Grand Total <span>S${{ number_format(str_replace(',','',$grandtotal), 2) }}</span></li>
+									<li class="subtot">Sub Total <span>S${{ $order->payable_amount - ($order->tax_collected + $order->shipping_cost + $order->packaging_fee)  }}</span></li>
+									<li class="subtot" style="border-top: 1px solid #e5e5e5;">Tax <span>S${{ $order->tax_collected }}</span></li>
+									<li>Shipping <span>S${{ $order->shipping_cost }}</span></li>
+									<li>Packaging Fee <span>S${{ $order->packaging_fee }}</span></li>
+									<li>Grand Total <span>S${{ $order->payable_amount }}</span></li>
 								</ul>
 							</div>
 						</div>
@@ -142,8 +93,7 @@
 </section>
 <!-- End Checkout -->
 
-@include('footer')
-
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
   
 <script type="text/javascript">

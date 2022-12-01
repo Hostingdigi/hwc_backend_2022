@@ -42,9 +42,9 @@
 										<div class="t-img">
 											<a href="{{ url('/prod/'.$product->UniqueKey) }}">
 												@if($cart['image'] != '')															
-													<img src="{{ url('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100">
+													<img src="{{ env('IMG_URL').('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100" title="{{ $cart['productName'] }}">
 												@else
-													<img src="{{ url('/images/noimage.png') }}" alt="{{ $cart['productName'] }}" width="100">
+													<img src="{{ url('/images/noimage.png') }}" alt="{{ $cart['productName'] }}" title="{{ $cart['productName'] }}" width="100">
 												@endif
 											</a>
 										</div>
@@ -53,30 +53,22 @@
 											@if($cart['productoption'])
 												<p>Option: {{ $cart['productoption'] }}</p>
 											@endif
-											@if($cart['size'])
-												<p>Size: {{ $cart['size'] }}</p>
-											@endif	
-											@if($cart['productWeight'])
-												<p>Weight: {{ $cart['productWeight'] }} Kg</p>
-											@endif	
-											@if($cart['color'])
-												<p>Color: {{ $cart['color'] }}</p>
-											@endif	
+											
 											
 										</div>
 									</td>
-									<td class="t-price" style="width:15%;">${{ number_format($cart['price'], 2) }}</td>
+									<td class="t-price" style="width:15%;">S${{ number_format($cart['price'], 2) }}</td>
 									<td class="t-qty" style="width:14%;">
 										<div class="qty-box">
 											<div class="quantity buttons_added">
-												<input type="button" value="-" class="minus" onclick="updateqty('minus', '{{ $productid }}', '{{ $maxqty }}', '{{ $cart['productName'] }}');">
-												<input type="number" step="1" min="1" max="10" value="{{ $cart['qty'] }}" class="qty text" id="qty{{ $cart['productId'] }}" size="4" readonly name="qty{{ $cart['productId'] }}">
-												<input type="button" value="+" class="plus" onclick="updateqty('plus', '{{ $productid }}', '{{ $maxqty }}', '{{ $cart['productName'] }}');">
+												<input type="button" value="-" class="minus" onclick="updateqty('minus', '{{ $productid }}', '{{ $maxqty }}', '{{ $cart['productName'] }}', '{{ $cart['option_id'] }}');">
+												<input type="number" step="1" min="1" max="10" value="{{ $cart['qty'] }}" class="qty text" id="qty{{ $cart['productId'] }}_{{ $cart['option_id'] }}" size="4" readonly name="qty{{ $cart['productId'] }}">
+												<input type="button" value="+" class="plus" onclick="updateqty('plus', '{{ $productid }}', '{{ $maxqty }}', '{{ $cart['productName'] }}', '{{ $cart['option_id'] }}');">
 												<input type="hidden" name="cartitems[]" value="{{ $cart['productId'] }}">
 											</div>
 										</div>
 									</td>
-									<td class="t-total" style="width:15%;" id="t-total{{ $cart['productId'] }}">${{ number_format($cart['total'], 2) }}</td>
+									<td class="t-total" style="width:15%;" id="t-total{{ $cart['productId'] }}_{{ $cart['option_id'] }}">S${{ number_format($cart['total'], 2) }}</td>
 									<td class="t-rem" style="width:5%;"><a href="{{ url('/removecartitem/'.$cartkey.'/'.$cart['productId']) }}"><i class="fa fa-trash-o"></i></a></td>
 								</tr>
 									
@@ -96,11 +88,11 @@
 				<div class="crt-sumry">
 					<h5>Cart Summary</h5>
 					<ul class="list-unstyled">
-						<li>Subtotal <span id="subtotal">${{ $subtotal }}</span></li>
+						<li>Subtotal <span id="subtotal">S${{ $subtotal }}</span></li>
 						
-						<li>{{ $taxtitle }} <span id="gst">${{ $gst }}</span></li>						
+						<li>{{ $taxtitle }} <span id="gst">S${{ $gst }}</span></li>						
 						<li id="dis" style="display:none;"></li>
-						<li>Grand Total <span id="grandtotal">${{ $grandtotal }}</span></li>
+						<li>Grand Total <span id="grandtotal">S${{ $grandtotal }}</span></li>
 					</ul>
 					<div class="cart-btns text-right">
 						<!--button type="button" class="up-cart">Update Cart</button-->
@@ -281,16 +273,16 @@ $(document).ready(function() {
 	@endif
 });
 	
-function updateqty(action, productid, maxqty, prodname) {
-	var qty = $('#qty'+productid).val();
+function updateqty(action, productid, maxqty, prodname, optionid) {
+	var qty = $('#qty'+productid+"_"+optionid).val();
 	if(action == 'minus') {
 		if(qty > 1) {
 			qty = parseInt(qty) - 1;
-			$('#qty'+productid).val(qty);
+			$('#qty'+productid+"_"+optionid).val(qty);
 		}
 	} else {
 		qty = parseInt(qty) + 1;
-		$('#qty'+productid).val(qty);
+		$('#qty'+productid+"_"+optionid).val(qty);
 	}
 	if(qty >= 1) {
 		if(qty > maxqty) {
@@ -303,14 +295,14 @@ function updateqty(action, productid, maxqty, prodname) {
 			$.ajax({
 				type: "POST",
 				url: '{{ url("/") }}/updatecartqty',				
-				data: {'prodid': productid, 'qty': qty},
+				data: {'prodid': productid, 'qty': qty, 'optionid': optionid},
 				headers: {'X-CSRF-TOKEN': token},		
 				success: function(response) {				
 					console.log(response);
 					if(response != '') {
 						var result = response.split('|');
 						if(result.length > 0) {
-							$('#t-total'+productid).html('$'+result[0]);
+							$('#t-total'+productid+"_"+optionid).html('$'+result[0]);
 							$('#subtotal').html('$'+result[1]);
 							$('#gst').html('$'+result[2]);
 							$('#grandtotal').html('$'+result[3]);
