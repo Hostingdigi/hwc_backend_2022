@@ -50,7 +50,7 @@ class PaymentController extends Controller
             $cartdata = Session::get('cartdata');
         }
 
-        $subtotal = $grandtotal = 0;
+        $subtotal = $grandtotal = $orderincid = 0;
         $cart = new Cart();
         $subtotal = $cart->getSubTotal();
         //$gst = $cart->getGST($subtotal);
@@ -133,7 +133,7 @@ class PaymentController extends Controller
             }
         }
 
-        return view('public/Payment.stripe', compact('cartdata', 'sesid', 'subtotal', 'gst', 'grandtotal', 'taxtitle', 'stripekey', 'billinginfo', 'deliverycost', 'deliverytype', 'packingfee', 'discounttext', 'discount'));
+        return view('public/Payment.stripe', compact('cartdata', 'orderincid', 'sesid', 'subtotal', 'gst', 'grandtotal', 'taxtitle', 'stripekey', 'billinginfo', 'deliverycost', 'deliverytype', 'packingfee', 'discounttext', 'discount'));
     }
 
     public function stripePaymentProcess(Request $request)
