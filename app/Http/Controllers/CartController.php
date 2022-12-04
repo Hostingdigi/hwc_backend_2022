@@ -19,6 +19,7 @@ use App\Models\Product;
 use App\Models\ProductOptions;
 use App\Models\Settings;
 use App\Models\ShippingMethods;
+use App\Services\CartServices;
 use Illuminate\Http\Request;
 use Session;
 
@@ -29,10 +30,12 @@ class CartController extends Controller
      *
      * @return void
      */
-    /*public function __construct()
+    protected $cartServices = null;
+
+    public function __construct(CartServices $cartServices)
     {
-    $this->middleware('auth');
-    }*/
+        $this->cartServices = $cartServices;
+    }
 
     /**
      * Show the application dashboard.
@@ -41,45 +44,16 @@ class CartController extends Controller
      */
     public function index()
     {
-        $cartdata = $taxvals = [];
-        $couponcode = '';
-        $taxtitle = 'GST (7%)';
-        $subtotal = $grandtotal = 0;
-        $sesid = Session::get('_token');
-        if (Session::has('cartdata')) {
-            $cartdata = Session::get('cartdata');
-        }
-        $cart = new Cart();
-        $subtotal = $cart->getSubTotal();
-        //$gst = $cart->getGST($subtotal);
+        $cartItems = $this->cartServices->cartItems();
+        $cartdata = $cartItems['cartItems'];
+        $subtotal = $cartItems['subTotal'];
+        $grandtotal = $cartItems['grandTotal'];
+        $couponcode = Session::has('couponcode') ? Session::get('couponcode') : '';
+        $gst = $cartItems['taxDetails']['taxTotal'];
+        $taxtitle = $cartItems['taxDetails']['taxLabel'];
+        $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
 
-        $countryid = 0;
-        $country = '';
-        if (Session::has('customer_id')) {
-            $userid = Session::get('customer_id');
-            $customer = Customer::where('cust_id', '=', $userid)->first();
-            $countryid = $customer->cust_country;
-            $countrydata = Country::where('countryid', '=', $countryid)->select('countrycode')->first();
-            if ($countrydata) {
-                $country = $countrydata->countrycode;
-            }
-        }
-        $taxes = $cart->getGST($subtotal, $country);
-
-        if ($country != '') {
-            $taxvals = @explode("|", $taxes);
-            $taxtitle = $taxvals[0];
-            $gst = $taxvals[1];
-        } else {
-            $gst = $taxes;
-        }
-        $grandtotal = $cart->getGrandTotal($subtotal, $gst);
-
-        if (Session::has('couponcode')) {
-            $couponcode = Session::get('couponcode');
-        }
-
-        return view('public/Cart.index', compact('cartdata', 'sesid', 'subtotal', 'gst', 'grandtotal', 'taxtitle', 'country', 'couponcode'));
+        return view('public/Cart.index', compact('cartdata', 'subtotal', 'gst', 'grandtotal', 'taxtitle', 'couponcode', 'taxLabelOnly'));
     }
 
     public function addtocart(Request $request)
@@ -243,7 +217,6 @@ class CartController extends Controller
 
     public function updatecartqty(Request $request)
     {
-
         $qtyfield = $itemqty = '';
         $product = [];
         $prodid = $request->prodid;
@@ -317,256 +290,157 @@ class CartController extends Controller
     public function checkout()
     {
 
-        $customer = $taxvals = [];
-        $taxtitle = 'GST (7%)';
-        if (Session::has('customer_id')) {
-            $custid = Session::get('customer_id');
-            $customer = Customer::where('cust_id', '=', $custid)->first();
+        if (!Session::has('cartdata')) {
+            return redirect('/cart');
         }
-        /*else {
-        Session::put('returnurl', 'checkout');
-        return redirect('/login');
-        }*/
 
-        $cartdata = [];
-        $subtotal = $grandtotal = $countryid = 0;
-        $country = '';
-        $sesid = Session::get('_token');
-        if (Session::has('cartdata')) {
-            $cartdata = Session::get('cartdata');
+        $cartItems = $this->cartServices->cartItems();
+        $cartdata = $cartItems['cartItems'];
+        $subtotal = $cartItems['subTotal'];
+        $grandtotal = $cartItems['grandTotal'];
+        $gst = $cartItems['taxDetails']['taxTotal'];
+        $taxtitle = $cartItems['taxDetails']['taxLabel'];
+        $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
+        $country = $cartItems['countryCode'];
+        $countryid = $cartItems['countryId'];
+        $discount = $cartItems['discountDetails']['discountTotal'];
+        $discounttext = $cartItems['discountDetails']['title'];
+        $customer = Session::has('customer_id') ? Customer::where('cust_id', Session::get('customer_id'))->first() : [];
 
-            $cart = new Cart();
-            $subtotal = $cart->getSubTotal();
+        $freeshippingamount = $remaining = 0;
+        $showfreedeliverymsg = $localfreedeliverymsg = $internationalfreedeliverymsg = '';
 
-            if ($customer) {
-                $countryid = $customer->cust_country;
+        $paysettings = PaymentSettings::select('free_shipping_amount', 'local_free_shipping_msg', 'international_free_shipping_msg')->first();
 
-                $countrydata = Country::where('countryid', '=', $countryid)->select('countrycode')->first();
-                if ($countrydata) {
-                    $country = $countrydata->countrycode;
-                }
+        if ($paysettings) {
+            $freeshippingamount = $paysettings->free_shipping_amount;
+            $localfreedeliverymsg = $paysettings->local_free_shipping_msg;
+            $internationalfreedeliverymsg = $paysettings->international_free_shipping_msg;
+        }
 
-                $taxes = $cart->getGST($subtotal, $country);
-
-                if ($country != '') {
-                    $taxvals = @explode("|", $taxes);
-                    $taxtitle = $taxvals[0];
-                    $gst = $taxvals[1];
-                } else {
-                    $gst = $taxes;
-                }
-            } else {
-                $gst = $cart->getGST($subtotal);
-            }
-
-            $discounttype = $disamount = 0;
-            $discounttext = '';
-            if (Session::has('couponcode')) {
-                $discounttype = Session::get('discounttype');
-                $disamount = Session::get('discount');
-                $discounttext = Session::get('discounttext');
-            }
-
-            $discount = $cart->getDiscount($subtotal, $gst, 0, 0, $discounttype, $disamount);
-
-            $grandtotal = $cart->getGrandTotal($subtotal, $gst, 0, 0, $discount);
-
-            $freeshippingamount = $remaining = 0;
-            $showfreedeliverymsg = $localfreedeliverymsg = $internationalfreedeliverymsg = '';
-
-            $paysettings = PaymentSettings::select('free_shipping_amount', 'local_free_shipping_msg', 'international_free_shipping_msg')->first();
-
-            if ($paysettings) {
-                $freeshippingamount = $paysettings->free_shipping_amount;
-                $localfreedeliverymsg = $paysettings->local_free_shipping_msg;
-                $internationalfreedeliverymsg = $paysettings->international_free_shipping_msg;
-            }
-
-            if ($country != 'SG' && $country != '') {
-                $intership = InternationalShipping::where('Status', '=', '1')->get();
-                if ($intership) {
-                    foreach ($intership as $intershipping) {
-                        $intercountry = $intershipping->CountriesList;
-                        if ($intercountry) {
-                            $intercountrys = @explode(',', $intercountry);
-                            if (in_array($countryid, $intercountrys)) {
-                                $freeshippingamount = $intershipping->FreeShippingCost;
-                                break;
-                            }
+        if ($country != 'SG' && $country != '') {
+            $intership = InternationalShipping::where('Status', '1')->get();
+            if ($intership) {
+                foreach ($intership as $intershipping) {
+                    $intercountry = $intershipping->CountriesList;
+                    if ($intercountry) {
+                        $intercountrys = @explode(',', $intercountry);
+                        if (in_array($countryid, $intercountrys)) {
+                            $freeshippingamount = $intershipping->FreeShippingCost;
+                            break;
                         }
                     }
                 }
-                if ($freeshippingamount > str_replace(',', '', $subtotal)) {
-                    $remaining = ($freeshippingamount - str_replace(',', '', $subtotal));
-                }
-
-                $deliverymethods = ShippingMethods::where('Status', '=', '1')->where('shipping_type', '=', '1')->get();
-
-                if ($remaining > 0) {
-                    $showfreedeliverymsg = str_replace('{amount}', $remaining, $internationalfreedeliverymsg);
-                }
-            } else {
-                if ($freeshippingamount > str_replace(',', '', $subtotal)) {
-                    $remaining = ($freeshippingamount - str_replace(',', '', $subtotal));
-                }
-                if ($remaining <= 0) {
-                    $deliverymethods = ShippingMethods::where('Status', '=', '1')->where('shipping_type', '=', '0')->where('EnName', 'NOT LIKE', '%Ninja Van Delivery%')->orderBy('EnName', 'desc')->get();
-                } else {
-                    $deliverymethods = ShippingMethods::where('Status', '=', '1')->where('shipping_type', '=', '0')->where('EnName', 'NOT LIKE', '%Free%')->orderBy('EnName', 'desc')->get();
-                    $showfreedeliverymsg = str_replace('{amount}', $remaining, $localfreedeliverymsg);
-                }
+            }
+            if ($freeshippingamount > $subtotal) {
+                $remaining = $freeshippingamount - $subtotal;
             }
 
-            $countries = Country::where('country_status', '=', '1')->orderBy('countryname', 'ASC')->get();
+            $deliverymethods = ShippingMethods::where([['Status', '=', '1'], ['shipping_type', '=', '1']])->get();
 
-            return view('public/Cart.checkout', compact('customer', 'cartdata', 'sesid', 'subtotal', 'gst', 'grandtotal', 'deliverymethods', 'countries', 'taxtitle', 'country', 'discounttext', 'discount', 'showfreedeliverymsg'));
+            if ($remaining > 0) {
+                $showfreedeliverymsg = str_replace('{amount}', $remaining, $internationalfreedeliverymsg);
+            }
         } else {
-            return redirect('/cart');
+            if ($freeshippingamount > $subtotal) {
+                $remaining = ($freeshippingamount - $subtotal);
+            }
+            if ($remaining <= 0) {
+                $deliverymethods = ShippingMethods::where([['Status', '=', '1'], ['shipping_type', '=', '0'], ['EnName', 'NOT LIKE', '%Ninja Van Delivery%']])->orderBy('EnName', 'desc')->get();
+            } else {
+                $deliverymethods = ShippingMethods::where([['Status', '=', '1'], ['shipping_type', '=', '0'], ['EnName', 'NOT LIKE', '%Free%']])->orderBy('EnName', 'desc')->get();
+                $showfreedeliverymsg = str_replace('{amount}', $remaining, $localfreedeliverymsg);
+            }
+
         }
+
+        $countries = Country::where('country_status', '1')->orderBy('countryname', 'ASC')->get();
+
+        return view('public/Cart.checkout', compact('customer', 'cartdata', 'sesid', 'subtotal', 'gst', 'grandtotal', 'deliverymethods', 'countries', 'taxLabelOnly', 'taxtitle', 'country', 'discounttext', 'discount', 'showfreedeliverymsg'));
 
     }
 
     public function placeorder(Request $request)
     {
-        $cartdata = [];
-        $taxtitle = 'GST (7%)';
-        $sesid = Session::get('_token');
-        if (Session::has('cartdata')) {
-            $cartdata = Session::get('cartdata');
-        }
-        $country = '';
-        $countryid = 0;
-        $packingfee = $deliverycost = $totalweight = 0;
-        $deliverytype = '';
-
-        $deliverycosts = [];
-
-        if ($cartdata) {
-
-            $deliverymethod = $request->deliverymethod;
-            $billinginfo = $shippinginfo = [];
-            $billinginfo['bill_fname'] = $request->bill_fname;
-            $billinginfo['bill_lname'] = $request->bill_lname;
-            $billinginfo['bill_email'] = $request->bill_email;
-            $billinginfo['bill_mobile'] = $request->bill_mobile;
-            $billinginfo['bill_compname'] = $request->bill_compname;
-            $billinginfo['bill_ads1'] = $request->bill_ads1;
-            $billinginfo['bill_ads2'] = $request->bill_ads2;
-            $billinginfo['bill_city'] = $request->bill_city;
-            $billinginfo['bill_state'] = $request->bill_state;
-            $billinginfo['bill_zip'] = $request->bill_zip;
-            $billinginfo['bill_country'] = $request->bill_country;
-            $country = $request->bill_country;
-            if (isset($request->shipaddress)) {
-                $billinginfo['ship_fname'] = $request->bill_fname;
-                $billinginfo['ship_lname'] = $request->bill_lname;
-                $billinginfo['ship_email'] = $request->bill_email;
-                $billinginfo['ship_mobile'] = $request->bill_mobile;
-                $billinginfo['ship_ads1'] = $request->bill_ads1;
-                $billinginfo['ship_ads2'] = $request->bill_ads2;
-                $billinginfo['ship_country'] = $request->bill_country;
-                $billinginfo['ship_city'] = $request->bill_city;
-                $billinginfo['ship_state'] = $request->bill_state;
-                $billinginfo['ship_zip'] = $request->bill_zip;
-            } else {
-                $billinginfo['ship_fname'] = $request->ship_fname;
-                $billinginfo['ship_lname'] = $request->ship_lname;
-                $billinginfo['ship_email'] = $request->ship_email;
-                $billinginfo['ship_mobile'] = $request->ship_mobile;
-                $billinginfo['ship_ads1'] = $request->ship_ads1;
-                $billinginfo['ship_ads2'] = $request->ship_ads2;
-                $billinginfo['ship_country'] = $request->ship_country;
-                $billinginfo['ship_city'] = $request->ship_city;
-                $billinginfo['ship_state'] = $request->ship_state;
-                $billinginfo['ship_zip'] = $request->ship_zip;
-                $country = $request->ship_country;
-            }
-
-            Session::put('deliverymethod', $deliverymethod);
-            Session::put('billinginfo', $billinginfo);
-            Session::put('if_unavailable', $request->if_items_unavailabel);
-
-            $subtotal = $grandtotal = 0;
-            $cart = new Cart();
-            $subtotal = $cart->getSubTotal();
-            //$gst = $cart->getGST($subtotal);
-
-            // Shipping Cost
-
-            $deliverytype = $cart->getDeliveryMethod($deliverymethod);
-
-            $totalweight = 0;
-
-            $taxes = $cart->getGST($subtotal, $country);
-
-            if ($country != '') {
-                $taxvals = @explode("|", $taxes);
-                $taxtitle = $taxvals[0];
-                $gst = $taxvals[1];
-            } else {
-                $gst = $taxes;
-            }
-
-            $settings = PaymentSettings::where('Id', '=', '1')->select('min_package_fee')->first();
-            if ($country != 'SG') {
-                $packingfee = $settings->min_package_fee;
-            }
-            $boxfees = 0;
-
-            foreach ($cartdata as $key => $val) {
-                if (is_array($val)) {
-                    $x = 0;
-                    foreach ($val as $datakey => $dataval) {
-                        $totalweight = $totalweight + $dataval['weight'];
-                        $shippingbox = $dataval['shippingbox'];
-                        $quantity = $dataval['qty'];
-                        $deliverycost += $cart->shippingCost($country, $deliverymethod, $shippingbox, $quantity, $subtotal, $gst);
-                        $boxfees = $cart->getPackagingFee($country, $totalweight, $subtotal, $gst, $deliverymethod, $shippingbox, $quantity);
-                    }
-                }
-            }
-
-            $packingfee = number_format(($packingfee + $boxfees), 2);
-            //Packing Cost
-
-            //$packingfee = $cart->getPackagingFee($country, $totalweight, $subtotal, $gst, $deliverymethod);
-
-            $discounttype = $disamount = 0;
-            $discounttext = '';
-            if (Session::has('couponcode')) {
-                $discounttype = Session::get('discounttype');
-                $disamount = Session::get('discount');
-                $discounttext = Session::get('discounttext');
-            }
-
-            $discount = $cart->getDiscount($subtotal, $gst, $deliverycost, $packingfee, $discounttype, $disamount);
-
-            $grandtotal = $cart->getGrandTotal($subtotal, $gst, $deliverycost, $packingfee, $discount);
-
-            $paymentmethods = PaymentMethods::where('status', '=', '1')->get();
-
-            $ordertype = 1;
-
-            if (Session::has('old_order_id')) {
-                if (Session::get('old_order_id') > 0) {
-                    $existingorder = Session::get('old_order_id');
-                    $eorder = OrderMaster::where('order_id', '=', $existingorder)->select('order_type')->first();
-                    if ($eorder) {
-                        $ordertype = $eorder->order_type;
-                    }
-                }
-            }
-
-            return view('public/Cart.placeorder', compact('cartdata', 'sesid', 'subtotal', 'gst', 'grandtotal', 'paymentmethods', 'taxtitle', 'deliverycost', 'deliverytype', 'packingfee', 'discounttext', 'discount', 'ordertype'));
-        } else {
+        if (!Session::has('cartdata')) {
             return redirect('/cart');
         }
+
+        $deliverymethod = $request->deliverymethod;
+        $billinginfo = $shippinginfo = [];
+        $billinginfo['bill_fname'] = $request->bill_fname;
+        $billinginfo['bill_lname'] = $request->bill_lname;
+        $billinginfo['bill_email'] = $request->bill_email;
+        $billinginfo['bill_mobile'] = $request->bill_mobile;
+        $billinginfo['bill_compname'] = $request->bill_compname;
+        $billinginfo['bill_ads1'] = $request->bill_ads1;
+        $billinginfo['bill_ads2'] = $request->bill_ads2;
+        $billinginfo['bill_city'] = $request->bill_city;
+        $billinginfo['bill_state'] = $request->bill_state;
+        $billinginfo['bill_zip'] = $request->bill_zip;
+        $billinginfo['bill_country'] = $request->bill_country;
+        $country = empty($request->bill_country) ? 'SG' : $request->bill_country;
+        if (isset($request->shipaddress)) {
+            $billinginfo['ship_fname'] = $request->bill_fname;
+            $billinginfo['ship_lname'] = $request->bill_lname;
+            $billinginfo['ship_email'] = $request->bill_email;
+            $billinginfo['ship_mobile'] = $request->bill_mobile;
+            $billinginfo['ship_ads1'] = $request->bill_ads1;
+            $billinginfo['ship_ads2'] = $request->bill_ads2;
+            $billinginfo['ship_country'] = $request->bill_country;
+            $billinginfo['ship_city'] = $request->bill_city;
+            $billinginfo['ship_state'] = $request->bill_state;
+            $billinginfo['ship_zip'] = $request->bill_zip;
+        } else {
+            $billinginfo['ship_fname'] = $request->ship_fname;
+            $billinginfo['ship_lname'] = $request->ship_lname;
+            $billinginfo['ship_email'] = $request->ship_email;
+            $billinginfo['ship_mobile'] = $request->ship_mobile;
+            $billinginfo['ship_ads1'] = $request->ship_ads1;
+            $billinginfo['ship_ads2'] = $request->ship_ads2;
+            $billinginfo['ship_country'] = $request->ship_country;
+            $billinginfo['ship_city'] = $request->ship_city;
+            $billinginfo['ship_state'] = $request->ship_state;
+            $billinginfo['ship_zip'] = $request->ship_zip;
+            $country = $request->ship_country;
+        }
+        Session::put('deliverymethod', $deliverymethod);
+        Session::put('billinginfo', $billinginfo);
+        Session::put('if_unavailable', $request->if_items_unavailabel);
+
+        $cartItems = $this->cartServices->cartItems($country);
+        $cartdata = $cartItems['cartItems'];
+        $subtotal = $cartItems['subTotal'];
+        $grandtotal = $cartItems['grandTotal'];
+        $gst = $cartItems['taxDetails']['taxTotal'];
+        $taxtitle = $cartItems['taxDetails']['taxLabel'];
+        $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
+        $country = $cartItems['countryCode'];
+        $countryid = $cartItems['countryId'];
+        $discount = $cartItems['discountDetails']['discountTotal'];
+        $discounttext = $cartItems['discountDetails']['title'];
+        $customer = Session::has('customer_id') ? Customer::where('cust_id', Session::get('customer_id'))->first() : [];
+        $deliverytype = $cartItems['deliveryDetails']['title'];
+        $packingfee = $cartItems['packingFees'];
+        $deliverycost = $cartItems['deliveryDetails']['deliveryTotal'];
+        $paymentmethods = PaymentMethods::where('status', '1')->get();
+        $ordertype = 1;
+
+        if (Session::has('old_order_id') && Session::get('old_order_id') > 0) {
+            $eorder = OrderMaster::where('order_id', Session::get('old_order_id'))->select('order_type')->first();
+            if ($eorder) {
+                $ordertype = $eorder->order_type;
+            }
+        }
+
+        return view('public/Cart.placeorder', compact('cartdata', 'subtotal', 'gst', 'grandtotal', 'taxLabelOnly', 'paymentmethods', 'taxtitle', 'deliverycost', 'deliverytype', 'packingfee', 'discounttext', 'discount', 'ordertype'));
+
     }
 
     public function paymentform(Request $request)
     {
         $paymentmethod = $request->paymentmethod;
-        $paymethod = PaymentMethods::where('id',$paymentmethod)->first();
+        $paymethod = PaymentMethods::where('id', $paymentmethod)->first();
         $paymethodname = $paymethod ? $paymethod->payment_name : 'Cash On Delivery';
         $sesid = Session::get('_token');
         $cartdata = Session::has('cartdata') ? Session::get('cartdata') : [];
@@ -896,6 +770,7 @@ class CartController extends Controller
             $discount = $cart->getDiscount($subtotal, $gst, $deliverycost, $packingfee, $discounttype, $disamount);
 
             $grandtotal = $cart->getGrandTotal($subtotal, $gst, $deliverycost, $packingfee, $discount);
+
 
             $subtotal = str_replace(',', '', $subtotal);
             $deliverycost = str_replace(',', '', $deliverycost);

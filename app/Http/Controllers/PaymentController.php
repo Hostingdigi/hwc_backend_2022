@@ -16,6 +16,8 @@ use App\Models\PaymentMethods;
 use App\Models\PaymentSettings;
 use App\Models\Product;
 use App\Models\Settings;
+use App\Services\CartServices;
+use App\Services\OrderServices;
 use DB;
 use Illuminate\Http\Request;
 use Session;
@@ -28,10 +30,15 @@ class PaymentController extends Controller
      *
      * @return void
      */
-    /*public function __construct()
+    protected $cartServices = null;
+    protected $orderServices = null;
+
+    public function __construct(CartServices $cartServices, OrderServices $orderServices)
     {
-    $this->middleware('auth');
-    }*/
+        $this->cartServices = $cartServices;
+        $this->orderServices = $orderServices;
+
+    }
 
     /**
      * Show the application dashboard.
@@ -40,111 +47,52 @@ class PaymentController extends Controller
      */
     public function stripe()
     {
-        $country = $deliverycost = $packingfee = $deliverymethod = 0;
-        $taxtitle = $deliverytype = '';
-        $cartdata = $taxvals = $billinginfo = [];
-        $taxtitle = 'GST (7%)';
-        $subtotal = $grandtotal = 0;
-        $sesid = Session::get('_token');
-        if (Session::has('cartdata')) {
-            $cartdata = Session::get('cartdata');
-        }
+        $cartItems = $this->cartServices->cartItems();
+        $cartdata = $cartItems['cartItems'];
+        $subtotal = $cartItems['subTotal'];
+        $grandtotal = $cartItems['grandTotal'];
+        $gst = $cartItems['taxDetails']['taxTotal'];
+        $taxtitle = $cartItems['taxDetails']['taxLabel'];
+        $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
+        $deliverytype = $cartItems['deliveryDetails']['title'];
+        $packingfee = $cartItems['packingFees'];
+        $deliverycost = $cartItems['deliveryDetails']['deliveryTotal'];
+        $discount = $cartItems['discountDetails']['discountTotal'];
+        $discounttext = $cartItems['discountDetails']['title'];
 
-        $subtotal = $grandtotal = $orderincid = 0;
-        $cart = new Cart();
-        $subtotal = $cart->getSubTotal();
-        //$gst = $cart->getGST($subtotal);
+        $orderincid = 0;
+        $billinginfo = Session::has('billinginfo') ? Session::get('billinginfo') : [];
 
-        // Shipping Cost
+        // Stripe Key
+        $paymentmethod = PaymentMethods::where('id', 3)->orWhere('payment_name', 'LIKE', '%stripe')->first();
+        $stripekey = $paymentmethod ? ($paymentmethod->payment_mode == 'live' ? $paymentmethod->api_key : $paymentmethod->test_api_key) : '';
 
-        if (Session::has('deliverymethod')) {
-            $deliverymethod = Session::get('deliverymethod');
-        }
-
-        //Packing Cost
-
-        if (Session::has('billinginfo')) {
-            $billinginfo = Session::get('billinginfo');
-            $country = $billinginfo['ship_country'];
-        }
-
-        // Shipping Cost
-
-        $deliverytype = $cart->getDeliveryMethod($deliverymethod);
-
-        $totalweight = 0;
-
-        $taxes = $cart->getGST($subtotal, $country);
-
-        if ($country != '') {
-            $taxvals = @explode("|", $taxes);
-            $taxtitle = $taxvals[0];
-            $gst = $taxvals[1];
-        } else {
-            $gst = $taxes;
-        }
-
-        $settings = PaymentSettings::where('Id', '=', '1')->select('min_package_fee')->first();
-        if ($country != 'SG') {
-            $packingfee = $settings->min_package_fee;
-        }
-        $boxfees = 0;
-
-        foreach ($cartdata as $key => $val) {
-            if (is_array($val)) {
-                $x = 0;
-                foreach ($val as $datakey => $dataval) {
-                    $totalweight = $totalweight + $dataval['weight'];
-                    $shippingbox = $dataval['shippingbox'];
-                    $quantity = $dataval['qty'];
-                    $deliverycost += $cart->shippingCost($country, $deliverymethod, $shippingbox, $quantity, $subtotal, $gst);
-                    $boxfees = $cart->getPackagingFee($country, $totalweight, $subtotal, $gst, $deliverymethod, $shippingbox, $quantity);
-                }
-            }
-        }
-
-        $packingfee = number_format(($packingfee + $boxfees), 2);
-
-        $discounttype = $disamount = 0;
-        $discounttext = '';
-        if (Session::has('couponcode')) {
-            $discounttype = Session::get('discounttype');
-            $disamount = Session::get('discount');
-            $discounttext = Session::get('discounttext');
-        }
-
-        $discount = $cart->getDiscount($subtotal, $gst, $deliverycost, $packingfee, $discounttype, $disamount);
-
-        $grandtotal = $cart->getGrandTotal($subtotal, $gst, $deliverycost, $packingfee, $discount);
-        if ($country == 'SG') {
-            //$subtotal = number_format(((float)str_replace(',', '', $subtotal) - (float)str_replace(',', '',$gst)),2);
-            $grandtotal = number_format(((float) str_replace(',', '', $grandtotal) - (float) str_replace(',', '', $gst)), 2);
-        }
-        $stripekey = '';
-        $paymode = 'test';
-        $paymentmethod = PaymentMethods::where('id', '=', '3')->orWhere('payment_name', 'LIKE', '%stripe')->first();
-
-        if ($paymentmethod) {
-            $paymode = $paymentmethod->payment_mode;
-            if ($paymode == 'live') {
-                $stripekey = $paymentmethod->api_key;
-            } else {
-                $stripekey = $paymentmethod->test_api_key;
-            }
-        }
-
-        return view('public/Payment.stripe', compact('cartdata', 'orderincid', 'sesid', 'subtotal', 'gst', 'grandtotal', 'taxtitle', 'stripekey', 'billinginfo', 'deliverycost', 'deliverytype', 'packingfee', 'discounttext', 'discount'));
+        return view('public/Payment.stripe', compact('cartdata', 'orderincid', 'taxLabelOnly', 'subtotal', 'gst', 'grandtotal', 'taxtitle', 'stripekey', 'billinginfo', 'deliverycost', 'deliverytype', 'packingfee', 'discounttext', 'discount'));
     }
 
     public function stripePaymentProcess(Request $request)
     {
-        $billinginfo = [];
-        $paymethodname = $deliverytype = $emailsubject = $emailcontent = $companyname = $adminemail = $ccemail = $taxtitle = '';
-        $paymentmethod = $packingfee = $deliverycost = $deliverymethod = 0;
-        $sesid = Session::get('_token');
-        if (Session::has('cartdata')) {
-            $cartdata = Session::get('cartdata');
+
+        if (!Session::has('billinginfo')) {
+            return redirect('cancelpayment');
         }
+
+        $cartItems = $this->cartServices->cartItems();
+        $cartdata = $cartItems['cartItems'];
+        $subtotal = $cartItems['subTotal'];
+        $grandtotal = $cartItems['grandTotal'];
+        $gst = $cartItems['taxDetails']['taxTotal'];
+        $taxtitle = $cartItems['taxDetails']['taxLabel'];
+        $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
+        $deliverytype = $cartItems['deliveryDetails']['title'];
+        $packingfee = $cartItems['packingFees'];
+        $deliverycost = $cartItems['deliveryDetails']['deliveryTotal'];
+        $discount = $cartItems['discountDetails']['discountTotal'];
+        $discounttext = $cartItems['discountDetails']['title'];
+
+        $paymethodname = $emailsubject = $emailcontent = $companyname = $adminemail = $ccemail = '';
+        $paymentmethod = 0;
+        $sesid = Session::get('_token');
 
         if (Session::has('paymentmethod')) {
             $paymentmethod = Session::get('paymentmethod');
@@ -152,410 +100,88 @@ class PaymentController extends Controller
 
         $billinginfo = Session::get('billinginfo');
 
-        $cart = new Cart();
-        $subtotal = $cart->getSubTotal();
+        //Create order
+        $orderCreate = $this->orderServices->createOrder();
 
-        $orderid = $countryid = $orderincid = 0;
-        $country = '';
-
-        $country = $billinginfo['ship_country'];
-
-        if (Session::has('deliverymethod')) {
-            $deliverymethod = Session::get('deliverymethod');
+        if ($orderCreate['status'] == false) {
+            return redirect('cancelpayment');
         }
 
-        // Shipping Cost
+        $userid = $orderCreate['userId'];
+        DB::table('cart_details')->where('user_id', '=', $userid)->delete();
 
-        $deliverytype = $cart->getDeliveryMethod($deliverymethod);
+        $paysettings = PaymentSettings::where('id', 1)->select('currency_type')->first();
+        $currency = $paysettings ? $paysettings->currency_type : 'SGD';
 
-        $totalweight = 0;
+        $paymentmethod = PaymentMethods::where('id', '3')->orWhere('payment_name', 'LIKE', '%stripe')->first();
+        $stripesignature = $paymentmethod ? ($paymentmethod->payment_mode == 'live' ? $paymentmethod->api_signature : $paymentmethod->test_api_signature) : '';
 
-        $taxes = $cart->getGST($subtotal, $country);
+        Stripe\Stripe::setApiKey($stripesignature);
 
-        if ($country != '') {
-            $taxvals = @explode("|", $taxes);
-            $taxtitle = $taxvals[0];
-            $gst = $taxvals[1];
-        } else {
-            $gst = $taxes;
-        }
-
-        $settings = PaymentSettings::where('Id', '=', '1')->select('min_package_fee')->first();
-        if ($country != 'SG') {
-            $packingfee = $settings->min_package_fee;
-        }
-        $boxfees = 0;
-
-        foreach ($cartdata as $key => $val) {
-            if (is_array($val)) {
-                $x = 0;
-                foreach ($val as $datakey => $dataval) {
-                    $totalweight = $totalweight + $dataval['weight'];
-                    $shippingbox = $dataval['shippingbox'];
-                    $quantity = $dataval['qty'];
-                    $deliverycost += $cart->shippingCost($country, $deliverymethod, $shippingbox, $quantity, $subtotal, $gst);
-                    $boxfees = $cart->getPackagingFee($country, $totalweight, $subtotal, $gst, $deliverymethod, $shippingbox, $quantity);
-                }
-            }
-        }
-
-        $packingfee = number_format(($packingfee + $boxfees), 2);
-
-        $discounttype = $disamount = 0;
-        $discounttext = '';
-        if (Session::has('couponcode')) {
-            $discounttype = Session::get('discounttype');
-            $disamount = Session::get('discount');
-            $discounttext = Session::get('discounttext');
-        }
-
-        $discount = $cart->getDiscount($subtotal, $gst, $deliverycost, $packingfee, $discounttype, $disamount);
-
-        $grandtotal = $cart->getGrandTotal($subtotal, $gst, $deliverycost, $packingfee, $discount);
-        if ($country == 'SG') {
-            //$subtotal = number_format(((float)str_replace(',', '', $subtotal) - (float)str_replace(',', '',$gst)),2);
-            $grandtotal = number_format(((float) str_replace(',', '', $grandtotal) - (float) str_replace(',', '', $gst)), 2);
-        }
-        $subtotal = str_replace(',', '', $subtotal);
-        $deliverycost = str_replace(',', '', $deliverycost);
-        $packingfee = str_replace(',', '', $packingfee);
-        $gst = str_replace(',', '', $gst);
-        $grandtotal = str_replace(',', '', $grandtotal);
-        $discount = str_replace(',', '', $discount);
-
-        $sesid = Session::get('_token');
-        if (Session::has('cartdata')) {
-            $cartdata = Session::get('cartdata');
-        }
-
-        $paymethod = PaymentMethods::where('id', '=', $paymentmethod)->first();
-        if ($paymethod) {
-            $paymethodname = $paymethod->payment_name;
-        }
-
-        if ($cartdata) {
-
-            $couponid = 0;
-            $userid = 0;
-            if (Session::has('customer_id')) {
-                $userid = Session::get('customer_id');
-            } else {
-                $chkcustomer = Customer::where('cust_email', '=', $billinginfo['bill_email'])->select('cust_id')->first();
-                if (!$chkcustomer) {
-                    Customer::insert(array('cust_firstname' => $billinginfo['bill_fname'], 'cust_lastname' => $billinginfo['bill_lname'], 'cust_email' => $billinginfo['bill_email'], 'cust_address1' => $billinginfo['bill_ads1'], 'cust_address2' => $billinginfo['bill_ads2'], 'cust_city' => $billinginfo['bill_city'], 'cust_state' => $billinginfo['bill_state'], 'cust_country' => $countryid, 'cust_zip' => $billinginfo['bill_zip'], 'cust_phone' => $billinginfo['bill_mobile'], 'cust_status' => 0));
-                    $cust = Customer::where('cust_id', '>', '0')->orderBy('cust_id', 'desc')->select('cust_id')->first();
-                    if ($cust) {
-                        $userid = $cust->cust_id;
-                    }
-                } else {
-                    $userid = $chkcustomer->cust_id;
-                }
-            }
-
-            if (Session::has('couponcode')) {
-                $couponcode = Session::get('couponcode');
-                $coupondata = Couponcode::where('coupon_code', '=', $couponcode)->where('status', '=', '1')->first();
-                if ($coupondata) {
-                    $couponid = $coupondata->id;
-                }
-            }
-
-            $ordermaster = new OrderMaster;
-            $ordermaster['user_id'] = $userid;
-            $ordermaster['ship_method'] = Session::get('deliverymethod');
-            $ordermaster['pay_method'] = $paymethodname;
-            $ordermaster['shipping_cost'] = $deliverycost;
-            $ordermaster['packaging_fee'] = $packingfee;
-            $ordermaster['tax_collected'] = $gst;
-            $ordermaster['payable_amount'] = $grandtotal;
-            $ordermaster['discount_amount'] = $discount;
-            $ordermaster['discount_id'] = $couponid;
-            $ordermaster['order_status'] = '0';
-            $ordermaster['if_items_unavailabel'] = Session::get('if_unavailable');
-            $ordermaster['bill_fname'] = $billinginfo['bill_fname'];
-            $ordermaster['bill_lname'] = $billinginfo['bill_lname'];
-            $ordermaster['bill_email'] = $billinginfo['bill_email'];
-            $ordermaster['bill_mobile'] = $billinginfo['bill_mobile'];
-            $ordermaster['bill_compname'] = $billinginfo['bill_compname'];
-            $ordermaster['bill_ads1'] = $billinginfo['bill_ads1'];
-            $ordermaster['bill_ads2'] = $billinginfo['bill_ads2'];
-            $ordermaster['bill_city'] = $billinginfo['bill_city'];
-            $ordermaster['bill_state'] = $billinginfo['bill_state'];
-            $ordermaster['bill_zip'] = $billinginfo['bill_zip'];
-            $ordermaster['bill_country'] = $billinginfo['bill_country'];
-            $ordermaster['ship_fname'] = $billinginfo['ship_fname'];
-            $ordermaster['ship_lname'] = $billinginfo['ship_lname'];
-            $ordermaster['ship_email'] = $billinginfo['ship_email'];
-            $ordermaster['ship_mobile'] = $billinginfo['ship_mobile'];
-            $ordermaster['ship_ads1'] = $billinginfo['ship_ads1'];
-            $ordermaster['ship_ads2'] = $billinginfo['ship_ads2'];
-            $ordermaster['ship_country'] = $billinginfo['ship_country'];
-            $ordermaster['ship_city'] = $billinginfo['ship_city'];
-            $ordermaster['ship_state'] = $billinginfo['ship_state'];
-            $ordermaster['ship_zip'] = $billinginfo['ship_zip'];
-
-            if (Session::has('old_order_id')) {
-                if (Session::get('old_order_id') > 0) {
-                    $orderid = Session::get('old_order_id');
-                    $orderincid = Session::get('old_order_id');
-                }
-            } else {
-                $ordermaster->save();
-                $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
-                if ($order) {
-                    $orderid = $order->order_id;
-                    $orderincid = $order->order_id;
-                }
-            }
-
-            $itemdetails = '<table style="width:100%; background:#f1f1f142; padding:10px;">';
-            $itemdetails .= '<tr><th width="40%" style="text-align:left">Item</th><th width="15%" style="text-align:center;">Quantity</th><th width="25%" style="text-align:right">Price</th><th width="20%" style="text-align:right">Total</th></tr>';
-            $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-            foreach ($cartdata[$sesid] as $cart) {
-                $orderdetails = new OrderDetails;
-                $orderdetails['order_id'] = $orderid;
-                $orderdetails['prod_id'] = $cart['productId'];
-                $orderdetails['prod_name'] = $cart['productName'];
-                $orderdetails['prod_quantity'] = $cart['qty'];
-                $orderdetails['prod_unit_price'] = $cart['price'];
-                $orderdetails['prod_option'] = $cart['productoption'];
-                //$orderdetails['option_id'] = $cart['option_id'];
-                $orderdetails['Weight'] = $cart['weight'];
-                $orderdetails['prod_code'] = $cart['productcode'];
-
-                if (!Session::has('old_order_id')) {
-                    $orderdetails->save();
-                }
-                $qty = 0;
-                $product = Product::where('Id', '=', $cart['productId'])->select('Quantity')->first();
-                if ($product->Quantity > $cart['qty']) {
-                    $qty = $product->Quantity - $cart['qty'];
-                }
-                Product::where('Id', '=', $cart['productId'])->update(array('Quantity' => $qty));
-
-                $productname = $cart['productName'];
-                if ($cart['productoption']) {
-                    $option = $cart['productoption'];
-                    $productname .= '<br><span style="font-size:11px; margin-left:10px;">Option: ' . $option . '</span>';
-                }
-                if ($cart['weight']) {
-                    $weight = $cart['weight'];
-                    $productname .= '<br><span style="font-size:11px; margin-left:10px;">Weight: ' . $weight . 'Kg</span>';
-                }
-                if ($cart['size']) {
-                    $size = $cart['size'];
-                    $productname .= '<br><span style="font-size:11px; margin-left:10px;">Size: ' . $size . '</span>';
-                }
-                if ($cart['color']) {
-                    $color = $cart['color'];
-                    $productname .= '<br><span style="font-size:11px; margin-left:10px;">Color: ' . $color . '</span>';
-                }
-
-                $itemdetails .= '<tr><td>' . $productname . '</td><td style="text-align:center;">' . $cart['qty'] . '</td><td style="text-align:right">$' . number_format($cart['price'], 2) . '</td><td style="text-align:right">$' . number_format($cart['total'], 2) . '</td></tr>';
-            }
-
-            $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-            $itemdetails .= '<tr><td colspan="2"></td><td>Sub Total</td><td style="text-align:right;">$' . number_format($subtotal, 2) . '</td></tr>';
-            $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-            $itemdetails .= '<tr><td colspan="2"></td><td>' . $taxtitle . '</td><td style="text-align:right;">$' . number_format($gst, 2) . '</td></tr>';
-            $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-            $itemdetails .= '<tr><td colspan="2"></td><td>Shipping (' . $deliverytype . ')</td><td style="text-align:right;">$' . number_format($deliverycost, 2) . '</td></tr>';
-            $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-            $itemdetails .= '<tr><td colspan="2"></td><td>Packing Fee</td><td style="text-align:right;">$' . number_format($packingfee, 2) . '</td></tr>';
-            $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-            if ($discounttext != '' && $discount != 0) {
-                $itemdetails .= '<tr><td colspan="2"></td><td>Discount(' . $discounttext . ')</td><td style="text-align:right;">$' . number_format($discount, 2) . '</td></tr>';
-                $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-            }
-            $itemdetails .= '<tr><td colspan="2"></td><td><b>Grand Total</b></td><td style="text-align:right;"><b>$' . number_format($grandtotal, 2) . '</b></td></tr>';
-            $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-
-            $itemdetails .= '</table>';
-
-            $countrydata = Country::where('countrycode', '=', $billinginfo['bill_country'])->select('countryid')->first();
-            if ($countrydata) {
-                $countryid = $countrydata->countryid;
-            }
-
-            Customer::where('cust_id', '=', $userid)->update(array('cust_firstname' => $billinginfo['bill_fname'], 'cust_lastname' => $billinginfo['bill_lname'], 'cust_address1' => $billinginfo['bill_ads1'], 'cust_address2' => $billinginfo['bill_ads2'], 'cust_city' => $billinginfo['bill_city'], 'cust_state' => $billinginfo['bill_state'], 'cust_country' => $countryid, 'cust_zip' => $billinginfo['bill_zip'], 'cust_phone' => $billinginfo['bill_mobile']));
-
-            $setting = Settings::where('id', '=', '1')->first();
-            if ($setting) {
-                $companyname = $setting->company_name;
-                $adminemail = $setting->admin_email;
-                $ccemail = $setting->cc_email;
-            }
-
-            $billing = '';
-            $billing .= '<p style="margin:0;">' . $billinginfo['bill_fname'] . ' ' . $billinginfo['bill_lname'] . '</p>';
-            $billing .= '<p style="margin:0;">' . $billinginfo['bill_ads1'] . '</p>';
-            if ($billinginfo['bill_ads2'] != '') {
-                $billing .= '<p style="margin:0;">' . $billinginfo['bill_ads2'] . '</p>';
-            }
-            $billing .= '<p style="margin:0;">' . $billinginfo['bill_city'] . '</p>';
-            $billing .= '<p style="margin:0;">' . $billinginfo['bill_state'] . ' - ' . $billinginfo['bill_zip'] . '</p>';
-            $billing .= '<p style="margin:0;">' . $billinginfo['bill_country'] . '</p>';
-
-            $shipping = '';
-            $shipping .= '<p style="margin:0;">' . $billinginfo['ship_fname'] . ' ' . $billinginfo['ship_lname'] . '</p>';
-            $shipping .= '<p style="margin:0;">' . $billinginfo['ship_ads1'] . '</p>';
-            if ($billinginfo['ship_ads2'] != '') {
-                $shipping .= '<p style="margin:0;">' . $billinginfo['ship_ads2'] . '</p>';
-            }
-            $shipping .= '<p style="margin:0;">' . $billinginfo['ship_city'] . '</p>';
-            $shipping .= '<p style="margin:0;">' . $billinginfo['ship_state'] . ' - ' . $billinginfo['ship_zip'] . '</p>';
-            $shipping .= '<p style="margin:0;">' . $billinginfo['ship_country'] . '</p>';
-
-            $emailtemplate = EmailTemplate::where('template_type', '=', '2')->where('status', '=', '1')->first();
-            if ($emailtemplate) {
-
-                if (strlen($orderid) == 3) {
-                    $orderid = date('Ymd') . '0' . $orderid;
-                } elseif (strlen($orderid) == 2) {
-                    $orderid = date('Ymd') . '00' . $orderid;
-                } elseif (strlen($orderid) == 1) {
-                    $orderid = date('Ymd') . '000' . $orderid;
-                } else {
-                    $orderid = date('Ymd') . $orderid;
-                }
-
-                $emailsubject = $emailtemplate->subject;
-                $emailcontent = $emailtemplate->content;
-                $logo = url('/') . '/front/img/logo.png';
-                $logo = '<img src="' . $logo . '">';
-                $emailsubject = str_replace('{companyname}', $companyname, $emailsubject);
-                $emailcontent = str_replace('{companyname}', $companyname, $emailcontent);
-                $emailcontent = str_replace('{customername}', $billinginfo['bill_fname'] . ' ' . $billinginfo['bill_lname'], $emailcontent);
-                $emailcontent = str_replace('{logo}', $logo, $emailcontent);
-                $emailcontent = str_replace('{email}', $adminemail, $emailcontent);
-                $emailcontent = str_replace('{orderid}', $orderid, $emailcontent);
-                $emailcontent = str_replace('{datetime}', date("M d Y H:i A"), $emailcontent);
-                $emailcontent = str_replace('{billinginfo}', $billing, $emailcontent);
-                $emailcontent = str_replace('{shippinginfo}', $shipping, $emailcontent);
-                $emailcontent = str_replace('{paymentmethod}', $paymethodname, $emailcontent);
-                $emailcontent = str_replace('{shippingmethod}', $deliverytype, $emailcontent);
-                $emailcontent = str_replace('{orderdetails}', $itemdetails, $emailcontent);
-
-                $custemail = $billinginfo['bill_email'];
-
-                $headers = 'From: ' . $companyname . ' ' . $adminemail . '' . "\r\n";
-                $headers .= 'Reply-To: ' . $adminemail . "\r\n";
-                $headers .= 'X-Mailer: PHP/' . phpversion();
-                $headers .= "MIME-Version: 1.0\r\n";
-                $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-
-                @mail($custemail, $emailsubject, $emailcontent, $headers);
-
-                @mail($adminemail, $emailsubject, $emailcontent, $headers);
-
-            }
-
-            $currency = 'SGD';
-            $paysettings = PaymentSettings::where('id', '=', '1')->select('currency_type')->first();
-            if ($paysettings) {
-                $currency = $paysettings->currency_type;
-            }
-
-            $stripesignature = '';
-            $paymode = 'live';
-            $paymentmethod = PaymentMethods::where('id', '=', '3')->orWhere('payment_name', 'LIKE', '%stripe')->first();
-
-            if ($paymentmethod) {
-                $paymode = $paymentmethod->payment_mode;
-                if ($paymode == 'live') {
-                    $stripesignature = $paymentmethod->api_signature;
-                } else {
-                    $stripesignature = $paymentmethod->test_api_signature;
-                }
-            }
-
-            Stripe\Stripe::setApiKey($stripesignature);
-            /*$response = Stripe\Charge::create ([
-            "amount" => $grandtotal * 100,
+        $source = \Stripe\Source::create([
+            "type" => "card",
             "currency" => $currency,
-            "source" => $request->stripeToken,
-            "description" => "Payment from hardwarecity.com.sg",
-            "metadata" => array("order_id" => $orderid)
-            ]);
+            "card" => [
+                "number" => $request->cardnumber,
+                "cvc" => $request->cvc,
+                "exp_month" => $request->exp_month,
+                "exp_year" => $request->exp_year,
+            ],
+            "owner" => [
+                "email" => $billinginfo['bill_email'],
+            ],
+        ]);
 
-            if($response) {
-            $transid = $response['id'];
-            OrderMaster::where('order_id', '=', $orderincid)->update(array('trans_id' => $transid, 'order_status' => '2'));
-            if($discounttext != '' && $discount != 0) {
-            CouponCodeUsage::insert(array('coupon_id' => $couponid, 'customer_id' => $userid, 'order_id' => $orderincid));
-            }
-            }*/
+        $shippingAddress = [
+            'line1' => $billinginfo['ship_ads1'],
+            'city' => $billinginfo['ship_city'],
+            'state' => $billinginfo['ship_state'],
+            'postal_code' => $billinginfo['ship_zip'],
+            'country' => $billinginfo['ship_country'],
+        ];
 
-            $source = \Stripe\Source::create([
-                "type" => "card",
+        $stripecustomer = \Stripe\Customer::create([
+            'name' => $billinginfo['ship_fname'] . ' ' . $billinginfo['ship_lname'],
+            'email' => $billinginfo['bill_email'],
+            'address' => $shippingAddress,
+        ]);
+
+        if ($stripecustomer) {
+
+            $response = Stripe\Charge::create([
+                "amount" => $grandtotal * 100,
                 "currency" => $currency,
-                "card" => [
-                    "number" => $request->cardnumber,
-                    "cvc" => $request->cvc,
-                    "exp_month" => $request->exp_month,
-                    "exp_year" => $request->exp_year,
-                ],
-                "owner" => [
-                    "email" => $billinginfo['bill_email'],
-                ],
-            ]);
-
-            $stripecustomer = \Stripe\Customer::create([
-                'name' => $billinginfo['ship_fname'] . ' ' . $billinginfo['ship_lname'],
-                'email' => $billinginfo['bill_email'],
-                'address' => [
-                    'line1' => $billinginfo['ship_ads1'],
-                    'city' => $billinginfo['ship_city'],
-                    'state' => $billinginfo['ship_state'],
-                    'postal_code' => $billinginfo['ship_zip'],
-                    'country' => $billinginfo['ship_country'],
+                "source" => $request->stripeToken,
+                "description" => "Payment from hardwarecity.com.sg",
+                "metadata" => ["order_id" => $orderCreate['orderId']],
+                "source" => $source['id'],
+                "customer" => $stripecustomer['id'],
+                "shipping" => [
+                    'name' => $billinginfo['ship_fname'] . ' ' . $billinginfo['ship_lname'],
+                    'address' => $shippingAddress,
                 ],
             ]);
 
-            if ($stripecustomer) {
-                $response = Stripe\Charge::create([
-                    "amount" => $grandtotal * 100,
-                    "currency" => $currency,
-                    "source" => $request->stripeToken,
-                    "description" => "Payment from hardwarecity.com.sg",
-                    "metadata" => array("order_id" => $orderid),
-                    "source" => $source['id'],
-                    "customer" => $stripecustomer['id'],
-                    "shipping" => [
-                        'name' => $billinginfo['ship_fname'] . ' ' . $billinginfo['ship_lname'],
-                        'address' => [
-                            'line1' => $billinginfo['ship_ads1'],
-                            'city' => $billinginfo['ship_city'],
-                            'state' => $billinginfo['ship_state'],
-                            'postal_code' => $billinginfo['ship_zip'],
-                            'country' => $billinginfo['ship_country'],
-                        ],
-                    ],
-                ]);
+            if ($response) {
+                $transid = $response['id'];
+                OrderMaster::where('order_id', $orderCreate['orderId'])->update(['trans_id' => $transid, 'order_status' => '1']);
 
-                if ($response) {
-                    $transid = $response['id'];
-                    OrderMaster::where('order_id', '=', $orderincid)->update(array('trans_id' => $transid, 'order_status' => '1'));
-
-                    if ($discounttext != '' && $discount != 0) {
-                        CouponCodeUsage::insert(array('coupon_id' => $couponid, 'customer_id' => $userid, 'order_id' => $orderincid));
-                    }
+                if (!empty($discounttext) && !empty($discount)) {
+                    CouponCodeUsage::insert(['coupon_id' => $couponid, 'customer_id' => $userid, 'order_id' => $orderCreate['orderId']]);
                 }
             }
 
-            Session::forget('cartdata');
-            Session::forget('deliverymethod');
-            Session::forget('if_unavailable');
-            Session::forget('billinginfo');
-            Session::forget('paymentmethod');
-            Session::forget('discount');
-            Session::forget('discounttext');
-            Session::forget('couponcode');
-            Session::forget('discounttype');
-            Session::forget('old_order_id');
+//Clear sessions
+            $sessionsValues = ['cartdata', 'deliverymethod', 'if_unavailable', 'billinginfo', 'paymentmethod', 'discount', 'discounttext',
+                'couponcode', 'discounttype', 'old_order_id'];
+            foreach ($sessionsValues as $session) {Session::forget($session);}
+
+            return redirect('success?orderid=' . $orderCreate['orderId']);
+
         }
 
-        return redirect('/success?orderid=' . $orderincid);
+        return redirect('cancelpayment');
+
     }
 
     public function hoolah()

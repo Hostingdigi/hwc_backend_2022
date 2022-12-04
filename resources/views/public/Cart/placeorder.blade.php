@@ -61,7 +61,7 @@
 								<ul class="list-unstyled">
 									<li>Product <span>Total</span></li>
 									@if($cartdata)
-										@foreach($cartdata[$sesid] as $cartkey => $cart)
+										@foreach($cartdata as $cartkey => $cart)
 										<li class="d-flex justify-content-between">
 											<div class="pro">
 												<div class="row">
@@ -90,12 +90,17 @@
 										@endforeach
 									@endif
 									
-									<li class="subtot">Sub Total <span>S${{ number_format(str_replace(',','',$subtotal),2) }}</span></li>
+									<li class="subtot">Sub Total 
+									<span>S${{ number_format(str_replace(',','',$subtotal),2) }}</span>
+									@if(!empty($taxLabelOnly))
+            						<small style="font-size:95%;word-break: break-word;"><br>[w/o - {{$taxLabelOnly}}]</small>
+            						@endif
+									</li>
 									<li class="subtot" style="border-top: 1px solid #e5e5e5; padding-top:12px;">{{ $taxtitle }} <span>S${{ number_format(str_replace(',','',$gst), 2) }}</span></li>
 									<li>Shipping ({{ $deliverytype }}) <span>S${{ number_format(str_replace(',','',$deliverycost), 2) }}</span></li>
 									<li>Packaging Fee <span>S${{ number_format($packingfee,2) }}</span></li>
 									@if($discount != 0 && $discounttext != '')<li id="dis">Discount({{ $discounttext }})<span>S${{ number_format(str_replace(',','',$discount), 2) }}</span></li>@endif
-									<li>Grand Total <span>S${{ number_format(str_replace(',','',$grandtotal),2) }}</span></li>
+									<li style="font-size: 29px;font-weight: bolder;">Grand Total <span>S${{ number_format(str_replace(',','',$grandtotal),2) }}</span></li>
 								</ul>
 							</div>
 						</div>

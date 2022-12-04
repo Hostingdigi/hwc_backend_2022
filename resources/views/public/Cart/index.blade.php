@@ -9,93 +9,79 @@
 		@if(!empty($cartdata))
 		
 		<div class="row">
-			<div class="col-md-9">
+			<div class="col-md-8">
 				<div class="cart-table table-responsive">	
 					<form action="{{ url('/updatecart') }}" method="post" name="updatecartfrm" id="updatecartfrm">
 					@csrf
-					<table class="table">
-						<thead>
-							<tr>
-								<th class="t-pro">Product</th>
-								<th class="t-price">Price</th>
-								<th class="t-qty">Quantity</th>
-								<th class="t-total">Total</th>
-								<th class="t-rem"></th>
-							</tr>
-						</thead>
-						<tbody>
-							@php 
-								$productqty = $productid = '';
-							@endphp
-							@foreach($cartdata[$sesid] as $cartkey => $cart)
-								@php
-									$productqty = $cart['qty'];
-									$productid = $cart['productId'];
-									$product = \App\Models\Product::where('Id', '=', $productid)->select('UniqueKey', 'Quantity', 'cust_qty_per_day')->first();
-									$maxqty = $product->Quantity;
-									if(($product->cust_qty_per_day < $product->Quantity) && $product->cust_qty_per_day > 0) {
-										$maxqty = $product->cust_qty_per_day;
-									}
-								@endphp	
+						<table class="table">
+							<thead>
 								<tr>
-									<td class="t-pro d-flex">
-										<div class="t-img">
-											<a href="{{ url('/prod/'.$product->UniqueKey) }}">
-												@if($cart['image'] != '')															
-													<img src="{{ env('IMG_URL').('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100" title="{{ $cart['productName'] }}">
-												@else
-													<img src="{{ url('/images/noimage.png') }}" alt="{{ $cart['productName'] }}" title="{{ $cart['productName'] }}" width="100">
-												@endif
-											</a>
-										</div>
-										<div class="t-content">
-											<p class="t-heading"><a href="{{ url('/prod/'.$product->UniqueKey) }}">{{ $cart['productName'] }}</a></p>
-											@if($cart['productoption'])
-												<p>Option: {{ $cart['productoption'] }}</p>
-											@endif
-											
-											
-										</div>
-									</td>
-									<td class="t-price" style="width:15%;">S${{ number_format($cart['price'], 2) }}</td>
-									<td class="t-qty" style="width:14%;">
-										<div class="qty-box">
-											<div class="quantity buttons_added">
-												<input type="button" value="-" class="minus" onclick="updateqty('minus', '{{ $productid }}', '{{ $maxqty }}', '{{ $cart['productName'] }}', '{{ $cart['option_id'] }}');">
-												<input type="number" step="1" min="1" max="10" value="{{ $cart['qty'] }}" class="qty text" id="qty{{ $cart['productId'] }}_{{ $cart['option_id'] }}" size="4" readonly name="qty{{ $cart['productId'] }}">
-												<input type="button" value="+" class="plus" onclick="updateqty('plus', '{{ $productid }}', '{{ $maxqty }}', '{{ $cart['productName'] }}', '{{ $cart['option_id'] }}');">
-												<input type="hidden" name="cartitems[]" value="{{ $cart['productId'] }}">
-											</div>
-										</div>
-									</td>
-									<td class="t-total" style="width:15%;" id="t-total{{ $cart['productId'] }}_{{ $cart['option_id'] }}">S${{ number_format($cart['total'], 2) }}</td>
-									<td class="t-rem" style="width:5%;"><a href="{{ url('/removecartitem/'.$cartkey.'/'.$cart['productId']) }}"><i class="fa fa-trash-o"></i></a></td>
+									<th class="t-pro">Product</th>
+									<th class="t-price">Price</th>
+									<th class="t-qty">Quantity</th>
+									<th class="t-total">Total</th>
+									<th class="t-rem"></th>
 								</tr>
-									
-							@endforeach						
-							
-						</tbody>
-					</table>
-					
-					
-					
-					
-					
+							</thead>
+							<tbody>
+								@foreach($cartdata as $cartkey => $cart)
+									@php
+										$productid = $cart['productId'];
+										$product = \App\Models\Product::where('Id', '=', $productid)->select('UniqueKey', 'Quantity', 'cust_qty_per_day')->first();
+										$maxqty = $product->Quantity;
+										if(($product->cust_qty_per_day < $product->Quantity) && $product->cust_qty_per_day > 0) {
+											$maxqty = $product->cust_qty_per_day;
+										}
+									@endphp	
+									<tr>
+										<td class="t-pro d-flex">
+											<div class="t-img">
+												<a href="{{ url('/prod/'.$product->UniqueKey) }}">
+													<img src="{{ (!empty($cart['image']) ? env('IMG_URL').('/uploads/product/'.$cart['image']) : url('/images/noimage.png')) }}" alt="{{ $cart['productName'] }}" width="100" title="{{ $cart['productName'] }}">
+												</a>
+											</div>
+											<div class="t-content">
+												<p class="t-heading"><a href="{{ url('/prod/'.$product->UniqueKey) }}">{{ $cart['productName'] }}</a></p>
+												@if($cart['productoption'])
+													<p>Option: {{ $cart['productoption'] }}</p>
+												@endif
+											</div>
+										</td>
+										<td class="t-price" style="width:15%;">S${{ number_format($cart['price'], 2) }}</td>
+										<td class="t-qty" style="width:14%;">
+											<div class="qty-box">
+												<div class="quantity buttons_added">
+													<input type="button" value="-" class="minus" onclick="updateqty('minus', '{{ $productid }}', '{{ $maxqty }}', '{{ $cart['productName'] }}', '{{ $cart['option_id'] }}');">
+													<input type="number" step="1" min="1" max="10" value="{{ $cart['qty'] }}" class="qty text" id="qty{{ $cart['productId'] }}_{{ $cart['option_id'] }}" size="4" readonly name="qty{{ $cart['productId'] }}">
+													<input type="button" value="+" class="plus" onclick="updateqty('plus', '{{ $productid }}', '{{ $maxqty }}', '{{ $cart['productName'] }}', '{{ $cart['option_id'] }}');">
+													<input type="hidden" name="cartitems[]" value="{{ $cart['productId'] }}">
+												</div>
+											</div>
+										</td>
+										<td class="t-total" style="width:15%;" id="t-total{{ $cart['productId'] }}_{{ $cart['option_id'] }}">S${{ number_format($cart['total'], 2) }}</td>
+										<td class="t-rem" style="width:5%;"><a href="{{ url('/removecartitem/'.$cartkey.'/'.$cart['productId']) }}"><i class="fa fa-trash-o"></i></a></td>
+									</tr>
+								@endforeach						
+							</tbody>
+						</table>
 					</form>
 				</div>
 			</div>
-			<div class="col-md-3">
+			<div class="col-md-4">
 				<div class="crt-sumry">
 					<h5>Cart Summary</h5>
 					<ul class="list-unstyled">
-						<li>Subtotal <span id="subtotal">S${{ $subtotal }}</span></li>
-						
+						<li>Subtotal
+							<span id="subtotal">S${{ $subtotal }}</span>
+							@if(!empty($taxLabelOnly))
+                    		<small style="word-break: break-word;"><br>[w/o - {{$taxLabelOnly}}]</small>
+                    		@endif
+						</li>
 						<li>{{ $taxtitle }} <span id="gst">S${{ $gst }}</span></li>						
 						<li id="dis" style="display:none;"></li>
-						<li>Grand Total <span id="grandtotal">S${{ $grandtotal }}</span></li>
+						<li class="mt-3" style="font-size: 18px;color:#000;font-weight: 900 !important;">Grand Total <span id="grandtotal" style="color:#000 !important;">S${{ number_format(($subtotal+$gst),2) }}</span></li>
 					</ul>
 					<div class="cart-btns text-right">
-						<!--button type="button" class="up-cart">Update Cart</button-->
 						<button type="button" class="chq-out">Checkout</button>
 					</div>
 				</div>
@@ -103,7 +89,6 @@
 				<div class="crt-sumry" style="background:none; padding:23px 10px 30px;">
 					<div class="cart-btns text-right">
 						<button type="button" class="up-cart" style="margin-right:10px;" id="clearcart">Clear Cart</button>
-						<!--button type="button" class="up-cart" id="updatecart">Update Cart</button-->						
 					</div>
 				</div>
 				
@@ -121,20 +106,16 @@
 					</form>
 				</div>
 			</div>
-			
-			
 		</div>
 		@else
-			
-			<div class="row">
-				<div class="col-md-12">
-					<div align="center">
+		<div class="row">
+			<div class="col-md-12">
+				<div align="center">
 					<p>You have no items in your shopping cart.</p>
 					<p style="margin-top:15px;"><a href="{{ url('/') }}">Click here</a> to continue shopping.</p>
-					</div>
 				</div>
 			</div>
-		
+		</div>
 		@endif
 	</div>
 </section>

@@ -2,7 +2,6 @@
 <!-- Header section end -->
 	<section id="breadcrumbs" class="breadcrumbs">
       <div class="container">
-
         <ol>
           <li><a href="index.html">Home</a></li>
 		  <li><div class="pageheading">Checkout</div></li>
@@ -87,7 +86,7 @@
 								<ul class="list-unstyled">
 									<li>Product <span>Total</span></li>
 									@if($cartdata)
-										@foreach($cartdata[$sesid] as $cartkey => $cart)
+										@foreach($cartdata as $cartkey => $cart)
 										<li class="d-flex justify-content-between">
 											<div class="pro">
 												<div class="row">
@@ -124,7 +123,13 @@
 										@endforeach
 									@endif
 									
-									<li class="subtot">Sub Total <span>S${{ number_format(str_replace(',','',$subtotal), 2) }}</span></li>
+									<li class="subtot">Sub Total 
+									
+            						<span>S${{ number_format(str_replace(',','',$subtotal), 2) }}</span>
+									@if(!empty($taxLabelOnly))
+                						<small style="font-size:92%;word-break: break-word;"><br>[w/o - {{$taxLabelOnly}}]</small>
+                						@endif
+						</li>
 									<li class="subtot" style="border-top: 1px solid #e5e5e5;">{{ $taxtitle }} <span>S${{ number_format(str_replace(',','',$gst), 2) }}</span></li>
 									<li>Shipping ({{ $deliverytype }}) <span>S${{ number_format(str_replace(',','',$deliverycost), 2) }}</span></li>
 									<li>Packaging Fee <span>S${{ number_format(str_replace(',','',$packingfee), 2) }}</span></li>
