@@ -9,7 +9,7 @@
       <div class="container">
 
         <ol>
-          <li><a href="index.html">Home</a></li>
+          <li><a href="{{ url('/') }}">Home</a></li>
 		  <li><div class="pageheading">Invoice</div></li>
         </ol>
       </div>
@@ -30,7 +30,7 @@
 								{!! $bannerad->Video !!}
 							</div> 
 						@else
-							<a href="{{ $bannerad->ban_link }}"><img src="{{ url('/').'/uploads/bannerads/'.$bannerad->EnBanimage }}" alt="{{ $bannerad->ban_name }}" class="img-fluid"></a>
+							<a href="{{ $bannerad->ban_link }}"><img src="{{ env('IMG_URL').('/uploads/bannerads/'.$bannerad->EnBanimage) }}" alt="{{ $bannerad->ban_name }}" class="img-fluid"></a>
 						@endif
 					</div>
 				@endforeach
@@ -41,9 +41,9 @@
 			@endif	
 				<div class="row">
 					<div class="col-md-12">						
-						<h5 class="text-center">Invoice Details</h5>
+						<h5 class="text-center">@if($orders->order_type != 2) Invoice Details @else Quotation Details @endif</h5>
 						<div class="table-responsive" style="width:100%; margin:0 auto; border:1px solid #ccc; padding:0 20px;">
-							<table>
+							<table width="100%">
 								<tr><td colspan="2">&nbsp;</td></tr>
 								<tr><th style="text-align:center;" colspan="2"><img src="{{ url('/img/logo.png') }}"></th></tr>
 								<tr><td colspan="2">&nbsp;</td></tr>
@@ -60,7 +60,7 @@
 										$orderid = date('Ymd', strtotime($orders->created_at)).$orderid;
 									}
 								@endphp
-								Invoice #: {{ $orderid }} </td></tr>
+								@if($orders->order_type != 2) Invoice #: @else Quotation #: @endif {{ $orderid }} </td></tr>
 								<tr><td colspan="2">&nbsp;</td></tr>
 								<tr>
 									<td width="50%">
@@ -72,7 +72,11 @@
 									</td>
 									<td width="50%" class="float-right">
 										@php
+											$shippinginfo = '';
 											$shipping = \App\Models\ShippingMethods::where('Id', '=', $orders->ship_method)->select('EnName')->first();
+											if($shipping) {
+												$shippinginfo = $shipping->EnName;
+											}
 										@endphp								
 										<table>
 											<tr><td>Date: {{ date('d/m/Y', strtotime($orders->created_at)) }}</td></tr>
@@ -87,34 +91,69 @@
 								</tr>
 								<tr><td colspan="2">&nbsp;</td></tr>
 								<tr>
-									<td width="50%" >
+									<td width="50%" style="vertical-align:top;">
 										<b>Shipping Info</b>
 										<table>
+											@if(stripos($shippinginfo, 'Self Collect') !== false)
+											<tr><td>{{ $shippinginfo }}</td></tr>
+											@else	
 											<tr><td>{{ $orders->ship_fname.' '.$orders->ship_lname }}</td></tr>
 											<tr><td>{{ $orders->ship_ads1 }}</td></tr>
 											@if($orders->ship_ads2)
 											<tr><td>{{ $orders->ship_ads2 }}</td></tr>
 											@endif
 											<tr><td>{{ $orders->ship_city }}</td></tr>
-											<tr><td>{{ $orders->ship_state }} - {{ $orders->ship_zip }}</td></tr>
-											<tr><td>{{ $orders->ship_country }}</td></tr>
+											<tr><td>{{ $orders->ship_state }}</td></tr>
+											<tr><td>
+											@if(!empty($shipCountryData))
+                    						{{ $shipCountryData->countryname.' - '.$orders->ship_zip }}<br>
+                    						@else
+                    						{{ ' - '.$orders->ship_zip }}<br>
+                    						@endif
+                    						</td></tr>
+											<tr><td style="white-space:nowrap;">Email: {{ $orders->ship_email }}</td></tr>
+											<tr><td>Mobile: {{ $orders->ship_mobile }}</td></tr>
+											@endif
 										</table>
 									</td>
 									<td width="50%" class="float-right">
 										<b>Billing Info</b>
 										<table>
+										    @if(!empty($orders->bill_compname))
+											<tr><td>{{ $orders->bill_compname }}</td></tr>
+											@endif
 											<tr><td>{{ $orders->bill_fname.' '.$orders->bill_lname }}</td></tr>
 											<tr><td>{{ $orders->bill_ads1 }}</td></tr>
 											@if($orders->bill_ads2)
 											<tr><td>{{ $orders->bill_ads2 }}</td></tr>
 											@endif
 											<tr><td>{{ $orders->bill_city }}</td></tr>
-											<tr><td>{{ $orders->bill_state }} - {{ $orders->bill_zip }}</td></tr>
-											<tr><td>{{ $orders->bill_country }}</td></tr>
+											<tr><td>{{ $orders->bill_state }}</td></tr>
+											<tr><td>
+											@if(!empty($billCountryData))
+                    						{{ $billCountryData->countryname.' - '.$orders->bill_zip }}<br>
+                    						@else
+                    						{{ ' - '.$orders->bill_zip }}<br>
+                    						@endif
+                    						</td></tr>
+											<tr><td style="white-space:nowrap;">Email: {{ $orders->bill_email }}</td></tr>
+											<tr><td>Mobile: {{ $orders->bill_mobile }}</td></tr>
+											
 										</table>
 									</td>
 								</tr>
+								@if($orders->pay_method != '')
 								<tr><td colspan="2">&nbsp;</td></tr>
+								<tr><td>
+									<b>Payment Method</b>
+									
+									<table>
+										<tr><td>{{ $orders->pay_method }}</td></tr>
+										
+									</table>
+								</td><td></td></tr>
+								@endif
+								<tr><td colspan="2">&nbsp;</td></tr>								
 								<tr>
 									<td colspan="2">								
 										<table class="table-bordered" width="100%" cellpadding="8">
@@ -130,59 +169,53 @@
 														@if($orderdetail->prod_option != '')
 															<span class="text-muted">Option: {{ $orderdetail->prod_option }}</span><br>
 														@endif
-														@if($product->Weight != '')
-															<span class="text-muted">Weight: {{ $product->Weight }} Kg</span><br>
-														@endif
-														@if($product->Size != '')
-															<span class="text-muted">Size: {{ $product->Size }}</span><br>
-														@endif
-														@if($product->Color != '')
-															<span class="text-muted">Color: {{ $product->Color }}</span><br>
-														@endif
+														
 														</td>
 														<td style="text-align:center;">{{ $orderdetail->prod_quantity }}</td>
-														<td style="text-align:right">${{ $orderdetail->prod_unit_price }}</td>
-														<td style="text-align:right">${{ number_format(($orderdetail->prod_quantity * $orderdetail->prod_unit_price), 2) }}</td>
+														<td style="text-align:right">S${{ $orderdetail->prod_unit_price }}</td>
+														<td style="text-align:right">S${{ number_format(($orderdetail->prod_quantity * $orderdetail->prod_unit_price), 2) }}</td>
 													</tr>											
 												@endforeach
 											@endif
 											<tr><td colspan="4">&nbsp;</td></tr>
 											<tr>
 												<td colspan="2"></td><td>Sub Total</td>
-												<td style="text-align:right">${{ number_format($orders->payable_amount - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected), 2) }}</td>										
+												<td style="text-align:right">S${{ number_format($orders->payable_amount - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected), 2) }}</td>										
 											</tr>
 											<tr>
 												<td colspan="2"></td><td>Tax</td>
-												<td style="text-align:right">${{ number_format($orders->tax_collected, 2) }}</td>
+												<td style="text-align:right">S${{ number_format($orders->tax_collected, 2) }}</td>
 											</tr>
 											<tr>
 												<td colspan="2"></td><td>Shipping</td>
-												<td style="text-align:right">${{ number_format($orders->shipping_cost, 2) }}</td>
+												<td style="text-align:right">S${{ number_format($orders->shipping_cost, 2) }}</td>
 											</tr>
 											<tr>
 												<td colspan="2"></td><td>Packaging Fee</td>
-												<td style="text-align:right">${{ number_format($orders->packaging_fee, 2) }}</td>
+												<td style="text-align:right">S${{ number_format($orders->packaging_fee, 2) }}</td>
 											</tr>
 											@if($orders->discount_amount != '0.00')
 											<tr>
 												<td colspan="2"></td><td>Discount</td>
-												<td style="text-align:right">${{ number_format($orders->discount_amount, 2) }}</td>
+												<td style="text-align:right">S${{ number_format($orders->discount_amount, 2) }}</td>
 											</tr>
 											@endif
 											<tr>
 												<td colspan="2"></td><td><b>Grand Total</b></td>
-												<td style="text-align:right"><b>${{ number_format($orders->payable_amount, 2) }}</b></td>
+												<td style="text-align:right"><b>S${{ number_format($orders->payable_amount, 2) }}</b></td>
 											</tr>
 										</table>
 									</td>
 									
 								</tr>
 								<tr><td colspan="2">&nbsp;</td></tr>
+								@if($orders->order_type == 2)
 								<tr>
 									<td colspan="2">
-									Note : Prices are subjected to change without prior notice. We hope that our quotation is favourable to you and looking forward to receive your valued orders in due course.<br><br>Thank and Regards.
+									Quotation is valid for 7 days.
 									</td>
 								</tr>
+								@endif
 								<tr><td colspan="2">&nbsp;</td></tr>
 								<tr><td colspan="2">&nbsp;</td></tr>
 							</table>    

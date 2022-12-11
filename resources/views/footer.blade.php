@@ -143,7 +143,7 @@
     $(document).ready(function(){  
 		$('#js-news').ticker();
 		$('.alert').delay(3000).fadeOut('fast');
-		$('.box-Added-product').delay(3000).fadeOut('fast');
+		//$('.box-Added-product').delay(1000).fadeOut('fast');
 		$('#subscribe_email').focus(function() {
 			$('#subscribe_email').css('border', '1px solid #ced4da');
 		});
@@ -211,6 +211,6 @@
 	}
 	
 	</script>
-	
+	@stack('child-scripts')
 	</body>
 </html>

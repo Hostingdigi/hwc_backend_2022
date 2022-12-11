@@ -4,19 +4,20 @@ namespace App\Services;
 
 use App\Models\Cart;
 use App\Models\Country;
-use App\Models\ShippingMethods;
+use App\Models\Customer;
 use App\Models\PaymentSettings;
+use App\Models\ShippingMethods;
 use Session;
 
 class CartServices
 {
-    public function cartItems($countryCode = 'SG')
+    public function cartItems($countryCode = null)
     {
         $custToken = Session::get('_token');
         $taxvals = [];
         $subTotal = 0;
         $cartData = [
-            'countryCode' => $countryCode != 'SG' ? $countryCode : 'SG',
+            'countryCode' => !empty($countryCode) ? $countryCode : 'SG',
             'countryId' => 189,
             'cartItems' => null,
             'subTotal' => 0,
@@ -30,8 +31,8 @@ class CartServices
         $settings = PaymentSettings::where('Id', '1')->select('min_package_fee')->first();
         $packingFee = $cartData['countryCode'] != 'SG' ? $settings->min_package_fee : 0;
 
-        if (Session::has('customer_id')) {
-            $customer = Customer::find(Session::get('customer_id'));
+        if (Session::has('customer_id') && empty($countryCode)) {
+            $customer = Customer::where('cust_id',Session::get('customer_id'))->first();
             $countrydata = Country::select('countrycode')->where('countryid', $customer->cust_country)->first();
             if ($countrydata) {
                 $cartData['countryCode'] = $countrydata->countrycode;
@@ -49,8 +50,8 @@ class CartServices
 
         //Exclude default tax amount
         $countryDetails = Country::where('countrycode', 'SG')->first();
-        $taxAmount = round((($subTotal * $countryDetails->taxpercentage) / (100+$countryDetails->taxpercentage) ),2);
-        $subTotal = round($subTotal-$taxAmount, 2);
+        $taxAmount = round((($subTotal * $countryDetails->taxpercentage) / (100 + $countryDetails->taxpercentage)), 2);
+        $subTotal = round($subTotal - $taxAmount, 2);
 
         $cartData['subTotal'] = $subTotal;
         $cartData['taxDetails'] = $this->getTax($subTotal, $cartData['countryCode']);
@@ -59,12 +60,14 @@ class CartServices
         foreach ($cartData['cartItems'] as $key => $val) {
 
             $totalWeight += $val['weight'];
-            $boxFees = $cart->getPackagingFee($cartData['countryCode'], $totalWeight, $subTotal, $cartData['taxDetails']['taxTotal'], 
-                (!empty($cartData['deliveryDetails']['deliverymethod']) ? $cartData['deliveryDetails']['deliverymethod'] : 0), $val['shippingbox'], $val['qty']);
+            $quantity = $val['qty'];
+            $shippingbox = $val['shippingbox'];
+            $boxFees = $cart->getPackagingFee($cartData['countryCode'], $totalWeight, $subTotal, $cartData['taxDetails']['taxTotal'],
+                (!empty($cartData['deliveryDetails']['deliverymethod']) ? $cartData['deliveryDetails']['deliverymethod'] : 0), $shippingbox, $quantity);
+        }
 
-            if (!empty($cartData['deliveryDetails']['deliverymethod'])) {
-                $deliveryTotal += $cart->shippingCost($cartData['countryCode'], $cartData['deliveryDetails']['deliverymethod'], $val['shippingbox'], $val['qty'], $subTotal, $cartData['taxDetails']['taxTotal']);
-            }
+        if (!empty($cartData['deliveryDetails']['deliverymethod'])) {
+            $deliveryTotal = $cart->shippingCost($cartData['countryCode'], $cartData['deliveryDetails']['deliverymethod'], $shippingbox, $quantity, $subTotal, $cartData['taxDetails']['taxTotal'], $totalWeight);
         }
         $packingFee += $boxFees;
         $packingFee = round($packingFee, 2);
@@ -74,7 +77,6 @@ class CartServices
         $cartData['discountDetails'] = $this->getDiscount($subTotal, $cartData['taxDetails']['taxTotal'], $deliveryTotal, $packingFee);
         $cartData['grandTotal'] = $this->getGrandTotal($subTotal, $cartData['taxDetails']['taxTotal'], $deliveryTotal, $packingFee, $cartData['discountDetails']['discountTotal']);
 
-        print_r($cartData);
         return $cartData;
 
     }

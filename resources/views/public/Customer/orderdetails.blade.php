@@ -212,7 +212,7 @@
 							<div class="row align-items-center">
 								<div class="col-4 col-md-3 col-xl-2">
 									@if($productimage != '')										
-										<a href="{{ url('/prod/'.$uniquekey) }}"><img src="{{ url('/uploads/product/'.$productimage) }}" alt="{{ $orderdetail->prod_name }}" class="img-fluid"></a>
+										<a href="{{ url('/prod/'.$uniquekey) }}"><img src="{{ env('IMG_URL').('/uploads/product/'.$productimage) }}" alt="{{ $orderdetail->prod_name }}" class="img-fluid"></a>
 									@else
 										<a href="{{ url('/prod/'.$uniquekey) }}"><img src="{{ url('/images/noimage.png') }}" alt="{{ $orderdetail->prod_name }}" class="img-fluid"></a>
 									@endif	
@@ -292,7 +292,11 @@
                 <ul class="list-group list-group-sm list-group-flush-y list-group-flush-x">
                   <li class="list-group-item d-flex">
                     <span>Subtotal</span>
+                    @if($orders->ship_country=='SG')
                     <span class="ml-auto">${{ number_format(($orders->payable_amount + $orders->discount_amount) - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected), 2) }}</span>
+                    @else
+                    <span class="ml-auto">${{ number_format(($orders->payable_amount + $orders->discount_amount) - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected), 2) }}</span>
+                    @endif
                   </li>
                   <li class="list-group-item d-flex">
                     <span>Tax</span>

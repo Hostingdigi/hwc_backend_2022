@@ -22,6 +22,8 @@ use App\Models\ShippingMethods;
 use App\Services\CartServices;
 use Illuminate\Http\Request;
 use Session;
+use Mail;
+use DB;
 
 class CartController extends Controller
 {
@@ -356,7 +358,7 @@ class CartController extends Controller
 
         $countries = Country::where('country_status', '1')->orderBy('countryname', 'ASC')->get();
 
-        return view('public/Cart.checkout', compact('customer', 'cartdata', 'sesid', 'subtotal', 'gst', 'grandtotal', 'deliverymethods', 'countries', 'taxLabelOnly', 'taxtitle', 'country', 'discounttext', 'discount', 'showfreedeliverymsg'));
+        return view('public/Cart.checkout', compact('customer', 'cartdata', 'subtotal', 'gst', 'grandtotal', 'deliverymethods', 'countries', 'taxLabelOnly', 'taxtitle', 'country', 'discounttext', 'discount', 'showfreedeliverymsg'));
 
     }
 
@@ -705,268 +707,228 @@ class CartController extends Controller
 
     public function quotation(Request $request)
     {
-
-        $cartdata = [];
-        $orderid = $deliverycost = $packingfee = $quotationid = 0;
-        $taxtitle = '';
-        $sesid = Session::get('_token');
-        if (Session::has('cartdata')) {
-            $cartdata = Session::get('cartdata');
-        }
-
-        if ($cartdata) {
-
-            $deliverymethod = Session::get('deliverymethod');
-
-            $billinginfo = Session::get('billinginfo');
-            $cart = new Cart();
-            $subtotal = $cart->getSubTotal();
-            $deliverytype = $cart->getDeliveryMethod($deliverymethod);
-
-            $country = $billinginfo['ship_country'];
-
-            $totalweight = 0;
-
-            $taxes = $cart->getGST($subtotal, $country);
-
-            if ($country != '') {
-                $taxvals = @explode("|", $taxes);
-                $taxtitle = $taxvals[0];
-                $gst = $taxvals[1];
-            } else {
-                $gst = $taxes;
-            }
-
-            $settings = PaymentSettings::where('Id', '=', '1')->select('min_package_fee')->first();
-            if ($country != 'SG') {
-                $packingfee = $settings->min_package_fee;
-            }
-            $boxfees = 0;
-
-            foreach ($cartdata as $key => $val) {
-                if (is_array($val)) {
-                    $x = 0;
-                    foreach ($val as $datakey => $dataval) {
-                        $totalweight = $totalweight + $dataval['weight'];
-                        $shippingbox = $dataval['shippingbox'];
-                        $quantity = $dataval['qty'];
-                        $deliverycost += $cart->shippingCost($country, $deliverymethod, $shippingbox, $quantity, $subtotal, $gst);
-                        $boxfees = $cart->getPackagingFee($country, $totalweight, $subtotal, $gst, $deliverymethod, $shippingbox, $quantity);
-                    }
-                }
-            }
-
-            $packingfee = number_format(($packingfee + $boxfees), 2);
-            //Packing Cost
-
-            $discounttype = $disamount = 0;
-            $discounttext = '';
-            if (Session::has('couponcode')) {
-                $discounttype = Session::get('discounttype');
-                $disamount = Session::get('discount');
-                $discounttext = Session::get('discounttext');
-            }
-
-            $discount = $cart->getDiscount($subtotal, $gst, $deliverycost, $packingfee, $discounttype, $disamount);
-
-            $grandtotal = $cart->getGrandTotal($subtotal, $gst, $deliverycost, $packingfee, $discount);
-
-
-            $subtotal = str_replace(',', '', $subtotal);
-            $deliverycost = str_replace(',', '', $deliverycost);
-            $packingfee = str_replace(',', '', $packingfee);
-            $gst = str_replace(',', '', $gst);
-            $grandtotal = str_replace(',', '', $grandtotal);
-            $discount = str_replace(',', '', $discount);
-
-            $userid = Session::get('customer_id');
-
-            $couponid = 0;
-
-            if (Session::has('couponcode')) {
-                $couponcode = Session::get('couponcode');
-                $coupondata = Couponcode::where('coupon_code', '=', $couponcode)->where('status', '=', '1')->first();
-                if ($coupondata) {
-                    $couponid = $coupondata->id;
-                }
-            }
-
-            $ordermaster = new OrderMaster;
-            $ordermaster['user_id'] = $userid;
-            $ordermaster['ship_method'] = Session::get('deliverymethod');
-            $ordermaster['pay_method'] = '';
-            $ordermaster['shipping_cost'] = $deliverycost;
-            $ordermaster['packaging_fee'] = $packingfee;
-            $ordermaster['tax_collected'] = $gst;
-            $ordermaster['payable_amount'] = $grandtotal;
-            $ordermaster['discount_amount'] = $discount;
-            $ordermaster['discount_id'] = $couponid;
-            $ordermaster['order_status'] = '0';
-            $ordermaster['if_items_unavailabel'] = Session::get('if_unavailable');
-            $ordermaster['bill_fname'] = $billinginfo['bill_fname'];
-            $ordermaster['bill_lname'] = $billinginfo['bill_lname'];
-            $ordermaster['bill_email'] = $billinginfo['bill_email'];
-            $ordermaster['bill_mobile'] = $billinginfo['bill_mobile'];
-            $ordermaster['bill_compname'] = $billinginfo['bill_compname'];
-            $ordermaster['bill_ads1'] = $billinginfo['bill_ads1'];
-            $ordermaster['bill_ads2'] = $billinginfo['bill_ads2'];
-            $ordermaster['bill_city'] = $billinginfo['bill_city'];
-            $ordermaster['bill_state'] = $billinginfo['bill_state'];
-            $ordermaster['bill_zip'] = $billinginfo['bill_zip'];
-            $ordermaster['bill_country'] = $billinginfo['bill_country'];
-            $ordermaster['ship_fname'] = $billinginfo['ship_fname'];
-            $ordermaster['ship_lname'] = $billinginfo['ship_lname'];
-            $ordermaster['ship_email'] = $billinginfo['ship_email'];
-            $ordermaster['ship_mobile'] = $billinginfo['ship_mobile'];
-            $ordermaster['ship_ads1'] = $billinginfo['ship_ads1'];
-            $ordermaster['ship_ads2'] = $billinginfo['ship_ads2'];
-            $ordermaster['ship_country'] = $billinginfo['ship_country'];
-            $ordermaster['ship_city'] = $billinginfo['ship_city'];
-            $ordermaster['ship_state'] = $billinginfo['ship_state'];
-            $ordermaster['ship_zip'] = $billinginfo['ship_zip'];
-            $ordermaster['order_type'] = '2';
-            $ordermaster->save();
-
-            $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
-            if ($order) {
-                $orderid = $order->order_id;
-                $quotationid = $orderid;
-            }
-
-            $itemdetails = '<table style="width:100%; background:#f1f1f1; padding:10px;">';
-            $itemdetails .= '<tr><th width="40%">Item</th><th width="15%" style="text-align:center;">Quantity</th><th width="25%" style="text-align:right">Price</th><th width="20%" style="text-align:right">Total</th></tr>';
-
-            foreach ($cartdata[$sesid] as $cart) {
-                $orderdetails = new OrderDetails;
-                $orderdetails['order_id'] = $orderid;
-                $orderdetails['prod_id'] = $cart['productId'];
-                $orderdetails['prod_name'] = $cart['productName'];
-                $orderdetails['prod_quantity'] = $cart['qty'];
-                $orderdetails['prod_unit_price'] = $cart['price'];
-                $orderdetails['prod_option'] = $cart['productoption'];
-                $orderdetails['Weight'] = $cart['weight'];
-                $orderdetails['prod_code'] = $cart['productcode'];
-                $orderdetails->save();
-
-                $itemdetails .= '<tr><td>' . $cart['productName'] . '</td><td style="text-align:center;">' . $cart['qty'] . '</td><td style="text-align:right">$' . number_format($cart['price'], 2) . '</td><td style="text-align:right">$' . number_format($cart['total'], 2) . '</td></tr>';
-            }
-
-            $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-            $itemdetails .= '<tr><td colspan="2"></td><td>Sub Total</td><td style="text-align:right;">$' . number_format($subtotal, 2) . '</td></tr>';
-            $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-            $itemdetails .= '<tr><td colspan="2"></td><td>' . $taxtitle . '</td><td style="text-align:right;">$' . number_format($gst, 2) . '</td></tr>';
-            $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-            $itemdetails .= '<tr><td colspan="2"></td><td>Shipping (' . $deliverytype . ')</td><td style="text-align:right;">$' . number_format($deliverycost, 2) . '</td></tr>';
-            $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-            $itemdetails .= '<tr><td colspan="2"></td><td>Packing Fee</td><td style="text-align:right;">$' . number_format($packingfee, 2) . '</td></tr>';
-            $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-            if ($discounttext != '' && $discount != 0) {
-                $itemdetails .= '<tr><td colspan="2"></td><td>Discount(' . $discounttext . ')</td><td style="text-align:right;">$' . number_format($discount, 2) . '</td></tr>';
-                $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-            }
-            $itemdetails .= '<tr><td colspan="2"></td><td><b>Grand Total</b></td><td style="text-align:right;"><b>$' . number_format($grandtotal, 2) . '</b></td></tr>';
-            $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
-
-            $itemdetails .= '</table>';
-
-            Customer::where('cust_id', '=', $userid)->update(array('cust_firstname' => $billinginfo['bill_fname'], 'cust_lastname' => $billinginfo['bill_lname'], 'cust_address1' => $billinginfo['bill_ads1'], 'cust_address2' => $billinginfo['bill_ads2'], 'cust_city' => $billinginfo['bill_city'], 'cust_state' => $billinginfo['bill_state'], 'cust_country' => $billinginfo['bill_country'], 'cust_zip' => $billinginfo['bill_zip'], 'cust_phone' => $billinginfo['bill_mobile']));
-
-            $setting = Settings::where('id', '=', '1')->first();
-            if ($setting) {
-                $companyname = $setting->company_name;
-                $adminemail = $setting->admin_email;
-                $ccemail = $setting->cc_email;
-            }
-
-            $billing = '';
-            $billing .= '<p>' . $billinginfo['bill_fname'] . ' ' . $billinginfo['bill_lname'] . '</p>';
-            $billing .= '<p>' . $billinginfo['bill_ads1'] . '</p>';
-            $billing .= '<p>' . $billinginfo['bill_ads2'] . '</p>';
-            $billing .= '<p>' . $billinginfo['bill_city'] . '</p>';
-            $billing .= '<p>' . $billinginfo['bill_state'] . ' - ' . $billinginfo['bill_zip'] . '</p>';
-            $billing .= '<p>' . $billinginfo['bill_country'] . '</p>';
-
-            $shipping = '';
-            $shipping .= '<p>' . $billinginfo['ship_fname'] . ' ' . $billinginfo['ship_lname'] . '</p>';
-            $shipping .= '<p>' . $billinginfo['ship_ads1'] . '</p>';
-            $shipping .= '<p>' . $billinginfo['ship_ads2'] . '</p>';
-            $shipping .= '<p>' . $billinginfo['ship_city'] . '</p>';
-            $shipping .= '<p>' . $billinginfo['ship_state'] . ' - ' . $billinginfo['ship_zip'] . '</p>';
-            $shipping .= '<p>' . $billinginfo['ship_country'] . '</p>';
-
-            $emailtemplate = EmailTemplate::where('template_type', '=', '10')->where('status', '=', '1')->first();
-            if ($emailtemplate) {
-
-                if (strlen($orderid) == 3) {
-                    $orderid = '0' . $orderid;
-                } elseif (strlen($orderid) == 2) {
-                    $orderid = '00' . $orderid;
-                } elseif (strlen($orderid) == 1) {
-                    $orderid = '000' . $orderid;
-                }
-                $orderid = 'Q' . date('Ymd') . $orderid;
-
-                $emailsubject = $emailtemplate->subject;
-                $emailcontent = $emailtemplate->content;
-                $logo = url('/') . '/front/img/logo.png';
-                $logo = '<img src="' . $logo . '">';
-                $emailsubject = str_replace('{companyname}', $setting->company_name, $emailsubject);
-                $emailsubject = str_replace('{date}', date("d-M-Y"), $emailsubject);
-                $emailcontent = str_replace('{companyname}', $setting->company_name, $emailcontent);
-                $emailcontent = str_replace('{companyaddress}', nl2br($setting->company_address), $emailcontent);
-                $emailcontent = str_replace('{companyfax}', $setting->company_fax, $emailcontent);
-                $emailcontent = str_replace('{companygstno}', $setting->GST_res_no, $emailcontent);
-                $emailcontent = str_replace('{logo}', $logo, $emailcontent);
-                $emailcontent = str_replace('{email}', $adminemail, $emailcontent);
-                $emailcontent = str_replace('{invoiceno}', $orderid, $emailcontent);
-                $emailcontent = str_replace('{date}', date("d-M-Y"), $emailcontent);
-                $emailcontent = str_replace('{orderstatus}', 'Payment Pending', $emailcontent);
-                $emailcontent = str_replace('{billinginfo}', $billing, $emailcontent);
-                $emailcontent = str_replace('{shippinginfo}', $shipping, $emailcontent);
-                $emailcontent = str_replace('{deliverymethod}', $deliverytype, $emailcontent);
-                $emailcontent = str_replace('{orderdetails}', $itemdetails, $emailcontent);
-
-                $custemail = $billinginfo['bill_email'];
-
-                $headers = 'From: ' . $setting->company_name . ' ' . $setting->admin_email . '' . "\r\n";
-                $headers .= 'Reply-To: ' . $setting->admin_email . "\r\n";
-                $headers .= 'X-Mailer: PHP/' . phpversion();
-                $headers .= "MIME-Version: 1.0\r\n";
-                $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
-
-                @mail($custemail, $emailsubject, $emailcontent, $headers);
-
-                //@mail($setting->admin_email, $emailsubject, $emailcontent, $headers);
-            }
-
-            if ($discounttext != '' && $discount != 0) {
-                CouponCodeUsage::insert(array('coupon_id' => $couponid, 'customer_id' => $userid, 'order_id' => $quotationid));
-            }
-
-            Session::forget('cartdata');
-            Session::forget('deliverymethod');
-            Session::forget('if_unavailable');
-            Session::forget('billinginfo');
-            Session::forget('paymentmethod');
-            Session::forget('discount');
-            Session::forget('discounttext');
-            Session::forget('couponcode');
-            Session::forget('discounttype');
-
-            return redirect('/invoice/' . $quotationid)->with('success', 'Quotation Successfully Created!');
-
-        } else {
+        if (!Session::has('billinginfo')) {
             return redirect('/');
         }
+
+        $billinginfo = Session::get('billinginfo');
+        $country = $billinginfo['ship_country'];
+
+        $cartItems = $this->cartServices->cartItems($country);
+        $cartdata = $cartItems['cartItems'];
+
+        if (empty($cartdata)) {
+            return redirect('/');
+        }
+
+        $subtotal = $cartItems['subTotal'];
+        $grandtotal = $cartItems['grandTotal'];
+        $gst = $cartItems['taxDetails']['taxTotal'];
+        $taxtitle = $cartItems['taxDetails']['taxLabel'];
+        $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
+        $countryid = $cartItems['countryId'];
+        $discount = $cartItems['discountDetails']['discountTotal'];
+        $discounttext = $cartItems['discountDetails']['title'];
+        $customer = Session::has('customer_id') ? Customer::where('cust_id', Session::get('customer_id'))->first() : [];
+        $deliverytype = $cartItems['deliveryDetails']['title'];
+        $packingfee = $cartItems['packingFees'];
+        $deliverycost = $cartItems['deliveryDetails']['deliveryTotal'];
+        $paymentmethods = PaymentMethods::where('status', '1')->get();
+
+        $orderid = $quotationid = 0;
+        $deliverymethod = Session::get('deliverymethod');
+
+        $userid = Session::get('customer_id');
+
+        $couponid = 0;
+        if (Session::has('couponcode')) {
+            $couponcode = Session::get('couponcode');
+            $coupondata = Couponcode::where('coupon_code', '=', $couponcode)->where('status', '=', '1')->first();
+            if ($coupondata) {
+                $couponid = $coupondata->id;
+            }
+        }
+
+        $ordermaster = new OrderMaster;
+        $ordermaster['user_id'] = $userid;
+        $ordermaster['ship_method'] = Session::get('deliverymethod');
+        $ordermaster['pay_method'] = '';
+        $ordermaster['shipping_cost'] = $deliverycost;
+        $ordermaster['packaging_fee'] = $packingfee;
+        $ordermaster['tax_collected'] = $gst;
+        $ordermaster['payable_amount'] = $grandtotal;
+        $ordermaster['discount_amount'] = $discount;
+        $ordermaster['discount_id'] = $couponid;
+        $ordermaster['order_status'] = '0';
+        $ordermaster['if_items_unavailabel'] = Session::get('if_unavailable');
+        $ordermaster['delivery_instructions'] = Session::get('delivery_instructions');
+
+        $ordermaster['bill_fname'] = $billinginfo['bill_fname'];
+        $ordermaster['bill_lname'] = $billinginfo['bill_lname'];
+        $ordermaster['bill_email'] = $billinginfo['bill_email'];
+        $ordermaster['bill_mobile'] = $billinginfo['bill_mobile'];
+        $ordermaster['bill_compname'] = $billinginfo['bill_compname'];
+        $ordermaster['bill_ads1'] = $billinginfo['bill_ads1'];
+        $ordermaster['bill_ads2'] = $billinginfo['bill_ads2'];
+        $ordermaster['bill_city'] = $billinginfo['bill_city'];
+        $ordermaster['bill_state'] = $billinginfo['bill_state'];
+        $ordermaster['bill_zip'] = $billinginfo['bill_zip'];
+        $ordermaster['bill_country'] = $billinginfo['bill_country'];
+        $ordermaster['ship_fname'] = $billinginfo['ship_fname'];
+        $ordermaster['ship_lname'] = $billinginfo['ship_lname'];
+        $ordermaster['ship_email'] = $billinginfo['ship_email'];
+        $ordermaster['ship_mobile'] = $billinginfo['ship_mobile'];
+        $ordermaster['ship_ads1'] = $billinginfo['ship_ads1'];
+        $ordermaster['ship_ads2'] = $billinginfo['ship_ads2'];
+        $ordermaster['ship_country'] = $billinginfo['ship_country'];
+        $ordermaster['ship_city'] = $billinginfo['ship_city'];
+        $ordermaster['ship_state'] = $billinginfo['ship_state'];
+        $ordermaster['ship_zip'] = $billinginfo['ship_zip'];
+        $ordermaster['order_type'] = '2';
+        $ordermaster->save();
+
+        $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
+        if ($order) {
+            $orderid = $order->order_id;
+            $quotationid = $orderid;
+        }
+
+        $itemdetails = '<table style="width:100%; background:#f1f1f142; padding:10px;">';
+        $itemdetails .= '<tr><th width="40%">Item</th><th width="15%" style="text-align:center;">Quantity</th><th width="25%" style="text-align:right">Price</th><th width="20%" style="text-align:right">Total</th></tr>';
+        $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
+        foreach ($cartdata as $cart) {
+            $orderdetails = new OrderDetails;
+            $orderdetails['order_id'] = $orderid;
+            $orderdetails['prod_id'] = $cart['productId'];
+            $orderdetails['prod_name'] = $cart['productName'];
+            $orderdetails['prod_quantity'] = $cart['qty'];
+            $orderdetails['prod_unit_price'] = $cart['price'];
+            $orderdetails['prod_option'] = $cart['productoption'];
+            $orderdetails['Weight'] = $cart['weight'];
+            $orderdetails['prod_code'] = $cart['productcode'];
+            $orderdetails->save();
+            $itemdetails .= '<tr><td>' . $cart['productName'] . '</td><td style="text-align:center;">' . $cart['qty'] . '</td><td style="text-align:right">$' . number_format($cart['price'], 2) . '</td><td style="text-align:right">$' . number_format($cart['total'], 2) . '</td></tr>';
+        }
+
+        $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
+        $itemdetails .= '<tr><td colspan="2"></td><td>Sub Total</td><td style="text-align:right;">$' . number_format($subtotal, 2) . '</td></tr>';
+        $itemdetails .= '<tr><td colspan="2"></td><td>' . $taxtitle . '</td><td style="text-align:right;">$' . number_format($gst, 2) . '</td></tr>';
+        $itemdetails .= '<tr><td colspan="2"></td><td>Shipping (' . $deliverytype . ')</td><td style="text-align:right;">$' . number_format($deliverycost, 2) . '</td></tr>';
+        $itemdetails .= '<tr><td colspan="2"></td><td>Packing Fee</td><td style="text-align:right;">$' . number_format($packingfee, 2) . '</td></tr>';
+        if ($discounttext != '' && $discount != 0) {
+            $itemdetails .= '<tr><td colspan="2"></td><td>Discount(' . $discounttext . ')</td><td style="text-align:right;">$' . number_format($discount, 2) . '</td></tr>';
+        }
+        $itemdetails .= '<tr><td colspan="2"></td><td><b>Grand Total</b></td><td style="text-align:right;"><b>$' . number_format($grandtotal, 2) . '</b></td></tr>';
+        $itemdetails .= '</table>';
+
+        Customer::where('cust_id', '=', $userid)->update(['cust_firstname' => $billinginfo['bill_fname'], 'cust_lastname' => $billinginfo['bill_lname'], 'cust_address1' => $billinginfo['bill_ads1'], 'cust_address2' => $billinginfo['bill_ads2'], 'cust_city' => $billinginfo['bill_city'], 'cust_state' => $billinginfo['bill_state'], 'cust_country' => $billinginfo['bill_country'], 'cust_zip' => $billinginfo['bill_zip'], 'cust_phone' => $billinginfo['bill_mobile']]);
+
+        $setting = Settings::where('id', '1')->first();
+        if ($setting) {
+            $companyname = $setting->company_name;
+            $adminemail = $setting->admin_email;
+            $ccemail = $setting->cc_email;
+        }
+
+        $billing = '';
+        $billing .= '<p style="margin:0;">' . $billinginfo['bill_fname'] . ' ' . $billinginfo['bill_lname'] . '</p>';
+        $billing .= '<p style="margin:0;">' . $billinginfo['bill_ads1'] . '</p>';
+        $billing .= '<p style="margin:0;">' . $billinginfo['bill_ads2'] . '</p>';
+        $billing .= '<p style="margin:0;">' . $billinginfo['bill_city'] . '</p>';
+        $billing .= '<p style="margin:0;">' . $billinginfo['bill_state'] . ' - ' . $billinginfo['bill_zip'] . '</p>';
+        $billing .= '<p style="margin:0;">' . $billinginfo['bill_country'] . '</p>';
+
+        $shipping = '';
+        $shipping .= '<p style="margin:0;">' . $billinginfo['ship_fname'] . ' ' . $billinginfo['ship_lname'] . '</p>';
+        $shipping .= '<p style="margin:0;">' . $billinginfo['ship_ads1'] . '</p>';
+        $shipping .= '<p style="margin:0;">' . $billinginfo['ship_ads2'] . '</p>';
+        $shipping .= '<p style="margin:0;">' . $billinginfo['ship_city'] . '</p>';
+        $shipping .= '<p style="margin:0;">' . $billinginfo['ship_state'] . ' - ' . $billinginfo['ship_zip'] . '</p>';
+        $shipping .= '<p style="margin:0;">' . $billinginfo['ship_country'] . '</p>';
+
+        $emailtemplate = EmailTemplate::where([['template_type', '=', '10'], ['status', '=', '1']])->first();
+        if ($emailtemplate) {
+
+            if (strlen($orderid) == 3) {
+                $orderid = '0' . $orderid;
+            } elseif (strlen($orderid) == 2) {
+                $orderid = '00' . $orderid;
+            } elseif (strlen($orderid) == 1) {
+                $orderid = '000' . $orderid;
+            }
+            $orderid = 'Q' . date('Ymd') . $orderid;
+
+            $emailsubject = $emailtemplate->subject;
+            $emailcontent = $emailtemplate->content;
+            $logo = url('/') . '/front/img/logo.png';
+            $logo = '<img src="' . $logo . '">';
+            $emailsubject = str_replace('{companyname}', $setting->company_name, $emailsubject);
+            $emailsubject = str_replace('{date}', date("d-M-Y"), $emailsubject);
+            $emailcontent = str_replace('{companyname}', $setting->company_name, $emailcontent);
+            $emailcontent = str_replace('{companyaddress}', nl2br($setting->company_address), $emailcontent);
+            $emailcontent = str_replace('{companyfax}', $setting->company_fax, $emailcontent);
+            $emailcontent = str_replace('{companygstno}', $setting->GST_res_no, $emailcontent);
+            $emailcontent = str_replace('{logo}', $logo, $emailcontent);
+            $emailcontent = str_replace('{email}', $adminemail, $emailcontent);
+            $emailcontent = str_replace('{invoiceno}', $orderid, $emailcontent);
+            $emailcontent = str_replace('{date}', date("d-M-Y"), $emailcontent);
+            $emailcontent = str_replace('{orderstatus}', 'Payment Pending', $emailcontent);
+            $emailcontent = str_replace('{billinginfo}', $billing, $emailcontent);
+            $emailcontent = str_replace('{shippinginfo}', $shipping, $emailcontent);
+            $emailcontent = str_replace('{deliverymethod}', $deliverytype, $emailcontent);
+            $emailcontent = str_replace('{orderdetails}', $itemdetails, $emailcontent);
+
+            $custemail = $billinginfo['bill_email'];
+
+            $headers = 'From: ' . $setting->company_name . ' ' . $setting->admin_email . '' . "\r\n";
+            $headers .= 'Reply-To: ' . $setting->admin_email . "\r\n";
+            $headers .= 'X-Mailer: PHP/' . phpversion();
+            $headers .= "MIME-Version: 1.0\r\n";
+            $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+
+            /*Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
+        $message->to($custemail)
+        ->subject($emailsubject)
+        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
+        ->setBody($emailcontent, 'text/html');
+        });*/
+
+        }
+
+        if ($discounttext != '' && $discount != 0) {
+            CouponCodeUsage::insert(['coupon_id' => $couponid, 'customer_id' => $userid, 'order_id' => $quotationid]);
+        }
+
+        DB::table('cart_details')->where('user_id', '=', $userid)->delete();
+
+        //Clear sessions
+        $sessionsValues = ['cartdata', 'deliverymethod', 'if_unavailable', 'delivery_instructions', 'billinginfo', 'paymentmethod', 'discount', 'discounttext',
+            'couponcode', 'discounttype', 'old_order_id'];
+        foreach ($sessionsValues as $session) {Session::forget($session);}
+
+        return redirect('/invoice/' . $quotationid)->with('success', 'Quotation Successfully Created!');
+
     }
 
     public function invoice($orderid)
     {
-        $orders = OrderMaster::where('order_id', '=', $orderid)->first();
-        $orderdetails = OrderDetails::where('order_id', '=', $orderid)->get();
-        $settings = Settings::where('Id', '=', '1')->first();
-        $bannerads = Bannerads::where('PageId', '=', 'invoice')->where('ban_status', '=', '1')->orderBy('display_order', 'asc')->get();
-        return view('public/Cart.invoice', compact('orders', 'orderdetails', 'settings', 'bannerads'));
+        if (Session::has('customer_id')) {
+            $orders = OrderMaster::where('order_id', $orderid)->first();
+            if ($orders->user_id == Session::get('customer_id')) {
+                $orderdetails = OrderDetails::where('order_id', $orderid)->get();
+                $settings = Settings::where('Id', '1')->first();
+                $bannerads = Bannerads::where([['PageId', '=', 'invoice'],['ban_status', '=', '1']])->orderBy('display_order', 'asc')->get();
+                $shipCountryData = Country::where('countrycode', $orders->ship_country)->first();
+                $billCountryData = Country::where('countrycode', $orders->bill_country)->first();
+                return view('public/Cart.invoice', compact('orders', 'orderdetails', 'settings', 'bannerads', 'shipCountryData', 'billCountryData'));
+            } else {
+                $staticpage = PageContent::where('UniqueKey', 'page-not-found')->first();
+                $bannerads = Bannerads::where([['ban_status', '=', '1'],['PageId', '=', 'page-not-found']])->orderBy('display_order', 'asc')->get();
+                return view('public.staticpages', compact('staticpage', 'bannerads'));
+            }
+        }
+
+        return redirect('/login');
     }
 
     public function applycouponcode(Request $request)
