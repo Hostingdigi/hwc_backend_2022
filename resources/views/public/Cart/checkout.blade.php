@@ -45,7 +45,7 @@
 							<select class="country" name="bill_country" id="bill_country" required>
 								<option value="">Select Country</option>
 								@foreach($countries as $country)
-								<option value="{{ $country->countrycode }}"  @if($customer) @if($country->countryid == $customer->cust_country || $country->countrycode == $customer->cust_country) selected @endif @endif>{{ $country->countryname }}</option>
+								<option value="{{ $country->countrycode }}"  @if($countryCode == $country->countrycode) selected @endif >{{ $country->countryname }}</option>
 								@endforeach
 							</select>
 						</div>

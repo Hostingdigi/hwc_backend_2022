@@ -109,7 +109,7 @@
                                 <div class="col-md-7">
                                     <div>
                                         <input type="checkbox" name="cust_terms_agreed" id="cust_terms_agreed" required value="1">
-                                        <label for="cust_terms_agreed">I have read the <a href="{{ url('/terms-and-conditions') }}">terms and condition</a>.</label>
+                                        <label for="cust_terms_agreed">I have read the <a href="{{ url('/terms-and-conditions') }}" style="text-decoration:underline;">terms and condition</a>.</label>
                                     </div>
                                     <div>
                                         <input type="checkbox" name="cust_newsletter" id="cust_newsletter" value="1">

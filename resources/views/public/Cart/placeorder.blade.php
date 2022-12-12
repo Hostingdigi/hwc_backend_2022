@@ -97,7 +97,7 @@
             						@endif
 									</li>
 									<li class="subtot" style="border-top: 1px solid #e5e5e5; padding-top:12px;">{{ $taxtitle }} <span>S${{ number_format(str_replace(',','',$gst), 2) }}</span></li>
-									<li>Shipping ({{ $deliverytype }}) <span>S${{ number_format(str_replace(',','',$deliverycost), 2) }}</span></li>
+									<li>Shipping ({{ $deliverytype }}) <span>S${{ number_format($deliverycost, 2) }}</span></li>
 									<li>Packaging Fee <span>S${{ number_format($packingfee,2) }}</span></li>
 									@if($discount != 0 && $discounttext != '')<li id="dis">Discount({{ $discounttext }})<span>S${{ number_format(str_replace(',','',$discount), 2) }}</span></li>@endif
 									<li style="font-size: 29px;font-weight: bolder;">Grand Total <span>S${{ number_format(str_replace(',','',$grandtotal),2) }}</span></li>

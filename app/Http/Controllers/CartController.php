@@ -303,7 +303,7 @@ class CartController extends Controller
         $gst = $cartItems['taxDetails']['taxTotal'];
         $taxtitle = $cartItems['taxDetails']['taxLabel'];
         $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
-        $country = $cartItems['countryCode'];
+        $country = $countryCode = $cartItems['countryCode'];
         $countryid = $cartItems['countryId'];
         $discount = $cartItems['discountDetails']['discountTotal'];
         $discounttext = $cartItems['discountDetails']['title'];
@@ -358,7 +358,7 @@ class CartController extends Controller
 
         $countries = Country::where('country_status', '1')->orderBy('countryname', 'ASC')->get();
 
-        return view('public/Cart.checkout', compact('customer', 'cartdata', 'subtotal', 'gst', 'grandtotal', 'deliverymethods', 'countries', 'taxLabelOnly', 'taxtitle', 'country', 'discounttext', 'discount', 'showfreedeliverymsg'));
+        return view('public/Cart.checkout', compact('customer', 'cartdata', 'countryCode', 'subtotal', 'gst', 'grandtotal', 'deliverymethods', 'countries', 'taxLabelOnly', 'taxtitle', 'country', 'discounttext', 'discount', 'showfreedeliverymsg'));
 
     }
 

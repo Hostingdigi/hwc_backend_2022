@@ -71,17 +71,14 @@
 							<table class="table table-striped table-bordered">
 								<tr>
 									<th>Date</th>
-									<th>Item(s)</th>									
+									<th>Items</th>									
 									<th>Next Delivery Date</th>
 									<th>Tracking No</th>															
 								</tr>
 								@foreach($orderdeliverydetails as $orderdeliverydetail)
 									<tr>
 										<td>
-										
-										@php	
-										
-										
+										@php											
 											$nextdeliverydate = $shippingby = $trackingnumber = $deldate = '';
 											$deliveryinfo = \App\Models\OrderDeliveryInfo::where('delivery_id', '=', $orderdeliverydetail->delivery_info_id)->where('order_id', '=', $orderdeliverydetail->order_id)->select('next_delivery_date', 'shipping_by', 'ship_tracking_number', 'delivered_date')->first();
 											if($deliveryinfo) {
@@ -96,12 +93,10 @@
 										@php
 											$productname = '';
 											$productids = [];
-											$deldetails = \App\Models\OrderDeliveryDetails::where('delivery_info_id', '=', $orderdeliverydetail->delivery_info_id)->where('order_id', '=', $orderdeliverydetail->order_id)->where('detail_id', '=', $orderdeliverydetail->detail_id)->get();
+											$deldetails = \App\Models\OrderDeliveryDetails::where('delivery_info_id', '=', $orderdeliverydetail->delivery_info_id)->where('order_id', '=', $orderdeliverydetail->order_id)->get();
 											if($deldetails) {
-												
 												foreach($deldetails as $deldetail) {
-													
-													$orddetails = \App\Models\OrderDetails::where('detail_id', '=', $deldetail->detail_id)->select('prod_name', 'prod_option')->get();
+													$orddetails = \App\Models\OrderDetails::where('prod_id', '=', $deldetail->prod_id)->select('prod_name', 'prod_option')->get();
 													foreach($orddetails as $orddetail) {
 														if(!in_array($deldetail->prod_id, $productids)) {
 															
@@ -115,7 +110,6 @@
 															
 															echo '<b>'.$orddetail->prod_name.'</b><br>';
 															if($orddetail->prod_option != '') {
-																
 																echo 'Option: '.$orddetail->prod_option.'<br>';
 															}
 															if($productweight != '') {

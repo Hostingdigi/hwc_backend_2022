@@ -131,7 +131,7 @@
               </div>
 
               <!-- Button -->
-              <button class="btn btn-dark" type="submit">
+              <button class="redbtn" type="submit">
                 Submit
               </button>
 

@@ -95,7 +95,7 @@
 
                         <!-- Text -->
                         <p class="mb-0 font-size-sm font-weight-bold">
-							${{ number_format($orders->payable_amount, 2) }}
+							S${{ number_format($orders->payable_amount, 2) }}
                         </p>
 
                       </div>
@@ -123,66 +123,95 @@
 					  <div class="col-12 col-md-4">
 
 						<!-- Heading -->
-						<p class="mb-4 font-weight-bold">
-						  Billing Address:
+						<p class="mb-1 font-weight-bold">
+						  Billing Info:
 						</p>
 
 						<p class="mb-7 mb-md-0 text-gray-500">
+						   @if(!empty($orders->bill_compname))
+    						{{ $orders->bill_compname }}
+    						<br>
+    					@endif
 						{{ $orders->bill_fname.' '.$orders->bill_lname }}<br>
 						{{ $orders->bill_ads1 }}<br>
 						@if($orders->bill_ads2){{ $orders->bill_ads2 }}<br>@endif
 						{{ $orders->bill_city }}<br>
-						{{ $orders->bill_state }}<br>
-						{{ $orders->bill_country }}<br><br>
+						{{ $orders->bill_state }}<br>						
+						@if(!empty($billCountryData))
+						{{ $billCountryData->countryname.' - '.$orders->bill_zip }}<br>
+						@else
+						{{ ' - '.$orders->bill_zip }}<br>
+						@endif
 						{{ $orders->bill_email }}<br>
 						{{ $orders->bill_mobile }}<br>
+						<br>
 						</p>
 
 					  </div>
 					  <div class="col-12 col-md-4">
-
+					  
+						@php
+							$shippinginfo = '';
+							$shipping = \App\Models\ShippingMethods::where('Id', '=', $orders->ship_method)->select('EnName')->first();
+							if($shipping) {
+								$shippinginfo = $shipping->EnName;
+							}
+						@endphp
+						
 						<!-- Heading -->
-						<p class="mb-4 font-weight-bold">
-						  Shipping Address:
+						<p class="mb-1 font-weight-bold">
+						  Shipping Info:
 						</p>
 
 						<p class="mb-7 mb-md-0 text-gray-500">
-							{{ $orders->ship_fname.' '.$orders->ship_lname }}<br>
-							{{ $orders->ship_ads1 }}<br>
-							@if($orders->ship_ads2){{ $orders->ship_ads2 }}<br>@endif
-							{{ $orders->ship_city }}<br>
-							{{ $orders->ship_state }}<br>
-							{{ $orders->ship_country }}<br><br>
-							{{ $orders->ship_email }}<br>
-							{{ $orders->ship_mobile }}<br>
+							@if(stripos($shippinginfo, 'Self Collect') !== false)
+								{{ $shippinginfo }}<br><br>
+							@else	
+								{{ $orders->ship_fname.' '.$orders->ship_lname }}<br>
+								{{ $orders->ship_ads1 }}<br>
+								@if($orders->ship_ads2){{ $orders->ship_ads2 }}<br>@endif
+								{{ $orders->ship_city }}<br>
+								{{ $orders->ship_state }}<br>							
+								@if(!empty($shipCountryData))
+        						{{ $shipCountryData->countryname.' - '.$orders->ship_zip }}<br>
+        						@else
+        						{{ ' - '.$orders->ship_zip }}<br>
+        						@endif
+								{{ $orders->ship_email }}<br>
+								{{ $orders->ship_mobile }}<br>
+								
+								<br>
+							@endif
 						</p>
 
 					  </div>
 					  <div class="col-12 col-md-4">
 
 						<!-- Heading -->
-						<p class="mb-4 font-weight-bold">
+						<p class="mb-1 font-weight-bold">
 						  Shipping Method:
 						</p>
 
 						<p class="mb-7 text-gray-500">
-							@php
-								$shipping = \App\Models\ShippingMethods::where('Id', '=', $orders->ship_method)->select('EnName')->first();
-							@endphp
-							@if($shipping)
-								{{ $shipping->EnName }}
-							@endif
+						{{ $shippinginfo }}
 						</p>
 
 						<!-- Heading -->
-						<p class="mb-4 font-weight-bold">
+						<p class="mb-0 font-weight-bold">
 						  Payment Method:
 						</p>
 
-						<p class="mb-0 text-gray-500">
+						<p class="mb-4 text-gray-500">
 						{{ $orders->pay_method }}
 						</p>
-
+						@if($orders->delivery_instructions != '')
+							<p class="mb-0 font-weight-bold">
+							Notes:
+							</p>
+							<p class="mb-0 text-gray-500">
+							{{ $orders->delivery_instructions }}
+							</p>
+						@endif
 					  </div>
 					</div>
 					
@@ -199,7 +228,7 @@
 					@foreach($orderdetails as $orderdetail)
 						@php
 							$productimage = $uniquekey = $productcolor = $productsize = $productweight = '';
-							$product = \App\Models\Product::where('Id', '=', $orderdetail->prod_id)->select('Image', 'UniqueKey', 'Color', 'Size', 'Weight')->first();
+							$product = \App\Models\Product::where('Id', '=', $orderdetail->prod_id)->select('Image', 'UniqueKey', 'Color', 'Size', 'Weight', 'Price')->first();
 							if($product) {
 								$productimage = $product->Image;
 								$uniquekey = $product->UniqueKey;
@@ -226,20 +255,17 @@
 										@if($orderdetail->prod_option != '')
 											<span class="text-muted">Option: {{ $orderdetail->prod_option }}</span><br>
 										@endif
-										@if($productweight != '')
-											<span class="text-muted">Weight: {{ $productweight }} Kg</span><br>
-										@endif
-										@if($productsize != '')
-											<span class="text-muted">Size: {{ $productsize }}</span><br>
-										@endif
-										@if($productcolor != '')
-											<span class="text-muted">Color: {{ $productcolor }}</span><br>
-										@endif
-										<span class="text-muted">${{ $orderdetail->prod_unit_price * $orderdetail->prod_quantity }}</span>
+									
+										<span class="text-muted">S${{ number_format(($product->Price * $orderdetail->prod_quantity), 2) }}
+										
+										</span>
 									</p>
 									<!-- Text -->
 									<div class="font-size-sm text-muted">
-										<span>{{ $orderdetail->prod_quantity }} X ${{ $orderdetail->prod_unit_price }}</span>
+										<span>{{ $orderdetail->prod_quantity }} X S${{ $product->Price }}</span>
+										@if($product->Price != $orderdetail->prod_unit_price)
+											&nbsp;<span style="color:green;">(Price/ Discount Rate has been adjusted)</span>
+										@endif
 									</div>
 								</div>
 								<div class="col-4 col-md-2">
@@ -248,7 +274,7 @@
 										Total Qty: {{ $orderdetail->prod_quantity }}
 										@php
 											$delivered = $refunded = 0;
-											$deliverydetails = \App\Models\OrderDeliveryDetails::where('order_id', '=', $orders->order_id)->where('prod_id', '=', $orderdetail->prod_id)->get();
+											$deliverydetails = \App\Models\OrderDeliveryDetails::where('order_id', '=', $orders->order_id)->where('prod_id', '=', $orderdetail->prod_id)->where('detail_id', '=', $orderdetail->detail_id)->get();
 										@endphp
 										@if($deliverydetails)
 											@foreach($deliverydetails as $deliverydetail)											
@@ -292,23 +318,19 @@
                 <ul class="list-group list-group-sm list-group-flush-y list-group-flush-x">
                   <li class="list-group-item d-flex">
                     <span>Subtotal</span>
-                    @if($orders->ship_country=='SG')
-                    <span class="ml-auto">${{ number_format(($orders->payable_amount + $orders->discount_amount) - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected), 2) }}</span>
-                    @else
-                    <span class="ml-auto">${{ number_format(($orders->payable_amount + $orders->discount_amount) - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected), 2) }}</span>
-                    @endif
+                    <span class="ml-auto">S${{ number_format(($orders->payable_amount + $orders->discount_amount) - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected), 2) }}</span>
                   </li>
                   <li class="list-group-item d-flex">
                     <span>Tax</span>
-                    <span class="ml-auto">${{ number_format($orders->tax_collected, 2) }}</span>
+                    <span class="ml-auto">S${{ number_format($orders->tax_collected, 2) }}</span>
                   </li>
                   <li class="list-group-item d-flex">
                     <span>Shipping</span>
-                    <span class="ml-auto">${{ number_format($orders->shipping_cost, 2) }}</span>
+                    <span class="ml-auto">S${{ number_format($orders->shipping_cost, 2) }}</span>
                   </li>
 				  <li class="list-group-item d-flex">
                     <span>Packaging Fee</span>
-                    <span class="ml-auto">${{ number_format($orders->packaging_fee, 2) }}</span>
+                    <span class="ml-auto">S${{ number_format($orders->packaging_fee, 2) }}</span>
                   </li>
 				  @if($orders->discount_id > 0)
 						@php
@@ -320,29 +342,31 @@
 							@if($coupondata->discount_type == 1)
 								<li class="list-group-item d-flex">
 									<span>Discount({{ $coupondata->discount.'%' }})</span>
-									<span class="ml-auto">${{ number_format($orders->discount_amount, 2) }}</span>
+									<span class="ml-auto">S${{ number_format($orders->discount_amount, 2) }}</span>
 								</li>
 							@else
 								<li class="list-group-item d-flex">
-									<span>Discount({{ '$'.$coupondata->discount }})</span>
-									<span class="ml-auto">${{ number_format($orders->discount_amount, 2) }}</span>
+									<span>Discount({{ 'S$'.$coupondata->discount }})</span>
+									<span class="ml-auto">S${{ number_format($orders->discount_amount, 2) }}</span>
 								</li>
 							@endif
 						@endif	
 					@endif	
                   <li class="list-group-item d-flex font-size-lg font-weight-bold">
                     <span>Grand Total</span>
-                    <span class="ml-auto">${{ number_format($orders->payable_amount, 2) }}</span>
+                    <span class="ml-auto">S${{ number_format($orders->payable_amount, 2) }}</span>
                   </li>
                 </ul>
 
               </div>
             </div>
-			<!--div class="row">
-				<div class="col-md-12">
+			@if($orders->order_status == 0)
+			<div class="row">
+				<div class="col-md-12" style="color:green;">
 					Disclaimer: Price/ Discount rate is subject to change without prior notice
 				</div>
-			</div-->
+			</div>
+			@endif
 			<div class="row">
 						<div class="col-md-8"></div>
 					  <div class="col-12 col-md-4">
@@ -352,9 +376,9 @@
 						</a>						
 						@else
 							<!--a class="btn btn-lg btn-block btn-outline-dark" href="{{ url('/downloadinvoice/'.$orders->order_id) }}"-->
-						<!--a href="#" class="btn btn-lg btn-block btn-outline-dark">
+						<a href="{{ url('/') }}/pdf/pdf/generatepdf.php?orderid={{ $orders->order_id }}" class="btn btn-lg btn-block btn-outline-dark">
 							 DOWNLOAD INVOICE
-						</a-->
+						</a>
 						@endif
 					  </div>
 					</div>

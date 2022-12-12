@@ -92,7 +92,7 @@
 
 								<!-- Text -->
 								<p class="mb-0 font-size-sm font-weight-bold">
-								  ${{ number_format($order->payable_amount, 2) }}
+								  S${{ number_format($order->payable_amount, 2) }}
 								</p>
 
 							  </div>

@@ -47,6 +47,16 @@
                         <p class="mb-lg-0 font-size-sm font-weight-bold">
 						@php 
 							$orderid = $orders->order_id;
+							
+							$quoteexpiry = 0;
+							$settings = \App\Models\PaymentSettings::first();
+							if($settings) {
+								$quoteexpiry = $settings->quotation_expiry_day;
+							}
+							
+							$curdate = date('Y-m-d H:i:s');
+							$expiredate = date('Y-m-d H:i:s', strtotime($orders->created_at.'+'.$quoteexpiry.' days'));
+							
 						@endphp
 						@if(strlen($orders->order_id) == 3)
 							@php $orderid = '0'.$orders->order_id; @endphp
@@ -72,7 +82,13 @@
 
                         <!-- Text -->
                         <p class="mb-0 font-size-sm font-weight-bold">
-							@if($orders->group_admin_approval == 0) Waiting for Approval @else Approved @endif
+							@if($orders->quotation_status == 0)
+								  New
+							  @elseif($orders->quotation_status == 1)
+								  Converted (Invoice)
+							  @elseif(strtotime($expiredate) < strtotime($curdate)) {
+								  Expired	
+							  @endif 
                         </p>
 
                       </div>
@@ -82,11 +98,11 @@
                       <div class="col-6 col-lg-4">
 
                         <!-- Heading -->
-                        <h6 class="heading-xxxs text-muted">Order Amount:</h6>
+                        <h6 class="heading-xxxs text-muted">Valid 7 days</h6>
 
                         <!-- Text -->
                         <p class="mb-0 font-size-sm font-weight-bold">
-							${{ number_format($orders->payable_amount, 2) }}
+							S${{ number_format($orders->payable_amount, 2) }}
                         </p>
 
                       </div>
@@ -107,7 +123,14 @@
               <div class="card-body">
 
                 <!-- Heading -->
-                <h6 class="mb-7">Billing & Shipping Details</h6>
+				<div class="row">
+					<div class="col-md-6">
+					<h6 class="mb-7">Billing & Shipping Details</h6>
+					</div>
+					<div class="col-md-6">
+					<h6 class="mb-7">Date: {{ date('d M Y', strtotime($orders->date_entered)) }}</h6>
+					</div>
+				</div>
 
                 <!-- Content -->
                 <div class="row">
@@ -115,37 +138,65 @@
 
                     <!-- Heading -->
                     <p class="mb-4 font-weight-bold">
-                      Billing Address:
+                      Billing Info:
                     </p>
 
                     <p class="mb-7 mb-md-0 text-gray-500">
+                    @if(!empty($orders->bill_compname))
+						{{ $orders->bill_compname }}
+						<br>
+					@endif
 					{{ $orders->bill_fname.' '.$orders->bill_lname }}<br>
 					{{ $orders->bill_ads1 }}<br>
 					@if($orders->bill_ads2){{ $orders->bill_ads2 }}<br>@endif
 					{{ $orders->bill_city }}<br>
-					{{ $orders->bill_state }}<br>
-					{{ $orders->bill_country }}<br><br>
+					{{ $orders->bill_state }}<br>					
+					@if(!empty($billCountryData))
+						{{ $billCountryData->countryname.' - '.$orders->bill_zip }}<br>
+						@else
+						{{ ' - '.$orders->bill_zip }}<br>
+						@endif
 					{{ $orders->bill_email }}<br>
 					{{ $orders->bill_mobile }}<br>
+					
+						<br>
                     </p>
-
+                    
                   </div>
                   <div class="col-12 col-md-4">
+				  
+					@php
+						$shippinginfo = '';
+						$shipping = \App\Models\ShippingMethods::where('Id', '=', $orders->ship_method)->select('EnName')->first();
+						if($shipping) {
+							$shippinginfo = $shipping->EnName;
+						}
+					@endphp	
 
                     <!-- Heading -->
                     <p class="mb-4 font-weight-bold">
-                      Shipping Address:
+                      Shipping Info:
                     </p>
 
-                    <p class="mb-7 mb-md-0 text-gray-500">
+                    <p class="mb-7 mb-md-0 text-gray-500" style="vertical-align:top;">
+						@if(stripos($shippinginfo, 'Self Collect') !== false)
+						{{ $shippinginfo }}<br><br>
+						@else
 						{{ $orders->ship_fname.' '.$orders->ship_lname }}<br>
 						{{ $orders->ship_ads1 }}<br>
 						@if($orders->ship_ads2){{ $orders->ship_ads2 }}<br>@endif
 						{{ $orders->ship_city }}<br>
-						{{ $orders->ship_state }}<br>
-						{{ $orders->ship_country }}<br><br>
+						{{ $orders->ship_state }}<br>						
+						@if(!empty($shipCountryData))
+						{{ $shipCountryData->countryname.' - '.$orders->ship_zip }}<br>
+						@else
+						{{ ' - '.$orders->ship_zip }}<br>
+						@endif
 						{{ $orders->ship_email }}<br>
 						{{ $orders->ship_mobile }}<br>
+						
+						<br>
+						@endif
                     </p>
 
                   </div>
@@ -157,12 +208,7 @@
                     </p>
 
                     <p class="mb-7 text-gray-500">
-						@php
-							$shipping = \App\Models\ShippingMethods::where('Id', '=', $orders->ship_method)->select('EnName')->first();
-						@endphp
-						@if($shipping)
-							{{ $shipping->EnName }}
-						@endif
+					{{ $shippinginfo }}
                     </p>
 
                     <!-- Heading -->
@@ -207,21 +253,13 @@
 										@if($orderdetail->prod_option != '')
 											<span class="text-muted">Option: {{ $orderdetail->prod_option }}</span><br>
 										@endif
-										@if($product->Weight != '')
-											<span class="text-muted">Weight: {{ $product->Weight }} Kg</span><br>
-										@endif
-										@if($product->Size != '')
-											<span class="text-muted">Size: {{ $product->Size }}</span><br>
-										@endif
-										@if($product->Color != '')
-											<span class="text-muted">Color: {{ $product->Color }}</span><br>
-										@endif
-										<span class="text-muted">${{ $orderdetail->prod_unit_price * $orderdetail->prod_quantity }}</span>
+										
+										<span class="text-muted">S${{ number_format(($orderdetail->prod_unit_price * $orderdetail->prod_quantity), 2) }}</span>
 									</p>
 
 									<!-- Text -->
 									<div class="font-size-sm text-muted">
-										<span>{{ $orderdetail->prod_quantity }} X ${{ $orderdetail->prod_unit_price }}</span>
+										<span>{{ $orderdetail->prod_quantity }} X S${{ $orderdetail->prod_unit_price }}</span>
 									</div>
 
 								</div>
@@ -245,19 +283,19 @@
                 <ul class="list-group list-group-sm list-group-flush-y list-group-flush-x">
                   <li class="list-group-item d-flex">
                     <span>Subtotal</span>
-                    <span class="ml-auto">${{ number_format($orders->payable_amount - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected), 2) }}</span>
+                    <span class="ml-auto">S${{ number_format($orders->payable_amount - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected), 2) }}</span>
                   </li>
                   <li class="list-group-item d-flex">
                     <span>Tax</span>
-                    <span class="ml-auto">${{ number_format($orders->tax_collected, 2) }}</span>
+                    <span class="ml-auto">S${{ number_format($orders->tax_collected, 2) }}</span>
                   </li>
                   <li class="list-group-item d-flex">
                     <span>Shipping</span>
-                    <span class="ml-auto">${{ number_format($orders->shipping_cost, 2) }}</span>
+                    <span class="ml-auto">S${{ number_format($orders->shipping_cost, 2) }}</span>
                   </li>
 				  <li class="list-group-item d-flex">
                     <span>Packaging Fee</span>
-                    <span class="ml-auto">${{ number_format($orders->packaging_fee, 2) }}</span>
+                    <span class="ml-auto">S${{ number_format($orders->packaging_fee, 2) }}</span>
                   </li>
 				  @if($orders->discount_id > 0)
 						@php
@@ -269,19 +307,19 @@
 							@if($coupondata->discount_type == 1)
 								<li class="list-group-item d-flex">
 									<span>Discount({{ $coupondata->discount.'%' }})</span>
-									<span class="ml-auto">${{ number_format($orders->discount_amount, 2) }}</span>
+									<span class="ml-auto">S${{ number_format($orders->discount_amount, 2) }}</span>
 								</li>
 							@else
 								<li class="list-group-item d-flex">
-									<span>Discount({{ '$'.$coupondata->discount }})</span>
-									<span class="ml-auto">${{ number_format($orders->discount_amount, 2) }}</span>
+									<span>Discount({{ 'S$'.$coupondata->discount }})</span>
+									<span class="ml-auto">S${{ number_format($orders->discount_amount, 2) }}</span>
 								</li>
 							@endif
 						@endif	
 					@endif	
                   <li class="list-group-item d-flex font-size-lg font-weight-bold">
                     <span>Grand Total</span>
-                    <span class="ml-auto">${{ number_format($orders->payable_amount, 2) }}</span>
+                    <span class="ml-auto">S${{ number_format($orders->payable_amount, 2) }}</span>
                   </li>
                 </ul>
 
@@ -292,13 +330,6 @@
 					
 				<div class="row">
 					
-					
-					
-					<div class="col-12 col-md-4">					
-					<!--a class="btn btn-lg btn-block btn-outline-dark" href="{{ url('/downloadquotation/'.$orders->order_id) }}">
-					  DOWNLOAD QUOTATION
-					</a-->
-					</div>
 					<div class="col-12 col-md-4">
 					@if($showapprove == 1 && $orders->group_admin_approval == 0)
 					<a class="btn btn-lg btn-block btn-outline-dark" href="{{ url('/approvequotation/'.$orders->order_id) }}">
@@ -310,11 +341,14 @@
 					@if($showproceed == 1 && $orders->quotation_status == 0)
 					<a class="btn btn-lg btn-block btn-outline-dark" href="{{ url('/makepayment/'.$orders->order_id) }}">
 					  PROCEED PAYMENT
-					</a>
-					
+					</a>					
 					@endif
 					</div>
-					
+					<div class="col-12 col-md-4">					
+					<a href="{{ url('/') }}/pdf/pdf/generatepdf.php?orderid={{ $orders->order_id }}" class="btn btn-lg btn-block btn-outline-dark">
+						@if($orders->quotation_status == 0) DOWNLOAD QUOTATION @elseif($orders->quotation_status == 1) DOWNLOAD INVOICE @endif
+					</a>
+					</div>
 				</div>
 				@else
 					<div class="row">

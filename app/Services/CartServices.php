@@ -7,6 +7,8 @@ use App\Models\Country;
 use App\Models\Customer;
 use App\Models\PaymentSettings;
 use App\Models\ShippingMethods;
+use App\Models\InternationalShipping;
+use App\Models\LocalShipping;
 use Session;
 
 class CartServices
@@ -31,15 +33,21 @@ class CartServices
         $settings = PaymentSettings::where('Id', '1')->select('min_package_fee')->first();
         $packingFee = $cartData['countryCode'] != 'SG' ? $settings->min_package_fee : 0;
 
-        if (Session::has('customer_id') && empty($countryCode)) {
-            $customer = Customer::where('cust_id',Session::get('customer_id'))->first();
-            $countrydata = Country::select('countrycode')->where('countryid', $customer->cust_country)->first();
-            if ($countrydata) {
-                $cartData['countryCode'] = $countrydata->countrycode;
-                $cartData['countryId'] = $countrydata->countryid;
+        if (Session::has('customer_id')) {
+            $customer = Customer::where('cust_id', Session::get('customer_id'))->first();
+            if (!empty($customer->cust_country)) {
+                $countryCodeCheck = (int) $customer->cust_country;
+                $countryCodeConditions = $countryCodeCheck ? [['countryid', '=', $customer->cust_country]] :
+                [['countrycode', '=', $customer->cust_country]];
+                $countrydata = Country::select('countrycode')->where($countryCodeConditions)->first();
+                if ($countrydata) {
+                    $cartData['countryCode'] = $countrydata->countrycode;
+                    $cartData['countryId'] = $countrydata->countryid;
+                }
             }
-        }
 
+        }
+        echo $cartData['countryCode'];
         $cartData['deliveryDetails'] = $this->deliveryDetails();
         $deliveryTotal = $boxFees = $totalWeight = 0;
         $cartData['cartItems'] = Session::has('cartdata') ? Session::get('cartdata')[$custToken] : [];
@@ -67,7 +75,8 @@ class CartServices
         }
 
         if (!empty($cartData['deliveryDetails']['deliverymethod'])) {
-            $deliveryTotal = $cart->shippingCost($cartData['countryCode'], $cartData['deliveryDetails']['deliverymethod'], $shippingbox, $quantity, $subTotal, $cartData['taxDetails']['taxTotal'], $totalWeight);
+            $deliveryTotal = $this->getShippingCost($cartData['countryCode'], $cartData['deliveryDetails']['deliverymethod'], $shippingbox, $quantity, $subTotal, $cartData['taxDetails']['taxTotal'], $totalWeight);
+            // $deliveryTotal = $cart->shippingCost($cartData['countryCode'], $cartData['deliveryDetails']['deliverymethod'], $shippingbox, $quantity, $subTotal, $cartData['taxDetails']['taxTotal'], $totalWeight);
         }
         $packingFee += $boxFees;
         $packingFee = round($packingFee, 2);
@@ -142,5 +151,88 @@ class CartServices
             'taxPercentage' => $taxPercentage,
             'taxTotal' => round((($subTotal * $taxPercentage) / 100), 2),
         ];
+    }
+
+    public function getShippingCost($countrycode = '', $deliverymethod = 0, $shippingbox = '', $quantity = 1, $subtotal = 0, $gst = 0, $totalweight = 0)
+    {
+        $shipamt = 0;
+        $initial_amt = $first_comm = $second_comm = $calculated = $dhl_extra_amount = 0;
+        $countrydata = Country::where('countrycode', $countrycode)->select('countryid')->first();
+        $countryid = $countrydata ? $countrydata->countryid : 0;
+        $freeshippingcost = $subtotal + $gst;
+
+        if ($countrycode == 'SG') {
+
+            $zones = LocalShipping::where('Status', 1)->orderBy('DisplayOrder', 'asc')->first();
+            $shippingmethods = ShippingMethods::where('Id', $deliverymethod)->first();
+
+            if ($freeshippingcost >= $zones->FreeShipCost || ($shippingmethods->shipping_type == 0 && strpos($shippingmethods->EnName, 'Ninja Van Delivery') === false)) {
+                $shipamt = 0;
+            } else {
+
+                if ($totalweight <= 5) {
+                    $shipamt = $zones->PriceRange5;
+                } elseif ($totalweight <= 15) {
+                    $shipamt = $zones->PriceRange15;
+                } elseif ($totalweight <= 30) {
+                    $shipamt = $zones->PriceRange30;
+                } elseif ($totalweight > 30) {
+                    $shipamt = $zones->PriceRangeAbove30;
+                }
+            }
+        } else {
+
+            $weight = $totalweight;
+            $zones = InternationalShipping::where('Status', 1)->whereRaw("concat(',',CountriesList,',') LIKE '%," . $countryid . "%,'")->first();
+
+            if ($zones) {
+                $freeshipcost = $zones->FreeShippingCost;
+                if ($freeshipcost != '0.00' && $freeshipcost > 0 && $subtotal >= $freeshipcost) {
+                    $shipamt = 0;
+                } else {
+                    if ($weight > 300) {
+                        $initial_amt = ($weight * $zones->PriceRange99999);
+                    } elseif ($weight > 70) {
+                        $initial_amt = ($weight * $zones->PriceRange300);
+                    } elseif ($weight > 30) {
+                        $initial_amt = ($weight * $zones->PriceRange70);
+                    } else {
+                        if ($zones->ShipCost != '') {
+                            $shipcosts = @explode(",", $zones->ShipCost);
+                            foreach ($shipcosts as $shipcost) {
+                                $tmpshipcosts = @explode(':', $shipcost);
+                                if (is_array($tmpshipcosts) && !empty($tmpshipcosts)) {
+                                    if ($weight <= $tmpshipcosts[0]) {
+                                        $initial_amt = $tmpshipcosts[1];
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    $first_comm = (($initial_amt / 100) * 25);
+                    $second_comm = ($first_comm / 100) * 8;
+                    $shipamt = $first_comm + $second_comm;
+
+                    /*DHL extra amount*/
+                    if ($weight <= 2.5) {
+                        $dhl_extra_amount = 0;
+                    } else if ($weight <= 30) {
+                        $dhl_extra_amount = 8.5;
+                    } else if ($weight <= 70) {
+                        $dhl_extra_amount = 27.5;
+                    } else if ($weight <= 300) {
+                        $dhl_extra_amount = 79.5;
+                    } else if ($weight > 300) {
+                        $dhl_extra_amount = 304.5;
+                    }
+
+                    $shipamt = $initial_amt + $shipamt + $dhl_extra_amount;
+                }
+            }
+        }
+
+        return $shipamt;
     }
 }

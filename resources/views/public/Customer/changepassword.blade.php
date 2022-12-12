@@ -82,7 +82,7 @@
                 <div class="col-12">
 
                   <!-- Button -->
-                  <button class="btn btn-dark" type="submit">Submit</button>
+                  <button class="redbtn" type="submit">Submit</button>
 
                 </div>
               </div>

@@ -209,7 +209,7 @@ class Cart extends Model
         return $weight;
     }
 
-    public function shippingCost($countrycode = '', $deliverymethod = 0, $shippingbox = '', $quantity = 1, $subtotal = 0, $gst = 0)
+    public function shippingCost($countrycode = '', $deliverymethod = 0, $shippingbox = '', $quantity = 1, $subtotal = 0, $gst = 0, $totalweight = 0)
     {
         $shipamt = '0.00';
         $countryid = $initial_amt = $first_comm = $second_comm = $calculated = $dhl_extra_amount = 0;
@@ -217,10 +217,6 @@ class Cart extends Model
         if ($countrydata) {
             $countryid = $countrydata->countryid;
         }
-
-        $weight = $this->internationalShippingBoxWeight($shippingbox);
-
-        $weight = $weight * $quantity;
 
         $freeshippingcost = (float) str_replace(',', '', $subtotal) + (float) str_replace(',', '', $gst);
 
@@ -233,19 +229,23 @@ class Cart extends Model
             if ($freeshippingcost >= $zones->FreeShipCost || ($shippingmethods->shipping_type == 0 && strpos($shippingmethods->EnName, 'Ninja Van Delivery') === false)) {
                 $shipamt = '0.00';
             } else {
-                if ($weight <= 5) {
+                if ($totalweight <= 5) {
                     $shipamt = $zones->PriceRange5;
-                } elseif ($weight <= 15) {
+                } elseif ($totalweight <= 15) {
                     $shipamt = $zones->PriceRange15;
-                } elseif ($weight <= 30) {
+                } elseif ($totalweight <= 30) {
                     $shipamt = $zones->PriceRange30;
-                } elseif ($weight > 30) {
+                } elseif ($totalweight > 30) {
                     $shipamt = $zones->PriceRangeAbove30;
                 } else {
                     $shipamt = '0.00';
                 }
             }
         } else {
+
+            //$weight = $this->internationalShippingBoxWeight($shippingbox);
+            //$weight = $weight * $quantity;
+            $weight = $totalweight;
 
             $zones = InternationalShipping::where('Status', '=', '1')->whereRaw("concat(',',CountriesList,',') LIKE '%," . $countryid . "%,'")->first();
 
@@ -275,7 +275,8 @@ class Cart extends Model
                         }
                     }
 
-                    $first_comm = $initial_amt + (($initial_amt / 100) * 18);
+                    $first_comm = (($initial_amt / 100) * 25);
+                    #$first_comm = $initial_amt  + (($initial_amt/100) * 18);
                     $second_comm = ($first_comm / 100) * 8;
                     $shipamt = $first_comm + $second_comm;
 
@@ -292,7 +293,7 @@ class Cart extends Model
                         $dhl_extra_amount = 304.5;
                     }
 
-                    $shipamt = $shipamt + $dhl_extra_amount;
+                    $shipamt = $initial_amt + $shipamt + $dhl_extra_amount;
                 }
             }
         }
