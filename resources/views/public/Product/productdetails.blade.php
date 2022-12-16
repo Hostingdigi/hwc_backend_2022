@@ -46,7 +46,7 @@
 							<div class="tab-content">
 								<div class="tab-pane fade show active" id="sg1" role="tabpanel">
 									@if($productdetail->LargeImage)
-										<img src="{{ url('/uploads/product/'.$productdetail->LargeImage) }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
+										<img src="{{ env('IMG_URL').('/uploads/product/'.$productdetail->LargeImage) }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 									@else
 										<img src="{{ url('images/noimage.png') }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 									@endif									
@@ -56,7 +56,7 @@
 									@foreach($galleries as $gallery)
 										<div class="tab-pane" id="sg{{ $g }}" role="tabpanel">
 											@if($gallery->LargeImage)
-												<img src="{{ url('/uploads/product/'.$gallery->LargeImage) }}" alt="" class="img-fluid">
+												<img src="{{ env('IMG_URL').('/uploads/product/'.$gallery->LargeImage) }}" alt="" class="img-fluid">
 											@else
 												<img src="{{ url('images/noimage.png') }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 											@endif
@@ -67,7 +67,7 @@
 							</div>
 							<div class="nav d-flex justify-content-between">
 								@if($productdetail->Image)
-									<a class="nav-item nav-link active" data-toggle="tab" href="#sg1"><img src="{{ url('/uploads/product/'.$productdetail->Image) }}" alt="{{ $productdetail->EnName }}"></a>
+									<a class="nav-item nav-link active" data-toggle="tab" href="#sg1"><img src="{{ env('IMG_URL').('/uploads/product/'.$productdetail->Image) }}" alt="{{ $productdetail->EnName }}"></a>
 								@else
 									<a class="nav-item nav-link active" data-toggle="tab" href="#sg1"><img src="{{ url('images/noimage.png') }}" alt="{{ $productdetail->EnName }}"></a>
 								@endif
@@ -76,7 +76,7 @@
 									@foreach($galleries as $gallery)
 										<a class="nav-item nav-link" data-toggle="tab" href="#sg{{ $g }}">
 											@if($gallery->Image)
-												<img src="{{ url('/uploads/product/'.$gallery->Image) }}" alt="" class="img-fluid">
+												<img src="{{ env('IMG_URL').('/uploads/product/'.$gallery->Image) }}" alt="" class="img-fluid">
 											@else
 												<img src="{{ url('images/noimage.png') }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 											@endif
@@ -164,36 +164,36 @@
 						  <div class="oldrate flft" id="oldprice">
 							S${{ number_format($actualprice, 2) }}
 						  </div>
-						  <div class="color-grey-tax">[ before GST / local tax ]</div>
-						  <div style="clear:both"></div>
-						  <div class="oldrate flft" id="oldgstprice">
-							S${{ number_format($actualgstprice, 2) }}
-						  </div>
-						  <div class="color-grey-tax">[ w/GST / local tax ]</div>
+						 <!-- <div class="color-grey-tax">[ before GST / local tax ]</div>-->
+						 <!-- <div style="clear:both"></div>-->
+						 <!-- <div class="oldrate flft" id="oldgstprice">-->
+							<!--S${{ number_format($actualgstprice, 2) }}-->
+						 <!-- </div>-->
+						 <div class="color-grey-tax">[ with GST ]</div>
 					   </div>
 					   
 					   <div class="col-5">
 						  <div class="newrate flft redclr" id="actualprice">
 							S${{ number_format($displayprice, 2) }}
 						  </div>
-						  <div class="color-red-tax">[ before GST / local tax ]</div>
-						  <div style="clear:both"></div>
-						  <div class="newrate flft redclr" id="actualgstprice">
-							S${{ number_format($gstprice, 2) }}
-						  </div>
-						  <div class="color-red-tax">[ w/GST / local tax ]</div>
+						 <!-- <div class="color-red-tax">[ before GST / local tax ]</div>-->
+						 <!-- <div style="clear:both"></div>-->
+						 <!-- <div class="newrate flft redclr" id="actualgstprice">-->
+							<!--S${{ number_format($gstprice, 2) }}-->
+						 <!-- </div>-->
+						 <div class="color-red-tax">[ with GST ]</div>
 					   </div>
 					   @else
 						<div class="col-5">
 						  <div class="newrate flft blackclr" id="actualprice">
 							 S${{ number_format($displayprice, 2) }}
 						  </div>
-						  <div class="color-black-tax">[ before GST / local tax ]</div>
-						  <div style="clear:both"></div>
-						  <div class="newrate flft blackclr" id="actualgstprice">
-							 S${{ number_format($gstprice, 2) }}
-						  </div>
-						  <div class="color-black-tax">[ w/GST / local tax ]</div>
+						  <!--<div class="color-black-tax">[ before GST / local tax ]</div>-->
+						  <!--<div style="clear:both"></div>-->
+						  <!--<div class="newrate flft blackclr" id="actualgstprice">-->
+							 <!--S${{ number_format($gstprice, 2) }}-->
+						  <!--</div>-->
+						  <div class="color-black-tax">[ with GST ]</div>
 					   </div>
 					   @endif
 					</div>
@@ -465,7 +465,7 @@
 							<div class="box-Added-product" id="success{{ $relatedproduct->Id }}" style="display:none;"><span class="boxAdjest">Item has been Added into Your Cart</span></div>
 							<a href="{{ url('/prod/'.$relatedproduct->UniqueKey) }}">
 							@if($relatedproduct->Image)
-								<img src="{{ url('/uploads/product/'.$relatedproduct->Image) }}" class="card-img-top" alt="{{ $relatedproduct->EnName }}">
+								<img src="{{ env('IMG_URL').('/uploads/product/'.$relatedproduct->Image) }}" class="card-img-top" alt="{{ $relatedproduct->EnName }}">
 							@else
 								<img src="{{ url('images/noimage.png') }}" class="card-img-top" alt="{{ $relatedproduct->EnName }}">
 							@endif
@@ -478,7 +478,7 @@
 									$rdisplayprice = $relatedproduct->Price;
 									$price = new \App\Models\Price();
 									$rdisplayprice = $price->getPrice($relatedproduct->Id);
-									$rdisplayprice = $price->getGSTPrice($rdisplayprice, 'SG');
+									//$rdisplayprice = $price->getGSTPrice($rdisplayprice, 'SG');
 								@endphp
 								S${{ number_format($rdisplayprice, 2) }}
 								</div>
@@ -569,12 +569,12 @@ $(document).ready(function() {
 			success: function(response) {
 				console.log(response);
 				var result = response.split("#");
-				$('#actualprice').html('$'+result[0]);
+				$('#actualprice').html('S$'+result[0]);
 				$('#productprice').val(result[0]);
-				$('#actualgstprice').html('$'+result[1]);
+				$('#actualgstprice').html('S$'+result[1]);
 				if(result[2] == 1) {
-					$('#oldprice').html('$'+result[3]);
-					$('#oldgstprice').html('$'+result[4]);
+					$('#oldprice').html('S$'+result[3]);
+					$('#oldgstprice').html('S$'+result[4]);
 				}
 			},error: function(ts) {				
 				console.log("Error:"+ts.responseText);  

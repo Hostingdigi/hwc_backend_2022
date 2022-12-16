@@ -172,6 +172,9 @@ Route::match(['get', 'post'], '/discountcoupon', 'App\Http\Controllers\CartMobil
 Route::match(['get', 'post'], '/successorder', 'App\Http\Controllers\CartMobileController@successorder');
 Route::match(['get', 'post'], '/cancelorder', 'App\Http\Controllers\CartMobileController@cancelorder');
 
+Route::get('prod_price_update', 'App\Http\Controllers\HomeController@prodPriceUpdate');
+Route::get('prod_option_price_update', 'App\Http\Controllers\HomeController@prodOptionPriceUpdate');
+
 //Mobile App - End
 
 //Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

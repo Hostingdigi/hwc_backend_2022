@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bannerads;
+use App\Models\Country;
 use App\Models\EmailTemplate;
 use App\Models\FavouriteProducts;
 use App\Models\Menu;
 use App\Models\PageContent;
+use App\Models\Product;
+use App\Models\ProductOptions;
 use App\Models\Settings;
 use App\Models\Subscriber;
 use Illuminate\Http\Request;
@@ -166,7 +169,7 @@ class HomeController extends Controller
             $logo = '<img src="' . $logo . '">';
 
             $emailsubject = $emailcontent = '';
-            $emailtemplate = EmailTemplate::where([['template_type', '=', '9'],['status', '=', '1']])->first();
+            $emailtemplate = EmailTemplate::where([['template_type', '=', '9'], ['status', '=', '1']])->first();
             if ($emailtemplate) {
                 $emailsubject = $emailtemplate->subject;
                 $emailcontent = $emailtemplate->content;
@@ -252,5 +255,76 @@ class HomeController extends Controller
             }
         }
         return redirect('/feedback')->with('success', 'Thank you for your feedback!');
+    }
+
+    public function prodPriceUpdate(Request $request)
+    {
+        $percent = Country::where('countryid', 189)->first()->taxpercentage;
+        $percent = ($percent + 100) / 100;
+
+        $allProducts = Product::where([['is_inclusive_tax', '=', 0], ['Price', '!=', 0]])->count();
+
+        if ($allProducts == 0) {
+
+            echo 'Done!';
+            die();
+        }
+
+        $rang = range(1, ($allProducts + 1000), 1000);
+
+        print_r($rang);
+
+        foreach ($rang as $rk => $r) {
+            if (!empty($rang[$rk + 1])) {
+                $products = Product::where('is_inclusive_tax', 0)->take($rang[$rk + 1])->get();
+
+                foreach ($products as $prod) {
+                    Product::where('Id', $prod->Id)->update([
+                        'is_inclusive_tax' => 1,
+                        'Price' => number_format(($prod->oldPrice * $percent), 2, '.', ''),
+                    ]);
+                }
+            }
+        }
+
+        if (Product::where([['is_inclusive_tax', '=', 0], ['Price', '!=', 0]])->count() == 0) {
+            echo 'Done!';
+        } else {
+            echo 'Not Completed. Try again';
+        }
+    }
+
+    public function prodOptionPriceUpdate(Request $request)
+    {
+        $percent = Country::where('countryid', 189)->first()->taxpercentage;
+        $percent = ($percent + 100) / 100;
+
+        $allProducts = ProductOptions::where([['is_inclusive_tax', '=', 0], ['Price', '!=', 0]])->count();
+
+        if ($allProducts == 0) {
+            echo 'Done!';
+            die();
+        }
+
+        $rang = range(1, ($allProducts + 1000), 1000);
+
+        foreach ($rang as $rk => $r) {
+            if (!empty($rang[$rk + 1])) {
+                $products = ProductOptions::where('is_inclusive_tax', 0)->take($rang[$rk + 1])->get();
+
+                foreach ($products as $prod) {
+                    ProductOptions::where('Id', $prod->Id)->update([
+                        'is_inclusive_tax' => 1,
+                        'Price' => number_format(($prod->oldPrice * $percent), 2, '.', ''),
+                    ]);
+                }
+            }
+        }
+
+        if (ProductOptions::where([['is_inclusive_tax', '=', 0], ['Price', '!=', 0]])->count() == 0) {
+            echo 'Done!';
+        } else {
+            echo 'Not Completed. Try again';
+        }
     }
 }
