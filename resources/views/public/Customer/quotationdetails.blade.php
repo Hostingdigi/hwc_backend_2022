@@ -239,7 +239,7 @@
 							<div class="row align-items-center">
 								<div class="col-4 col-md-3 col-xl-2">
 									@if($product->Image != '')										
-										<a href="{{ url('/prod/'.$product->UniqueKey) }}"><img src="{{ url('/uploads/product/'.$product->Image) }}" alt="{{ $orderdetail->prod_name }}" class="img-fluid"></a>
+										<a href="{{ url('/prod/'.$product->UniqueKey) }}"><img src="{{ env('IMG_URL').('/uploads/product/'.$product->Image) }}" alt="{{ $orderdetail->prod_name }}" class="img-fluid"></a>
 									@else
 										<a href="{{ url('/prod/'.$product->UniqueKey) }}"><img src="{{ url('/images/noimage.png') }}" alt="{{ $orderdetail->prod_name }}" class="img-fluid"></a>
 									@endif	

@@ -341,6 +341,8 @@ class Price extends Model
 
     public function getGSTPrice($price = 0, $countrycode = '')
     {
+        if ($countrycode == 'SG') {return $price;}
+
         $taxtitle = '';
         $percentage = 1;
         $gstprice = $price;

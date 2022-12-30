@@ -51,14 +51,14 @@
 										<td class="t-qty" style="width:14%;">
 											<div class="qty-box">
 												<div class="quantity buttons_added">
-													<input type="button" value="-" class="minus" onclick="updateqty('minus', '{{ $productid }}', '{{ $maxqty }}', '{{ $cart['productName'] }}', '{{ $cart['option_id'] }}');">
-													<input type="number" step="1" min="1" max="10" value="{{ $cart['qty'] }}" class="qty text" id="qty{{ $cart['productId'] }}_{{ $cart['option_id'] }}" size="4" readonly name="qty{{ $cart['productId'] }}">
-													<input type="button" value="+" class="plus" onclick="updateqty('plus', '{{ $productid }}', '{{ $maxqty }}', '{{ $cart['productName'] }}', '{{ $cart['option_id'] }}');">
+													<input type="button" value="-" class="minus" onclick="updateqty('minus', '{{ $productid }}', '{{ $maxqty }}', '{{ $cart['productName'] }}', '{{isset($cart['option_id'])?$cart['option_id']:'' }}');">
+													<input type="number" step="1" min="1" max="10" value="{{ $cart['qty'] }}" class="qty text" id="qty{{ $cart['productId'] }}_{{isset($cart['option_id'])?$cart['option_id']:'' }}" size="4" readonly name="qty{{ $cart['productId'] }}">
+													<input type="button" value="+" class="plus" onclick="updateqty('plus', '{{ $productid }}', '{{ $maxqty }}', '{{ $cart['productName'] }}', '{{isset($cart['option_id'])?$cart['option_id']:'' }}');">
 													<input type="hidden" name="cartitems[]" value="{{ $cart['productId'] }}">
 												</div>
 											</div>
 										</td>
-										<td class="t-total" style="width:15%;" id="t-total{{ $cart['productId'] }}_{{ $cart['option_id'] }}">S${{ number_format($cart['total'], 2) }}</td>
+										<td class="t-total" style="width:15%;" id="t-total{{ $cart['productId'] }}_{{isset($cart['option_id'])?$cart['option_id']:'' }}">S${{ number_format($cart['total'], 2) }}</td>
 										<td class="t-rem" style="width:5%;"><a href="{{ url('/removecartitem/'.$cartkey.'/'.$cart['productId']) }}"><i class="fa fa-trash-o"></i></a></td>
 									</tr>
 								@endforeach						
