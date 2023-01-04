@@ -718,7 +718,8 @@ class CustomerMobileController extends Controller
                 }
                 $orderlist[$o]['shipmethod'] = $shipmethod;
                 $orderlist[$o]['tax_collected'] = $order->tax_collected;
-                $orderlist[$o]['payable_amount'] = $order->payable_amount;
+                $orderlist[$o]['tax_label'] = $order->tax_label;
+                $orderlist[$o]['payable_amount'] = ($order->payable_amount-$order->shipping_cost-$order->packaging_fee-$order->tax_collected);
                 $orderlist[$o]['paymethod'] = $order->pay_method;
                 $orderstatus = 'Payment Pending';
                 if ($order->order_status == 0) {

@@ -120,9 +120,10 @@ class CartMobileController extends Controller
         $country = $request->has('country_code') && !empty($request->country_code) ? trim($request->country_code) : '';
         $country = empty($country) ? 'SG' : $country;
         $subtotal = $cart->getCartSubTotal($sesid);
+        $subtotal = (float) str_replace(',', '', $subtotal);
 
         //Exclude default tax amount
-        $countryDetails = Country::where('countrycode', 'SG')->first();
+        $countryDetails = Country::where('countrycode', $country)->first();
         $taxAmount = round((($subtotal * $countryDetails->taxpercentage) / (100 + $countryDetails->taxpercentage)), 2);
         $subtotal = round($subtotal - $taxAmount, 2);
 
@@ -1035,7 +1036,7 @@ class CartMobileController extends Controller
     {
         $data = [];
         $shipcountryname = $billcountryname = '';
-        $orderincid = $orderid = 0;
+        $orderincid = $orderid = $taxValue = 0;
         $orderinfo = $request->orderinfo;
 
         if ($orderinfo) {
@@ -1078,6 +1079,14 @@ class CartMobileController extends Controller
             if (isset($orderinfo['existorderid'])) {
                 $existorderid = $orderinfo['existorderid'];
             }
+
+            $countrydata = Country::where('countrycode', '=', $billinginfo['bill_country'])->select('countryid', 'taxtitle', 'taxpercentage')->first();
+            if ($countrydata) {
+                $countryid = $countrydata->countryid;
+                $taxtitle = $countrydata->taxtitle;
+                $taxValue = $countrydata->taxpercentage;
+            }
+
             $ordermaster = new OrderMaster;
             $ordermaster['user_id'] = $userid;
             $ordermaster['ship_method'] = $orderinfo['shipmethod'];
@@ -1085,6 +1094,8 @@ class CartMobileController extends Controller
             $ordermaster['shipping_cost'] = str_replace(',', '', $orderinfo['shippingcost']);
             $ordermaster['packaging_fee'] = str_replace(',', '', $orderinfo['packagingfee']);
             $ordermaster['tax_collected'] = str_replace(',', '', $orderinfo['tax_collected']);
+            $ordermaster['tax_label'] = trim($taxtitle . ' (' . $taxValue . '%)');
+            $ordermaster['tax_percentage'] = $taxValue;
             $ordermaster['discount_amount'] = str_replace(',', '', $discount);
             $ordermaster['discount_id'] = $couponid;
             $ordermaster['payable_amount'] = str_replace(',', '', $orderinfo['payable_amount']);
@@ -1130,11 +1141,7 @@ class CartMobileController extends Controller
                 }
             }
 
-            $countrydata = Country::where('countrycode', '=', $billinginfo['bill_country'])->select('countryid', 'taxtitle')->first();
-            if ($countrydata) {
-                $countryid = $countrydata->countryid;
-                $taxtitle = $countrydata->taxtitle;
-            }
+            
             $hoolahitems = [];
             $atomeitems = [];
             $cartitems = $orderinfo['products'];
@@ -2136,7 +2143,7 @@ class CartMobileController extends Controller
             $cart = new \App\Models\Cart();
 
             //Exclude default tax amount
-            $countryDetails = Country::where('countrycode', 'SG')->first();
+            $countryDetails = Country::where('countrycode', $country)->first();
             $taxAmount = round((($subtotal * $countryDetails->taxpercentage) / (100 + $countryDetails->taxpercentage)), 2);
             $subtotal = round($subtotal - $taxAmount, 2);
 
@@ -2405,7 +2412,7 @@ class CartMobileController extends Controller
     {
         $data = [];
         $shipcountryname = $billcountryname = '';
-        $orderincid = $orderid = 0;
+        $orderincid = $orderid = $taxValue = 0;
         $orderinfo = $request->orderinfo;
 
         if ($orderinfo) {
@@ -2445,12 +2452,21 @@ class CartMobileController extends Controller
                 $deliverytype = $shipdata->EnName;
             }
 
+            $countrydata = Country::where('countrycode', '=', $billinginfo['bill_country'])->select('countryid', 'taxtitle','taxpercentage')->first();
+            if ($countrydata) {
+                $countryid = $countrydata->countryid;
+                $taxtitle = $countrydata->taxtitle;
+                $taxValue = $countrydata->taxpercentage;
+            }
+
             $ordermaster = new OrderMaster;
             $ordermaster['user_id'] = $userid;
             $ordermaster['ship_method'] = $orderinfo['shipmethod'];
             $ordermaster['pay_method'] = $orderinfo['paymethod'];
             $ordermaster['shipping_cost'] = str_replace(',', '', $orderinfo['shippingcost']);
             $ordermaster['packaging_fee'] = str_replace(',', '', $orderinfo['packagingfee']);
+            $ordermaster['tax_label'] = trim($taxtitle.' ('.$taxValue.'%)');
+            $ordermaster['tax_percentage'] = $taxValue;
             $ordermaster['tax_collected'] = str_replace(',', '', $orderinfo['tax_collected']);
             $ordermaster['discount_amount'] = str_replace(',', '', $discount);
             $ordermaster['discount_id'] = $couponid;
@@ -2490,11 +2506,7 @@ class CartMobileController extends Controller
                 $quotationid = $order->order_id;
             }
 
-            $countrydata = Country::where('countrycode', '=', $billinginfo['bill_country'])->select('countryid', 'taxtitle')->first();
-            if ($countrydata) {
-                $countryid = $countrydata->countryid;
-                $taxtitle = $countrydata->taxtitle;
-            }
+            
             $hoolahitems = [];
             $atomeitems = [];
             $cartitems = $orderinfo['products'];

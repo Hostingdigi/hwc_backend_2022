@@ -92,7 +92,7 @@
 												<div class="row">
 													<div class="col-md-3">
 														@if($cart['image'] != '')															
-															<img src="{{ env('IMG_URL').('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100%">
+															<img src="{{ url('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100%">
 														@else
 															<img src="{{ url('/images/noimage.png') }}" alt="{{ $cart['productName'] }}" width="100%">
 														@endif
@@ -123,7 +123,7 @@
 										@endforeach
 									@endif
 									
-									<li class="subtot">Sub Total 
+								<li class="subtot">Sub Total
 									<span>S${{ number_format(str_replace(',','',$subtotal), 2) }}</span>
 										@if(!empty($taxLabelOnly))
                 						<small style="font-size:92%;word-break: break-word;"><br>[w/o - {{$taxLabelOnly}}]</small>

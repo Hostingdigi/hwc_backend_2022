@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\Country;
+use App\Models\Customer;
 use App\Models\OrderDetails;
 use App\Models\OrderMaster;
 use App\Models\PaymentMethods;
 use App\Models\Product;
-use App\Models\Country;
-use App\Models\Customer;
 use App\Services\CartServices;
 use Session;
 
@@ -27,7 +27,9 @@ class OrderServices
             'orderId' => null,
         ];
 
-        $cartItems = $this->cartServices->cartItems();
+        $billinginfo = Session::has('billinginfo') ? Session::get('billinginfo') : [];
+        $cartItems = $this->cartServices->cartItems($billinginfo['bill_country'] ?? null);
+
         $cartdata = $cartItems['cartItems'];
         $subtotal = $cartItems['subTotal'];
         $grandtotal = $cartItems['grandTotal'];
@@ -78,6 +80,9 @@ class OrderServices
         $ordermaster['pay_method'] = $paymethodname;
         $ordermaster['shipping_cost'] = $deliverycost;
         $ordermaster['packaging_fee'] = $packingfee;
+        $ordermaster['tax_label'] = isset($cartItems['taxDetails']['taxLabel']) ? $cartItems['taxDetails']['taxLabel'] : '';
+        $ordermaster['tax_percentage'] = isset($cartItems['taxDetails']['taxPercentage']) ? $cartItems['taxDetails']['taxPercentage'] : '';
+
         $ordermaster['tax_collected'] = $gst;
         $ordermaster['payable_amount'] = $grandtotal;
         $ordermaster['discount_amount'] = $discount;

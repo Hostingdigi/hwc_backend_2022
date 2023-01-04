@@ -239,7 +239,7 @@
 							<div class="row align-items-center">
 								<div class="col-4 col-md-3 col-xl-2">
 									@if($product->Image != '')										
-										<a href="{{ url('/prod/'.$product->UniqueKey) }}"><img src="{{ env('IMG_URL').('/uploads/product/'.$product->Image) }}" alt="{{ $orderdetail->prod_name }}" class="img-fluid"></a>
+										<a href="{{ url('/prod/'.$product->UniqueKey) }}"><img src="{{ url('/uploads/product/'.$product->Image) }}" alt="{{ $orderdetail->prod_name }}" class="img-fluid"></a>
 									@else
 										<a href="{{ url('/prod/'.$product->UniqueKey) }}"><img src="{{ url('/images/noimage.png') }}" alt="{{ $orderdetail->prod_name }}" class="img-fluid"></a>
 									@endif	
@@ -282,11 +282,14 @@
                 <!-- List group -->
                 <ul class="list-group list-group-sm list-group-flush-y list-group-flush-x">
                   <li class="list-group-item d-flex">
-                    <span>Subtotal</span>
+                    <span>Subtotal
+												<br>
+						<small>[ w/o {{ !empty($orders->tax_label) ? $orders->tax_label : 'Tax' }} ]</small>
+					</span>
                     <span class="ml-auto">S${{ number_format($orders->payable_amount - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected), 2) }}</span>
                   </li>
                   <li class="list-group-item d-flex">
-                    <span>Tax</span>
+                    <span>{{($orders->tax_label !='')?$orders->tax_label:'Tax'}}</span>
                     <span class="ml-auto">S${{ number_format($orders->tax_collected, 2) }}</span>
                   </li>
                   <li class="list-group-item d-flex">

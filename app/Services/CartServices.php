@@ -5,16 +5,25 @@ namespace App\Services;
 use App\Models\Cart;
 use App\Models\Country;
 use App\Models\Customer;
-use App\Models\PaymentSettings;
-use App\Models\ShippingMethods;
 use App\Models\InternationalShipping;
 use App\Models\LocalShipping;
+use App\Models\PaymentSettings;
+use App\Models\ShippingMethods;
 use Session;
 
 class CartServices
 {
     public function cartItems($countryCode = null)
     {
+        $allowCust = 0;
+        if (Session::has('customer_id')) {
+            if (empty($countryCode)) {
+                $allowCust = 1;
+            } /*else if(!Session::has('billinginfo')){
+        $allowCust = 1;
+        }*/
+        }
+
         $custToken = Session::get('_token');
         $taxvals = [];
         $subTotal = 0;
@@ -33,21 +42,24 @@ class CartServices
         $settings = PaymentSettings::where('Id', '1')->select('min_package_fee')->first();
         $packingFee = $cartData['countryCode'] != 'SG' ? $settings->min_package_fee : 0;
 
-        if (Session::has('customer_id')) {
+        if (Session::has('customer_id') && $allowCust) {
             $customer = Customer::where('cust_id', Session::get('customer_id'))->first();
+
             if (!empty($customer->cust_country)) {
+
                 $countryCodeCheck = (int) $customer->cust_country;
                 $countryCodeConditions = $countryCodeCheck ? [['countryid', '=', $customer->cust_country]] :
                 [['countrycode', '=', $customer->cust_country]];
                 $countrydata = Country::select('countrycode')->where($countryCodeConditions)->first();
                 if ($countrydata) {
+
                     $cartData['countryCode'] = $countrydata->countrycode;
                     $cartData['countryId'] = $countrydata->countryid;
                 }
             }
 
         }
-        echo $cartData['countryCode'];
+
         $cartData['deliveryDetails'] = $this->deliveryDetails();
         $deliveryTotal = $boxFees = $totalWeight = 0;
         $cartData['cartItems'] = Session::has('cartdata') ? Session::get('cartdata')[$custToken] : [];
@@ -56,15 +68,16 @@ class CartServices
             $subTotal += $val['total'];
         }
 
-        //Exclude default tax amount
-        $countryDetails = Country::where('countrycode', 'SG')->first();
+        //Extract tax amount
+        $countryDetails = Country::where('countrycode', $cartData['countryCode'])->first();
         $taxAmount = round((($subTotal * $countryDetails->taxpercentage) / (100 + $countryDetails->taxpercentage)), 2);
         $subTotal = round($subTotal - $taxAmount, 2);
 
         $cartData['subTotal'] = $subTotal;
         $cartData['taxDetails'] = $this->getTax($subTotal, $cartData['countryCode']);
         //$subTotal = $cartData['subTotal'] = round(($subTotal - $cartData['taxDetails']['taxTotal']), 2);
-
+        $shippingbox = '';
+        $quantity = 0;
         foreach ($cartData['cartItems'] as $key => $val) {
 
             $totalWeight += $val['weight'];
@@ -166,7 +179,8 @@ class CartServices
             $zones = LocalShipping::where('Status', 1)->orderBy('DisplayOrder', 'asc')->first();
             $shippingmethods = ShippingMethods::where('Id', $deliverymethod)->first();
 
-            if ($freeshippingcost >= $zones->FreeShipCost || ($shippingmethods->shipping_type == 0 && strpos($shippingmethods->EnName, 'Ninja Van Delivery') === false)) {
+            if (($freeshippingcost >= $zones->FreeShipCost || ($shippingmethods->shipping_type == 0 && strpos($shippingmethods->EnName, 'Ninja Van Delivery') === false))) {
+                //if ($freeshippingcost >= $zones->FreeShipCost || ($shippingmethods->shipping_type == 0 && strpos($shippingmethods->EnName, 'Ninja Van Delivery') === false)) {
                 $shipamt = 0;
             } else {
 

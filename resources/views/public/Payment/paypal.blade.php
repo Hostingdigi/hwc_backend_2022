@@ -125,7 +125,12 @@
 										@endforeach
 									@endif
 									
-									<li class="subtot">Sub Total <span>${{ number_format(str_replace(',','',$subtotal), 2) }}</span></li>
+									<li class="subtot">Sub Total 
+										<span>S${{ number_format(str_replace(',','',$subtotal), 2) }}</span>
+										@if(!empty($taxLabelOnly))
+                						<small style="font-size:92%;word-break: break-word;"><br>[w/o - {{$taxLabelOnly}}]</small>
+                						@endif
+									</li>
 									<li class="subtot" style="border-top: 1px solid #e5e5e5;">{{ $taxtitle }} <span>${{ number_format(str_replace(',','',$gst), 2) }}</span></li>
 									<li>Shipping ({{ $deliverytype }}) <span>${{ number_format(str_replace(',','',$deliverycost), 2) }}</span></li>
 									<li>Packaging Fee <span>${{ number_format(str_replace(',','',$packingfee), 2) }}</span></li>
