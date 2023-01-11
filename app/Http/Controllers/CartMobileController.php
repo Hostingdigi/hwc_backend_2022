@@ -78,7 +78,7 @@ class CartMobileController extends Controller
                     $productid = $orderdetail->prod_id;
                     $ses_productname = $product->EnName;
                     $ses_qty = $orderdetail->prod_quantity;
-                    $optionid = $orderdetail->prod_option_id;
+                    $optionid = !empty($orderdetail->prod_option_id) ? $orderdetail->prod_option_id : 0;
 
                     $price = new \App\Models\Price();
                     $productprice = $price->getDiscountPrice($productid);
@@ -1080,7 +1080,7 @@ class CartMobileController extends Controller
                 $existorderid = $orderinfo['existorderid'];
             }
 
-            $countrydata = Country::where('countrycode', '=', $billinginfo['bill_country'])->select('countryid', 'taxtitle', 'taxpercentage')->first();
+            $countrydata = Country::where('countrycode', '=', $shippinginfo['ship_country'])->select('countryid', 'taxtitle', 'taxpercentage')->first();
             if ($countrydata) {
                 $countryid = $countrydata->countryid;
                 $taxtitle = $countrydata->taxtitle;
@@ -2452,7 +2452,7 @@ class CartMobileController extends Controller
                 $deliverytype = $shipdata->EnName;
             }
 
-            $countrydata = Country::where('countrycode', '=', $billinginfo['bill_country'])->select('countryid', 'taxtitle','taxpercentage')->first();
+            $countrydata = Country::where('countrycode', '=', $shippinginfo['ship_country'])->select('countryid', 'taxtitle','taxpercentage')->first();
             if ($countrydata) {
                 $countryid = $countrydata->countryid;
                 $taxtitle = $countrydata->taxtitle;
