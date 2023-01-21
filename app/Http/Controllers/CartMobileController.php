@@ -85,7 +85,7 @@ class CartMobileController extends Controller
                     if ($optionid > 0) {
 
                         $options = ProductOptions::where('Id', '=', $optionid)->first();
-                        if($options){
+                        if ($options) {
                             $optionprice = $options->Price;
                             $optionprice = $price->getOptionPrice($productid, $optionid);
                             $prodoption = $options->Title;
@@ -121,7 +121,6 @@ class CartMobileController extends Controller
         $country = empty($country) ? 'SG' : $country;
         $subtotal = $cart->getCartSubTotal($sesid);
         $subtotal = (float) str_replace(',', '', $subtotal);
-
         //Exclude default tax amount
         $countryDetails = Country::where('countrycode', $country)->first();
         $taxAmount = round((($subtotal * $countryDetails->taxpercentage) / (100 + $countryDetails->taxpercentage)), 2);
@@ -142,12 +141,10 @@ class CartMobileController extends Controller
         $gst = $taxes;
         }
         }*/
-
         $grandtotal = $cart->getGrandTotal($subtotal, $gst);
 
         return response()->json(['response' => 'success', 'message' => 'Shopping Cart', 'gstText' => $gstText,
-            'subtotal_text' => 'w/o ' . $taxDetails['taxLabelOnly'],
-            'subtotal' => $subtotal, 'gst' => $gst, 'grandtotal' => $grandtotal, 'cartcount' => isset($cartdata[$sesid]) ? count($cartdata[$sesid]) : 0, 'cartdetails' => $cartdata[$sesid] ?? []]);
+            'subtotal_text' => 'w/o ' . $taxDetails['taxLabelOnly'], 'subtotal' => number_format($subtotal, 2), 'gst' => $gst, 'grandtotal' => $grandtotal, 'cartcount' => isset($cartdata[$sesid]) ? count($cartdata[$sesid]) : 0, 'cartdetails' => $cartdata[$sesid] ?? []]);
     }
 
     public function shoppingcart(Request $request)
@@ -1141,7 +1138,6 @@ class CartMobileController extends Controller
                 }
             }
 
-            
             $hoolahitems = [];
             $atomeitems = [];
             $cartitems = $orderinfo['products'];
@@ -2155,11 +2151,11 @@ class CartMobileController extends Controller
             $taxes = $cart->getGST($subtotal, $country);
 
             /*if ($country != '') {
-                $taxvals = @explode("|", $taxes);
-                $gstText = $taxvals[0];
-                $gst = $taxvals[1];
+            $taxvals = @explode("|", $taxes);
+            $gstText = $taxvals[0];
+            $gst = $taxvals[1];
             } else {
-                $gst = $taxes;
+            $gst = $taxes;
             }*/
 
             $grandtotal = $cart->getGrandTotal($subtotal, $gst);
@@ -2204,14 +2200,22 @@ class CartMobileController extends Controller
 
             $discounttype = $disamount = 0;
             $discounttext = '';
+            if (isset($orderinfo['couponcode']) && !empty($orderinfo['couponcode'])) {
+                $coupondata = Couponcode::where('coupon_code', '=', trim($orderinfo['couponcode']))->where('status', '=', '1')->first();
+                if ($coupondata) {
+                    $discounttext = 'Coupon discount(' . ($coupondata->discount_type == 1 ? $coupondata->discount . '%)' : '$' . $coupondata->discount . ')');
+                    $discounttype = $coupondata->discount_type;
+                    $disamount = $coupondata->discount;
+                }
+            }
 
             $discount = $cart->getDiscount($subtotal, $gst, $deliverycost, $packingfee, $discounttype, $disamount);
             $grandtotal = $cart->getGrandTotal($subtotal, $gst, $deliverycost, $packingfee, $discount);
 
         }
 
-        return response()->json(['response' => 'success', 'message' => 'Shipping & Packaing Price', 'gstText' => $gstText, 'gst' => $gst, 'packagingprice' => $packingfee, 'shippingprice' => $deliverycost, 'grandtotal' => $grandtotal, 'deliverycosttotalitem' => $deliverycosttotalitem, 'totaldeliverycost' => $totaldeliverycost, 'totalweight' => $totalweight,
-            'subtotal_text' => 'w/o '.$taxDetails['taxLabelOnly'], 'subtotal' => $subtotal]);
+        return response()->json(['response' => 'success', 'message' => 'Shipping & Packaing Price', 'gstText' => $gstText, 'gst' => $gst, 'packagingprice' => $packingfee, 'shippingprice' => $deliverycost,
+            'grandtotal' => $grandtotal, 'deliverycosttotalitem' => $deliverycosttotalitem, 'totaldeliverycost' => $totaldeliverycost, 'totalweight' => $totalweight, 'subtotal_text' => 'w/o ' . $taxDetails['taxLabelOnly'], 'subtotal' => $subtotal, 'discount' => $discount, 'discount_text' => $discounttext]);
     }
 
     public function getshipandpackingprice(Request $request)
@@ -2386,11 +2390,24 @@ class CartMobileController extends Controller
 
             try {
 
+                $shippingAddress = $request->has('shipping') ? $request->shipping[0] : [];
+
                 $paymentIntent = \Stripe\PaymentIntent::create([
                     'amount' => ($request['orderinfo'][0]['amount'] * 100),
                     'currency' => 'sgd',
                     'automatic_payment_methods' => [
                         'enabled' => true,
+                    ],
+                    "description" => "Payment from Ios Application and payment method is - " . ($request->has('payment_method') ? $request->payment_method : '') . ".",
+                    "metadata" => ["order_id" => $request->has('order_id') ? $request->order_id : ''],
+                    "shipping" => [
+                        'name' => !empty($shippingAddress) ? $shippingAddress['ship_fname'] . ' ' . $shippingAddress['ship_lname'] : '-',
+                        'address' => !empty($shippingAddress) ? [
+                            "line1" => $shippingAddress['ship_address1'], "line2" => $shippingAddress['ship_address2'],
+                            "city" => $shippingAddress['ship_city'],
+                            "state" => $shippingAddress['ship_state'], "postal_code" => $shippingAddress['ship_zip'],
+                            "country" => $shippingAddress['ship_country'],
+                        ] : [],
                     ],
                 ]);
 
@@ -2452,7 +2469,7 @@ class CartMobileController extends Controller
                 $deliverytype = $shipdata->EnName;
             }
 
-            $countrydata = Country::where('countrycode', '=', $shippinginfo['ship_country'])->select('countryid', 'taxtitle','taxpercentage')->first();
+            $countrydata = Country::where('countrycode', '=', $shippinginfo['ship_country'])->select('countryid', 'taxtitle', 'taxpercentage')->first();
             if ($countrydata) {
                 $countryid = $countrydata->countryid;
                 $taxtitle = $countrydata->taxtitle;
@@ -2465,7 +2482,7 @@ class CartMobileController extends Controller
             $ordermaster['pay_method'] = $orderinfo['paymethod'];
             $ordermaster['shipping_cost'] = str_replace(',', '', $orderinfo['shippingcost']);
             $ordermaster['packaging_fee'] = str_replace(',', '', $orderinfo['packagingfee']);
-            $ordermaster['tax_label'] = trim($taxtitle.' ('.$taxValue.'%)');
+            $ordermaster['tax_label'] = trim($taxtitle . ' (' . $taxValue . '%)');
             $ordermaster['tax_percentage'] = $taxValue;
             $ordermaster['tax_collected'] = str_replace(',', '', $orderinfo['tax_collected']);
             $ordermaster['discount_amount'] = str_replace(',', '', $discount);
@@ -2506,7 +2523,6 @@ class CartMobileController extends Controller
                 $quotationid = $order->order_id;
             }
 
-            
             $hoolahitems = [];
             $atomeitems = [];
             $cartitems = $orderinfo['products'];
@@ -2654,12 +2670,12 @@ class CartMobileController extends Controller
                 $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
                 #@mail($custemail, $emailsubject, $emailcontent, $headers);
-                /*Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
+                Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
                     $message->to($custemail)
                         ->subject($emailsubject)
                         ->from(env('MAIL_USERNAME'), env('APP_NAME'))
                         ->setBody($emailcontent, 'text/html');
-                });*/
+                });
 
                 //@mail($setting->admin_email, $emailsubject, $emailcontent, $headers);
             }
