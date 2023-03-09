@@ -122,4 +122,17 @@ class GrabPayFunctions extends Model
     {
         return base64_encode($url);
     }
+
+    public function generatePopSignature($clientSecret, $accessToken, $dateTime)
+    {
+        $timestamp = strtotime($dateTime);
+        $message = $timestamp . $accessToken;
+        $signature = hash_hmac('sha256', $message, $clientSecret, true);
+        $payload = [
+            'time_since_epoch' => $timestamp,
+            'sig' => $this->base64UrlEncodeNormal($signature),
+        ];
+
+        return $this->base64UrlEncodeNormal(json_encode($payload));
+    }
 }

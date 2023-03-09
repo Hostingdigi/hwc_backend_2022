@@ -28,7 +28,7 @@ class OrderServices
         ];
 
         $billinginfo = Session::has('billinginfo') ? Session::get('billinginfo') : [];
-        $cartItems = $this->cartServices->cartItems($billinginfo['bill_country'] ?? null);
+        $cartItems = $this->cartServices->cartItems($billinginfo['ship_country'] ?? null);
 
         $cartdata = $cartItems['cartItems'];
         $subtotal = $cartItems['subTotal'];
@@ -74,6 +74,7 @@ class OrderServices
             }
         }
 
+        $fuelSettings = PaymentSettings::where('Id', '1')->select('fuelcharge_percentage')->first();
         $ordermaster = new OrderMaster;
         $ordermaster['user_id'] = $userid;
         $ordermaster['ship_method'] = Session::get('deliverymethod');
@@ -88,6 +89,9 @@ class OrderServices
         $ordermaster['discount_amount'] = $discount;
         $ordermaster['discount_id'] = $couponid;
         $ordermaster['order_status'] = '0';
+        $ordermaster['fuelcharge_percentage'] = $billinginfo['ship_country'] != 'SG' ? ($fuelSettings ? $fuelSettings->fuelcharge_percentage : 0) : 0;
+        $ordermaster['fuelcharges'] = isset($cartItems['fuelcharges']) ? $cartItems['fuelcharges'] : 0.00;
+        $ordermaster['handlingfee'] = isset($cartItems['handlingfee']) ? $cartItems['handlingfee'] : 0.00;
         $ordermaster['if_items_unavailabel'] = Session::get('if_unavailable');
         $ordermaster['delivery_instructions'] = Session::get('delivery_instructions');
 

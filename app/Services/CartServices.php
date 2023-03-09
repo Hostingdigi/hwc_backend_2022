@@ -68,7 +68,7 @@ class CartServices
             $subTotal += $val['total'];
         }
 
-        //Extract tax amount
+        //Exclude default tax amount
         $countryDetails = Country::where('countrycode', $cartData['countryCode'])->first();
         $taxAmount = round((($subTotal * $countryDetails->taxpercentage) / (100 + $countryDetails->taxpercentage)), 2);
         $subTotal = round($subTotal - $taxAmount, 2);
@@ -95,9 +95,11 @@ class CartServices
         $packingFee = round($packingFee, 2);
 
         $cartData['deliveryDetails']['deliveryTotal'] = $deliveryTotal;
+        $cartData['fuelcharges'] = $this->getFuelCharges($deliveryTotal, $cartData['countryCode']);
+        $cartData['handlingfee'] = $this->getHandlingFee($totalWeight, $cartData['countryCode']);
         $cartData['packingFees'] = $packingFee;
         $cartData['discountDetails'] = $this->getDiscount($subTotal, $cartData['taxDetails']['taxTotal'], $deliveryTotal, $packingFee);
-        $cartData['grandTotal'] = $this->getGrandTotal($subTotal, $cartData['taxDetails']['taxTotal'], $deliveryTotal, $packingFee, $cartData['discountDetails']['discountTotal']);
+        $cartData['grandTotal'] = $this->getGrandTotal($subTotal, $cartData['taxDetails']['taxTotal'], $deliveryTotal, $packingFee, $cartData['discountDetails']['discountTotal'], $cartData['fuelcharges'], $cartData['handlingfee']);
 
         return $cartData;
 
@@ -143,9 +145,9 @@ class CartServices
         ];
     }
 
-    public function getGrandTotal($subTotal = 0, $taxTotal = 0, $deliverycost = 0, $packingfee = 0, $discount = 0)
+    public function getGrandTotal($subTotal = 0, $taxTotal = 0, $deliverycost = 0, $packingfee = 0, $discount = 0, $fuelcharges = 0, $handlingfee = 0)
     {
-        $grandtotal = $subTotal + $taxTotal + $deliverycost + $packingfee;
+        $grandtotal = $subTotal + $taxTotal + $deliverycost + $packingfee + $fuelcharges + $handlingfee;
         $grandtotal = $grandtotal - $discount;
 
         return round($grandtotal, 2);
@@ -164,6 +166,23 @@ class CartServices
             'taxPercentage' => $taxPercentage,
             'taxTotal' => round((($subTotal * $taxPercentage) / 100), 2),
         ];
+    }
+
+    public function getFuelCharges($shipping_charges = 0, $countrycode = '')
+    {
+        if ($countrycode == 'SG') {
+            $fuelcharges = 0;
+        } else {
+            $subtotal_with_tax = $shipping_charges;
+            $settings = PaymentSettings::where('Id', '1')->select('fuelcharge_percentage')->first();
+            $fuelcharges = ($subtotal_with_tax / 100) * $settings->fuelcharge_percentage;
+        }
+        return $fuelcharges;
+    }
+
+    public function getHandlingFee($total_weight = 0, $countrycode = '')
+    {
+        return ($countrycode == 'SG') ? 0 : ($total_weight * env('HANDLING_PER'));
     }
 
     public function getShippingCost($countrycode = '', $deliverymethod = 0, $shippingbox = '', $quantity = 1, $subtotal = 0, $gst = 0, $totalweight = 0)
