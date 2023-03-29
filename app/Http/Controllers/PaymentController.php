@@ -2011,6 +2011,7 @@ class PaymentController extends Controller
                         return redirect('cancelpayment', ['orderid' => $orderid]);
                     }
 
+                    Log::alert('ORDER ID : ' . $orderid . ' oauth api response => '.json_encode($oAuthTokenResult));
                     $resultObj = json_decode($oAuthTokenResult);
 
                     //Step 2 - Complete charge
