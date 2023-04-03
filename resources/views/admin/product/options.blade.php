@@ -21,7 +21,12 @@
 
 
 @include('admin.includes.mainmenu')
-
+@php
+if($adminrole ==5)
+    $field_display = "readonly";
+else
+    $field_display = "";
+@endphp
 
 
 <div class="app-content content" style="background-color:#fff;">
@@ -115,7 +120,7 @@
                                                         <div class="form-group row">
 
                                                             <div class="col-md-4">
-                                                                <span>Name </span>
+                                                                <span>Product Name </span>
                                                             </div>
                                                             <div class="col-md-8">
 
@@ -124,18 +129,31 @@
                                                             </div>
                                                         </div>
                                                     </div>
-
+                                                    
+                                                    @if(($editoption && $adminrole ==5)|| $adminrole !=5)
 													<div class="col-12">
                                                         <div class="form-group row">
                                                             <div class="col-md-4">
-                                                                <span>Title</span>
+                                                                <span>Option Title</span>
                                                             </div>
                                                             <div class="col-md-8">
-                                                               <input type="text" name="Title" required value="@if($editoption){{ $editoption->Title }}@endif" class="form-control"> 
+                                                               <input type="text" name="Title" required {{$field_display}} value="@if($editoption){{ $editoption->Title }}@endif" class="form-control"> 
                                                             </div>
                                                         </div>
                                                     </div>
-
+                                                    <div class="col-12">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-4">
+                                                                <span>Barcode<br>(Use comma separater for multiple values)</span>
+                                                            </div>
+                                                            <div class="col-md-8">
+                                                            <textarea name="barcode" class="form-control" >@if($editoption){{ $editoption->barcode }}@endif</textarea>
+                                                              
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    @endif
+                                                    @if($adminrole !=5)
 													<div class="col-12">
                                                         <div class="form-group row">
                                                             <div class="col-md-4">
@@ -237,11 +255,14 @@
                                                         </div>
                                                     </div>
 													
-
-													<div class="col-md-8 offset-md-4">
-                                                        <button type="submit" class="btn btn-primary mr-1 mb-1">Submit</button>
-                                                        <button type="reset" class="btn btn-outline-warning mr-1 mb-1">Reset</button>
-                                                    </div>
+                                                    @endif
+                                                    @if($editoption || $adminrole !=5)
+                                                        <div class="col-md-8 offset-md-4">
+                                                            <button type="submit" class="btn btn-primary mr-1 mb-1">Submit</button>
+                                                            <button type="reset" class="btn btn-outline-warning mr-1 mb-1">Reset</button>
+                                                        </div>
+                                                    @endif
+                                                   
                                                 </div>
                                             </div>
                                         </form>
@@ -261,6 +282,8 @@
                                 <tr>
 								<th></th>
 								<th>Title</th>
+
+                                <th>Barcode</th>
 
 								<th>Price</th>
 
@@ -282,15 +305,22 @@
 
 								<tr>														
 									<td><input type="checkbox" value="{{ $option->Id }}" name="optionids[]"></td>
-									<td>{{ $option->Title }}</td>														
+									<td>{{ $option->Title }}</td>	
+                                    <td>{{ $option->barcode }}</td>														
 									<td><input type="text" name="Price{{ $option->Id }}" value="{{ $option->Price }}" class="form-control" style="width:55px;"></td>
 									<td><input type="text" name="Quantity{{ $option->Id }}" value="{{ $option->Quantity }}" class="form-control" style="width:55px;"></td>
 									<td><input type="text" name="custqty{{ $option->Id }}" value="{{ $option->cust_qty_per_day }}" class="form-control" style="width:55px;"></td>
 									<td><input type="text" name="ShippingBox{{ $option->Id }}" value="{{ $option->ShippingBox }}" class="form-control" style="width:55px;"></td>
-									<td><a href="javascript:void(0);" onclick="chkupdatestatus({{ $option->Id }}, {{ $option->Status }})">@if($option->Status == 1)<i class="fa fa-eye fa-lg" aria-hidden="true"></i> @else
-										<i class="fa fa-eye-slash fa-lg" aria-hidden="true"></i> @endif </a> &nbsp;&nbsp;
+									<td>
+                                    
 										<a href="{{ url('/admin/products/options/'.$option->Id.'/'.$option->Prod.'/editoptions') }}">
-										<i class="fa fa-pencil fa-lg" aria-hidden="true"></i></a>&nbsp;&nbsp;<a href="javascript:void(0);" onclick="chkdelete({{ $option->Id }})"><i class="fa fa-trash fa-lg" aria-hidden="true"></i></a></td>
+										<i class="fa fa-pencil fa-lg" aria-hidden="true"></i></a>
+                                        @if($adminrole !=5)
+                                        &nbsp;&nbsp;<a href="javascript:void(0);" onclick="chkupdatestatus({{ $option->Id }}, {{ $option->Status }})">@if($option->Status == 1)<i class="fa fa-eye fa-lg" aria-hidden="true"></i> @else
+										<i class="fa fa-eye-slash fa-lg" aria-hidden="true"></i> @endif </a> 
+                                        &nbsp;&nbsp;<a href="javascript:void(0);" onclick="chkdelete({{ $option->Id }})"><i class="fa fa-trash fa-lg" aria-hidden="true"></i></a>
+                                        @endif
+                                        </td>
 								</tr>						
 
 							@endforeach				
@@ -300,6 +330,7 @@
 						  </table>		
 
 						  </section>
+                          @if($adminrole !=5)
 						  <div class="col-md-2" style="float:right; text-align:right; margin-bottom:20px;">
 							<select name="bulk_action" id="bulk_action" class="form-control" onchange="bulk_update_item(this.value)">
 									<option value="">Select </option>
@@ -311,6 +342,7 @@
 									
 							</select>
 							</div>	
+                            @endif
 						</form>
             </div>
 

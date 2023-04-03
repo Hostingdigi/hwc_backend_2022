@@ -48,7 +48,7 @@
 														<select class="form-control" name="status">
 															<option value="" @if($status == '') selected @endif>Select All Products</option>
 															<option value="1" @if($status == '1') selected @endif>Active</option>
-															<option value="0" @if($status == '0') selected @endif>De - Active</option>
+															<option value="0" @if($status == '0') selected @endif>In-Active</option>
 														</select>
 													</div>
 												</div>
@@ -160,6 +160,16 @@
 											<div class="col-12">
 												<div class="form-group row">
 													<div class="col-md-4">
+														<span>Barcode</span>
+													</div>
+													<div class="col-md-8">
+														<input type="text" id="barcode" class="form-control" name="barcode" placeholder="Product Barcode" value="{{ $barcode }}">
+													</div>
+												</div>
+											</div>
+											<div class="col-12">
+												<div class="form-group row">
+													<div class="col-md-4">
 														<span>Is Promo Product?</span>
 													</div>
 													<div class="col-md-8">
@@ -199,6 +209,7 @@
 					</div>
 				</div>
 				</form>
+				<input type="checkbox" name="selectall" id="selectall" onClick="check_uncheck_checkbox(this.checked);" style="margin-left:15px; margin-top:25px;">&nbsp;Select All
 				@if(in_array('20_Export CSV', $moduleaccess) || $adminrole == 0)
 				<a href="{{ url('/admin/exportproducts?status='.$status.'&Types='.$Types.'&Brand='.$Brand.'&Nametype='.$Nametype.'&EnName='.$EnName.'&Qtytype='.$Qtytype.'&Qty='.$Qty.'&productcode='.$productcode.'&IsPromotion='.$IsPromotion.'&sortcolumn='.$sortcolumn) }}" id="export" class="btn btn-primary mr-1 mb-1 float-right" target="_blank">Export CSV</a>
 				@endif
@@ -218,7 +229,7 @@
                                     <th>Box Size</th>                                                                        
                                     <th>Cust Qty / Day</th>                                                                        
                                     <th>Display Order</th>                                                                        
-                                    <th width="200">Actions</th>
+                                    <th >Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -226,7 +237,13 @@
                                @foreach($products as $product)
                                     <tr>
                                         <td><input type="checkbox" value="{{ $product->Id }}" name="productids[]"></td>
-										<td>{{ $product->EnName }}</td>
+										<td>{{ $product->EnName }} 
+										
+										@if($product->barcode!='')
+										<br>
+										<a style="font-size:12px;font-style: italic;text-decoration:underline;" href="#" alt="{{$product->barcode}}" title="{{$product->barcode}}">Product Code</a>
+										@endif
+										<!--<span style="font-size:12px;font-style: italic;">{{($product->barcode!='')?"Barcode :".$product->barcode:'' }}</span> --></td>
 										<td>							
 												@php
 													$categoryname = '';
@@ -255,7 +272,7 @@
 										<td align="center"><input type="text" name="cust_qty{{ $product->Id }}" value="{{ $product->cust_qty_per_day }}" class="form-control" style="width:55px;"></td> 
 										<td align="center"><input type="text" name="dorder{{ $product->Id }}" value="{{ $product->DisplayOrder }}" class="form-control" style="width:55px;"></td>
 										
-										<td align="center" style="white-space:nowrap;">
+										<td align="center"  width="20%">
 										@if(in_array('20_Status', $moduleaccess) || $adminrole == 0)
 										<a href="javascript:void(0);" onclick="chkupdatestatus({{ $product->Id }}, {{ $product->ProdStatus }})">@if($product->ProdStatus == 1)<i class="fa fa-eye fa-lg" aria-hidden="true"></i> @else
 										<i class="fa fa-eye-slash fa-lg" aria-hidden="true"></i> @endif </a> &nbsp;&nbsp;
@@ -273,7 +290,7 @@
 										@if(in_array('20_Quantity Update', $moduleaccess) || $adminrole == 0)
 										<a href="{{ url('/admin/products/'.$product->Id.'/quantity/') }}" >Quantity</a>&nbsp;|&nbsp;
 										@endif
-										<br>
+										
 										@if(in_array('20_Group Price', $moduleaccess) || $adminrole == 0)
 										<a href="{{ url('/admin/products/'.$product->Id.'/groupprice/') }}" >Group Price</a>&nbsp;|&nbsp;
 										@endif
@@ -340,6 +357,8 @@
 									<select name="bulk_action" id="bulk_action" class="form-control" onchange="bulk_update_item(this.value)">
 										<option value="">Select </option>
 										<option value="delete">Delete</option>
+										<option value="status_active">Mark as Active</option>
+										<option value="status_inactive">Mark as InActive</option>
 										<option value="assign_promo">Mark as Promo Prod</option>
 										<option value="remove_promo">Remove from Promo Prod</option>
 										<option value="update_price">Update Price</option>
@@ -420,11 +439,23 @@ function bulk_update_item(val){
 		 }
 	}
 }
+
+function check_uncheck_checkbox(isChecked) {
+	if(isChecked) {
+		$('input[name="productids[]"]').each(function() { 
+			this.checked = true; 
+		});
+	} else {
+		$('input[name="productids[]"]').each(function() {
+			this.checked = false;
+		});
+	}
+}
 </script>	
 <script>
 $(document).ready(function() {
 	$('#reset').click(function() {
-		window.location = "{{ url('/admin/products') }}";
+		window.location = "{{ url('/admin/clearproductsearch') }}";
 	});
 });
 

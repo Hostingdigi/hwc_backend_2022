@@ -58,24 +58,46 @@
 																@php
 																	$remainingqty = 0;
 																	$delrefundqty = 0;
-																	$orddeldetails = \App\Models\OrderDeliveryDetails::where('order_id', '=', $orderdetail->order_id)->where('prod_id', '=', $orderdetail->prod_id)->select('quantity')->get();
+																	$refunded =0;
+																	$delivered =0;
+
+																	$orddeldetails = \App\Models\OrderDeliveryDetails::where('order_id', '=', $orderdetail->order_id)->where('detail_id', '=', $orderdetail->detail_id)->where('prod_id', '=', $orderdetail->prod_id)->select('quantity','status')->get();
 																	if($orddeldetails) {
 																		foreach($orddeldetails as $orddeldetail) {
+																			
 																			$delrefundqty += $orddeldetail->quantity;
+																			if($orddeldetail->status ==2)
+																				$refunded +=$orddeldetail->quantity;
+
+																			if($orddeldetail->status ==1)
+																				$delivered +=$orddeldetail->quantity;
 																		}
 																	}
 																	
 																	$remainingqty = $orderdetail->prod_quantity - $delrefundqty;
 																@endphp
 																<tr @if($remainingqty == 0) style="background:#CCC;" @endif>
-																	<td><input type="checkbox" value="{{ $orderdetail->prod_id }}" name="prodids[]" @if($remainingqty == 0) disabled @endif></td>
+																	<td><input type="checkbox" value="{{ $orderdetail->detail_id }}" name="prodids[]" @if($remainingqty == 0) disabled @endif></td>
 																	<td>{{ $orderdetail->prod_name }}</td>
 																	<td>${{ $orderdetail->prod_unit_price }}</td>
 																	<td>{{ $orderdetail->prod_quantity }}</td>
-																	<td>Delivered: {{ $delrefundqty }}</td>
 																	<td>
-																	@if($remainingqty > 0)	
-																		<input type="text" class="form-control" value="{{ $remainingqty }}" name="prod_id{{ $orderdetail->prod_id }}" style="width:100px;" max="{{ $orderdetail->prod_quantity }}">
+																	@php 
+																	
+																	if($refunded >0)
+																		echo "Refunded: ".$refunded;
+																	if($delivered >0)
+																		echo "Delivered: ".$delivered;
+																	@endphp
+																	</td>
+																	<td>
+																	@if($remainingqty > 0)
+																	<select class="form-control"  name="detail_id_{{$orderdetail->detail_id}}" style="width:100px;">
+																	@for($i=1;$i<=$orderdetail->prod_quantity;$i++)
+																		<option value="{{$i}}">{{$i}}</option>
+																	@endfor
+																	</select>	
+																		
 																	@else
 																		{{ $remainingqty }}
 																	@endif	
@@ -99,7 +121,7 @@
                                                 </div>
                                             </div>
                                         </form>
-										@if(count($orderdeliverydetails) > 0)
+										@if(count($orderdeliveryinfo) > 0)
 										<h1 align="center" style="margin-top:20px;">DELIVERY TRACKING RECORDS</h1>
 										<div class="form-body">
 											<div class="row">
@@ -112,20 +134,25 @@
 															<th>Next Delivery Date</th>
 															<th>Tracking No</th>															
 														</tr>
-														@foreach($orderdeliverydetails as $orderdeliverydetail)
+														@foreach($orderdeliveryinfo as $info)
 															<tr>
-																<td>{{ date('d M Y', strtotime($orderdeliverydetail->created_at)) }}</td>
+																<td>{{ date('d M Y', strtotime($info->created_at)) }}</td>
 																<td>
 																@php
-																	$productname = '';
+																	
+																$productname = '';
 																	$productids = [];
-																	$deldetails = \App\Models\OrderDeliveryDetails::where('delivery_info_id', '=', $orderdeliverydetail->delivery_info_id)->where('order_id', '=', $orderdeliverydetail->order_id)->get();
+																	$deldetails = \App\Models\OrderDeliveryDetails::where('order_id', '=', $info->order_id)->where('delivery_info_id', '=', $info->delivery_id)->get();
+																	
 																	if($deldetails) {
 																		foreach($deldetails as $deldetail) {
-																			$orddetails = \App\Models\OrderDetails::where('prod_id', '=', $deldetail->prod_id)->select('prod_name')->get();
+																			
+																			$orddetails = \App\Models\OrderDetails::where('detail_id', '=', $deldetail->detail_id)->select('prod_name')->get();
+																			
+
 																			foreach($orddetails as $orddetail) {
-																				if(!in_array($deldetail->prod_id, $productids)) {
-																					echo $orddetail->prod_name.': '.$orderdeliverydetail->quantity."<br>";
+																				if(!in_array($deldetail->prod_id, $productids) || 1==1) {
+																					echo $orddetail->prod_name.': '.$deldetail->quantity." Qty <br>";
 																					$productids[] = $deldetail->prod_id;
 																				}
 																			}
@@ -133,27 +160,19 @@
 																	}
 																@endphp
 																</td>
-																<td>@if($orderdeliverydetail->status == 1) Delivered @else Refunded @endif</td>
+																<td>@if($info->status == 1) Delivered @else Refunded @endif</td>
 																<td>
-																@php
-																	
-																	$nextdeliverydate = $shippingby = '';
-																	$deliveryinfo = \App\Models\OrderDeliveryInfo::where('delivery_id', '=', $orderdeliverydetail->delivery_info_id)->where('order_id', '=', $orderdeliverydetail->order_id)->select('next_delivery_date', 'shipping_by')->first();
-																	if($deliveryinfo) {
-																		$nextdeliverydate = $deliveryinfo->next_delivery_date;
-																		$shippingby = $deliveryinfo->shipping_by;
-																	}
-																@endphp
-																@if($nextdeliverydate != '' && $nextdeliverydate != '0000-00-00') 
-																{{ date('d M Y', strtotime($nextdeliverydate)) }}
-																@endif	
+																{{$info->next_delivery_date}}
+																@if($info->next_delivery_date != '' && $info->next_delivery_date  != '0000-00-00') 
+																{{ date('d M Y', strtotime($info->next_delivery_date )) }}
+																@endif		
 																</td>
 																<td>
-																@if($orderdeliverydetail->status == 1)
-																	@if($shippingby == '')
-																		<a href="{{ url('/admin/orders/'.$orderdeliverydetail->order_id.'/'.$orderdeliverydetail->delivery_info_id.'/deliveryinfo') }}"><i class="fa fa-truck fa-lg" aria-hidden="true"></i></a>
+																@if($info->status == 1)
+																	@if($info->shipping_by == '')
+																		<a href="{{ url('/admin/orders/'.$info->order_id.'/'.$info->delivery_id.'/deliveryinfo') }}"><i class="fa fa-truck fa-lg" aria-hidden="true"></i></a>
 																	@else																	
-																		<a href="{{ url('/admin/orders/'.$orderdeliverydetail->delivery_info_id.'/trackorder') }}" class="btn btn-primary mr-1 mb-1 waves-effect waves-light" target="_blank">Track Order</a>
+																		<a href="{{ url('/admin/orders/'.$info->delivery_id.'/trackorder') }}" class="btn btn-primary mr-1 mb-1 waves-effect waves-light" target="_blank">Track Order</a>
 																	@endif
 																@endif	
 																</td>

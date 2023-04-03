@@ -59,6 +59,7 @@
 	<meta name="description" content="{{ $metadesc }}">
 	<meta name="keywords" content="{{ $metakey }}">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!-- <meta name="google-site-verification" content="1FHXAhBf4KOaY7Dxw4WhWi5r3z8atGo7_QA-CDufOaQ" /> -->
 	<!-- Favicon -->
 	<link href="{{ url('images/favicon.ico') }}" rel="shortcut icon"/>
 
@@ -86,7 +87,65 @@
 		  <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
 	  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 	<![endif]-->
+	<!--Start of Zendesk Chat Script-->
+	<script type="text/javascript">
+	// window.$zopim||(function(d,s){var z=$zopim=function(c){
+	// z._.push(c)},$=z.s=
+	// d.createElement(s),e=d.getElementsByTagName(s)[0];z.set=function(o){z.set.
+	// _.push(o)};z._=[];z.set._=[];$.async=!0;$.setAttribute('charset','utf-8');
+	// $.src='https://v2.zopim.com/?6FIVDCXQheiWd7dUCPAWf1Dli5JgiPcD';z.t=+new Date;$.
+	// type='text/javascript';e.parentNode.insertBefore($,e)})(document,'script');
+	</script>
 
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script>
+	// window.dataLayer = window.dataLayer || [];
+	// function gtag(){dataLayer.push(arguments);}
+	// gtag('js', new Date());
+
+	// gtag('config', 'UA-142468295-1');
+	
+	</script>
+	@if($seourl == 'success')
+	@php
+	$billemail = '';
+	if(isset($_REQUEST['orderid'])) {
+	$lastorderid = $_REQUEST['orderid'];
+	$ordermastertbl = \App\Models\OrderMaster::where('order_id', '=', $lastorderid)->select('order_id','payable_amount','bill_email')->first();
+	if($ordermastertbl) {
+	$billemail = $ordermastertbl->bill_email;
+	}
+	}
+	@endphp
+	<script>
+	// var enhanced_conversion_data = {
+	// 	"email": @php echo "'".$billemail."'" @endphp
+		
+	// };
+	</script>
+
+	@endif
+	<!-- Global site tag (gtag.js) - Google Ads: 762150370 -->
+	<!-- <script async src="https://www.googletagmanager.com/gtag/js?id=AW-762150370"></script> -->
+	<script>
+	// window.dataLayer = window.dataLayer || [];
+	// function gtag(){dataLayer.push(arguments);}
+	// gtag('js', new Date());
+	// gtag('config','AW-762150370', {'allow_enhanced_conversions':true});
+	</script>
+
+	@if($seourl == 'success')
+	<!-- Event snippet for Purchase conversion page -->
+	<script>
+	// gtag('event', 'conversion', {
+	// 	'send_to': 'AW-762150370/kTlHCKKpqrADEOL7tesC',
+	// 	'value' : @php echo $ordermastertbl->payable_amount @endphp,
+	// 	'currency': 'SGD',
+	// 	'transaction_id': ''
+	// });
+	</script>
+
+	@endif
 </head><body>
 <div id="preloder--">
 		<div class="loader--"></div>

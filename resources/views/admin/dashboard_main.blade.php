@@ -56,6 +56,7 @@
 		$pendingpercentage = number_format((($overallpending / $overalltotal) * 100), 2);
 	}
 @endphp
+@if(in_array('21_View', $moduleaccess) || $adminrole == 0)
     <!-- BEGIN: Header-->
 <div class="app-content content">
         <div class="content-overlay"></div>
@@ -81,19 +82,19 @@
 											<div class="col-md-4">
 												<p class="mb-50 text-bold-600">Sales</p>
                                                 <h2 class="text-bold-400">
-                                                    <span class="text-success">${{ number_format($overalltotal, 2) }}</span>
+                                                    <span class="text-success">S${{ number_format($overalltotal, 2) }}</span>
                                                 </h2>
 											</div>
 											<div class="col-md-4">
 												<p class="mb-50 text-bold-600">Paid</p>
                                                 <h2 class="text-bold-400">
-                                                    <span>${{ number_format($overallpaid, 2) }}</span>
+                                                    <span>S${{ number_format($overallpaid, 2) }}</span>
                                                 </h2>
 											</div>
 											<div class="col-md-4">
 												<p class="mb-50 text-bold-600">Pending</p>
                                                 <h2 class="text-bold-400">                                                    
-                                                    <span>${{ number_format($overallpending, 2) }}</span>
+                                                    <span>S${{ number_format($overallpending, 2) }}</span>
                                                 </h2>
 											</div>
 										</div>
@@ -114,19 +115,19 @@
 											<div class="col-md-4">
 												<p class="mb-50 text-bold-600">Sales</p>
                                                 <h2 class="text-bold-400">
-                                                    <span class="text-success">${{ number_format($salestotal, 2) }}</span>
+                                                    <span class="text-success">S${{ number_format($salestotal, 2) }}</span>
                                                 </h2>
 											</div>
 											<div class="col-md-4">
 												<p class="mb-50 text-bold-600">Paid</p>
                                                 <h2 class="text-bold-400">
-                                                    <span>${{ number_format($paid, 2) }}</span>
+                                                    <span>S${{ number_format($paid, 2) }}</span>
                                                 </h2>
 											</div>
 											<div class="col-md-4">
 												<p class="mb-50 text-bold-600">Pending</p>
                                                 <h2 class="text-bold-400">                                                    
-                                                    <span>${{ number_format($pending, 2) }}</span>
+                                                    <span>S${{ number_format($pending, 2) }}</span>
                                                 </h2>
 											</div>
 										</div>
@@ -147,19 +148,19 @@
 											<div class="col-md-4">
 												<p class="mb-50 text-bold-600">Sales</p>
                                                 <h2 class="text-bold-400">
-                                                    <span class="text-success">${{ number_format($lastsalestotal, 2) }}</span>
+                                                    <span class="text-success">S${{ number_format($lastsalestotal, 2) }}</span>
                                                 </h2>
 											</div>
 											<div class="col-md-4">
 												<p class="mb-50 text-bold-600">Paid</p>
                                                 <h2 class="text-bold-400">
-                                                    <span>${{ number_format($lastpaid, 2) }}</span>
+                                                    <span>S${{ number_format($lastpaid, 2) }}</span>
                                                 </h2>
 											</div>
 											<div class="col-md-4">
 												<p class="mb-50 text-bold-600">Pending</p>
                                                 <h2 class="text-bold-400">                                                    
-                                                    <span>${{ number_format($lastpending, 2) }}</span>
+                                                    <span>S${{ number_format($lastpending, 2) }}</span>
                                                 </h2>
 											</div>
 										</div>
@@ -252,9 +253,9 @@
 														
 														{{ $order->order_id }}
 														</td>
-														<td>{{ date('d M Y h:i A', strtotime($order->date_entered)) }}</td>
+														<td>{{ date('d M Y', strtotime($order->date_entered)) }}</td>
 														<td>{{ $order->bill_fname }} {{ $order->bill_lname }}</td>
-														<td>${{ $order->payable_amount }}</td>
+														<td>S${{ $order->payable_amount }}</td>
 														<td>
 															@if($order->order_type == "1")
 																Online Order
@@ -286,7 +287,7 @@
         </div>
     </div>
     <!-- END: Content-->
-
+@endif
     <div class="sidenav-overlay"></div>
     <div class="drag-target"></div>
 @include('admin.includes.footer')

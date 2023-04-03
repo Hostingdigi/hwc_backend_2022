@@ -182,9 +182,9 @@
                                                             </div>
                                                             <div class="col-md-8">
                                                                 <select name="order_status" class="form-control">
-																	<option value="2">Mark as Shipped</option>
-																	<option value="1">Mark as Paid/ Shippmend pending</option>
-																	<option value="0" selected>Mark as Not Paid</option>
+																	<option value="2" @if($order->order_status == 2) selected @endif>Mark as Shipped</option>
+																	<option value="1" @if($order->order_status == 1) selected @endif>Mark as Paid/ Shippment Pending</option>
+																	<option value="0" @if($order->order_status == 0) selected @endif>Mark as Not Paid</option>
 																</select>  
                                                              </div>
                                                         </div>

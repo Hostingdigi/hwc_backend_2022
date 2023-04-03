@@ -118,6 +118,16 @@
                                                     <div class="col-12">
                                                         <div class="form-group row">
                                                             <div class="col-md-4">
+                                                                <span>Overseas Fuel Charges Percentage(%)</span>
+                                                            </div>
+                                                            <div class="col-md-8">
+                                                                <input type="text" id="fuelcharge_percentage" class="form-control" name="fuelcharge_percentage" value="{{ $paysettings->fuelcharge_percentage }}" placeholder="Overseas Fuel Charge (%)" required>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-12">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-4">
                                                                 <span>Shipping Cost</span>
                                                             </div>
                                                             <div class="col-md-8">

@@ -73,9 +73,9 @@
                                                             </div>
                                                             <div class="col-md-8">
                                                                 <select name="order_status" id="order_status" class="form-control">
-                                                                <option value="1">Pending</option>
-                                                                <option value="9">Ready For Collection</option>
-                                                                <option value="3">Collected / Shipped</option>
+                                                                <option value="1" @if($order->order_status == 1) selected @endif>Shippment Pending</option>
+                                                                <option value="9" @if($order->order_status == 9) selected @endif>Ready For Collection</option>
+                                                                <option value="3" @if($order->order_status == 3) selected @endif>Collected / Shipped</option>
                                                                 </select>    
                                                              </div>
                                                         </div>

@@ -98,7 +98,7 @@
                                         <option value="DisplayOrder" @if($sortby == 'DisplayOrder') selected @endif>Position</option>
                                         <option value="EnName" @if($sortby == 'EnName') selected @endif>Name</option>
                                         <option value="StandardPrice" @if($sortby == 'StandardPrice') selected @endif>Price</option>
-                                        <option>Rating</option>
+                                        
                                     </select>
                                 </div>
                                 <div class="show-item">
@@ -142,10 +142,10 @@
 															<div class="img-box">
 															<a href="{{ url('/prod/'.$product->UniqueKey) }}">
 															@if($product->Image != '')
-																<img class="main-img img-fluid" src="{{ url('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}">
-																<img class="sec-img img-fluid" src="{{ url('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}">
+																<img class="main-img img-fluid" src="{{ url('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
+																<img class="sec-img img-fluid" src="{{ url('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
 															@else
-																<img class="main-img img-fluid" src="{{ url('/images/noimage.png') }}"  alt="{{ $product->EnName }}">
+																<img class="main-img img-fluid" src="{{ url('/images/noimage.png') }}"  alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
 															@endif
 															</a>
 															</div>
@@ -158,42 +158,57 @@
 															@endif
 														</div>
 														<div class="tab-heading">
-															<p><a href="{{ url('/prod/'.$product->UniqueKey) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">@if(strlen($product->EnName) > 32){{ substr($product->EnName, 0, 32) }}...@else {{ $product->EnName }} @endif</a></p>
+														<p><a href="{{ url('/prod/'.$product->UniqueKey) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}" title="{{ $product->EnName }}" title="{{ $product->EnName }}">@if(strlen($product->EnName) > 22){{ substr($product->EnName, 0, 30) }}...@else {{ $product->EnName }} @endif</a></p>
 														</div>
 														<div class="img-content d-flex justify-content-between">
 															<div class="wid_full">
-																
-																<ul class="list-unstyled list-inline price">
-																	@php	
-																		$displayprice = $product->Price;
-																		$price = new \App\Models\Price();
-																		//$displayprice = $price->getPrice($product->Id);
-																		$actualprice = $price->getGroupPrice($product->Id);
-																		$displayprice = $price->getDiscountPrice($product->Id);
-																		$installmentPrice = $price->getInstallmentPrice($displayprice);
-																	@endphp
-																	
-																	@if($displayprice < $actualprice)
-																		<li class="list-inline-item">
-																			${{ number_format($displayprice, 2) }}
-																		</li>
-																		<li class="list-inline-item strikeoutprice">${{ number_format($actualprice, 2) }}</li>
-																	@else
-																		<li class="list-inline-item text-center">
-																			${{ number_format($displayprice, 2) }}
-																		</li>
-																	@endif
-																</ul>
-																<div class="text-center mt-3">
-																	or installments of ${{ number_format($installmentPrice, 2) }} with <img src="{{ url('/images/8dc4dab.png') }}" style="width:46px; vertical-align: inherit;">
-																</div>
+																@if($product->Price >0)
+																	<ul class="list-unstyled list-inline price">
+																		@php	
+																			$displayprice = $product->Price;
+																			$price = new \App\Models\Price();
+																			//$displayprice = $price->getPrice($product->Id);
+																			$actualprice = $price->getGroupPrice($product->Id);
+																			$displayprice = $price->getDiscountPrice($product->Id);
+																			$installmentPrice = $price->getInstallmentPrice($displayprice);
+																			
+																			$actualprice = $price->getGSTPrice($actualprice, 'SG');
+																			$displayprice = $price->getGSTPrice($displayprice, 'SG');
+																			$installmentPrice = $price->getInstallmentPrice($displayprice);
+																		@endphp
+																		
+																		@if($displayprice < $actualprice)
+																			<li class="list-inline-item">
+																				S${{ number_format($displayprice, 2) }}
+																			</li>
+																			<li class="list-inline-item strikeoutprice">S${{ number_format($actualprice, 2) }}</li>
+																		@else
+																			<li class="list-inline-item text-center">
+																				S${{ number_format($displayprice, 2) }}
+																			</li>
+																		@endif
+																	</ul>
+																	<div class="text-center mt-3">
+																		or installments of S${{ number_format($installmentPrice, 2) }} with 
+																	</div>
+																	<div class="text-center">
+																		<img src="{{ url('/images/8dc4dab.png') }}" style="width:80px; vertical-align: middle;">
+																	</div>
+																@else
+																	<div class="text-center mt-3">
+																		<div class="prod-price-col-red">COMING SOON</div>	
+																	</div>
+																	<div class="text-center mt-3" style="margin-top:2.8rem!important;">
+																		Stay Tuned
+																	</div>
+																@endif
 																<div class="text-center mt-3">
 																@if($product->Quantity > 0)
 																	@php																	
 																		$options = \App\Models\ProductOptions::where('Prod', '=', $product->Id)->count();
 																	@endphp
 																	 
-																	@if($options > 0)
+																	@if($options > 0 || $product->Price ==0)
 																		<a href="{{ url('/prod/'.$product->UniqueKey) }}" class="site-btn bg-dark mx-auto textyellow">More Details</a>
 																	@else
 																		<a href="javascript:void(0);" onclick="addtocart('{{ $product->Id }}');" class="site-btn bg-dark mx-auto textyellow">Add to Cart</a>

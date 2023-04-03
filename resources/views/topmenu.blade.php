@@ -115,9 +115,9 @@
 						<div class="col-12">							
 							<div class="usernewtext">							
 							@if(Session::has('customer_name'))
-								Hello, {{ Session::get('customer_name') }}
+								Hi {{ Session::get('customer_name') }}!
 							@else
-								Welcome to Hardwarecity!
+								Hi Guest!
 							@endif
 							</div>
 						</div>
@@ -154,4 +154,4 @@
 	</header>
 	<!-- Header section end -->
 	
-	
+	<div id="feedback-link" class="" role="button" tabindex="0" style="margin: auto 1px 1px auto; padding: 0px; border-style: solid; border-width: 0px; font-style: normal; font-weight: normal; font-variant: normal; list-style: outside none none; letter-spacing: normal; line-height: normal; text-decoration: none; vertical-align: baseline; white-space: normal; word-spacing: normal; background-repeat: repeat-x; background-position: left bottom; background-color: transparent; border-color: transparent; width: 1px; height: 228px; cursor: pointer; display: block; z-index: 107158; position: fixed; inset: 0px 0px auto auto;"><a href="{{ url('/feedback') }}"><img src="{{ url('img/feedback_icon_img.png') }}" id="feedback" alt="Feedback" class="LPMimage" style="margin: 0px; padding: 0px; border-style: none; border-width: 0px; font-style: normal; font-weight: normal; font-variant: normal; list-style: outside none none; letter-spacing: normal; line-height: normal; text-decoration: none; vertical-align: baseline; white-space: normal; word-spacing: normal; position: absolute; top: 228px; left: -26px; z-index: 600;"></a></div>

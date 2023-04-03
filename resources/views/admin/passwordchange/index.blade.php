@@ -21,7 +21,12 @@
             <div class="content-body">
             <section id="basic-horizontal-layouts">
                     <div class="row match-height">
-						
+						@if(Session::get('success'))
+						<div class="alert success" style="color:green; text-align:center;">{{ Session::get('success') }}</div>
+						@endif
+						@if(Session::get('error'))
+						<div class="alert dancer" style="color:red; text-align:center;">{{ Session::get('error') }}</div>
+						@endif
                         <div class="col-md-12 col-12">
                             <div class="card">
                                 <div class="card-header">
@@ -29,7 +34,8 @@
                                 </div>
                                 <div class="card-content">
                                     <div class="card-body">
-                                        <form class="form form-horizontal" name="adminaccess" id="adminaccess" method = "post" action="{{ url('/admin/passwordchange') }}" enctype="multipart/form-data">                                            
+                                        <form class="form form-horizontal" name="adminaccess" id="adminaccess" method = "post" action="{{ url('/admin/passwordchange') }}" enctype="multipart/form-data" onsubmit="return validateform();">
+										<input type="hidden" name="adminid" value="{{ $adminid }}">
                                             {{ csrf_field() }}
                                             <div class="form-body">
                                                 <div class="row">
@@ -40,11 +46,7 @@
                                                             </div>
                                                             <div class="col-md-8">
                                                                 <input type="password" id="oldpassword" class="form-control" name="oldpassword" placeholder="Old Password" required>
-                                                                @if ($errors->has('oldpassword'))
-                                                                    <span class="help-block">
-                                                                    <strong>{{ $errors->first('oldpassword') }}</strong>
-                                                                    </span>
-                                                                @endif
+                                                               
                                                             </div>
                                                         </div>
                                                     </div>
@@ -55,30 +57,33 @@
                                                             </div>
                                                             <div class="col-md-8">
                                                                 <input type="password" id="newpassword" class="form-control" name="newpassword" placeholder="New Password" required>
-                                                                @if ($errors->has('newpassword'))
-                                                                    <span class="help-block">
-                                                                    <strong>{{ $errors->first('newpassword') }}</strong>
-                                                                    </span>
-                                                                @endif
+                                                               
                                                             </div>
                                                         </div>
                                                     </div>
                                                     
                                                     <div class="col-12">
-                                                        <div class="form-group row{{ $errors->has('confirmpassword') ? ' has-error' : '' }}">
+                                                        <div class="form-group row">
                                                             <div class="col-md-4">
                                                                 <span>Confirm Password</span>
                                                             </div>
                                                             <div class="col-md-8">
                                                                 <input type="password" id="confirmpassword" class="form-control" name="confirmpassword" placeholder="Confirm Password" required>
-                                                                @if ($errors->has('confirmpassword'))
-                                                                    <span class="help-block">
-                                                                    <strong>{{ $errors->first('confirmpassword') }}</strong>
-                                                                    </span>
-                                                                @endif
+                                                                
                                                             </div>
                                                         </div>
                                                     </div>
+													<div class="col-12">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-4">
+                                                                
+                                                            </div>
+                                                            <div class="col-md-8">
+                                                               <div class="alert" id="passerror" style="display:none; color:red; ">New Password confirmation does not match!</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+													
                                                     <div class="col-md-8 offset-md-4">
                                                         <button type="submit" class="btn btn-primary mr-1 mb-1">Change</button>
                                                         <button type="reset" class="btn btn-outline-warning mr-1 mb-1">Reset</button>
@@ -102,3 +107,13 @@
     <div class="sidenav-overlay"></div>
     <div class="drag-target"></div>   
 @include('admin.includes.footer')
+<script type="text/javascript">
+function validateform() {
+	var newpass = $('#newpassword').val();
+	var confirmpass = $('#confirmpassword').val();
+	if(newpass != confirmpass) {
+		$('#passerror').show();
+		return false;
+	}
+}
+</script>

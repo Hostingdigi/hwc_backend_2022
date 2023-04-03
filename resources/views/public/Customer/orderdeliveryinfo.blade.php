@@ -128,7 +128,7 @@
 																echo 'Color: '.$productcolor.'<br>';
 															}
 															if($orderdeliverydetail->status == 1) { 
-																echo '<b>Delivered : </b>'; 
+																echo '<b>Shipped : </b>'; 
 															} else {
 																echo '<b>Refunded : </b>'; 
 															}

@@ -169,6 +169,8 @@
 									<th>Invoice Type</th>
 									<th>Delivery In</th>
 									<th>Status</th>
+									<th>Payment Method</th>
+									<th>Order From</th>
 									<th>Actions</th>
                                 </tr>
                             </thead>
@@ -208,9 +210,9 @@
 											
 											{{ $order->order_id }}
 											</td>
-											<td>{{ date('d M Y h:i A', strtotime($order->date_entered)) }}</td>
+											<td>{{ date('d M Y', strtotime($order->date_entered)) }}</td>
 											<td>{{ $order->bill_fname }} {{ $order->bill_lname }}</td>
-											<td>${{ $order->payable_amount }}</td>
+											<td>S${{ $order->payable_amount }}</td>
 											<td>
 												@if($order->order_type == "1")
 													Online Order
@@ -226,12 +228,14 @@
 												@if($order->quotation_status == 0) New @elseif($order->quotation_status == 1) Converted (Invoice) @elseif($order->quotation_status == 2) Expired @endif
 											@endif	
 											</td>
+											<td>{{ $order->pay_method }}</td>
+											<td>@if($order->order_from == 0) Website @else Mobile App @endif</td>
 											<td align="center">
-											@if(in_array('21_View', $moduleaccess) || $adminrole == 0)
+											@if(in_array('35_View', $moduleaccess) || $adminrole == 0)
 											<a href="{{ url('/admin/orders/'.$order->order_id) }}"><i class="fa fa-search" aria-hidden="true"></i></a>&nbsp;&nbsp;|&nbsp;&nbsp;
 											@endif
 
-											@if(in_array('21_Edit', $moduleaccess) || $adminrole == 0)
+											@if(in_array('35_Edit', $moduleaccess) || $adminrole == 0)
 												@if($order->order_type == 1)
 													@if($deliveryin != '')
 														<a href="{{ url('/admin/orders/'.$order->order_id.'/selfcollect') }}"><i class="fa fa-shopping-bag fa-lg" aria-hidden="true"></i></a>
@@ -249,7 +253,7 @@
 												@endif
 											@endif	
 											
-											@if(in_array('21_Delete', $moduleaccess) || $adminrole == 0)
+											@if(in_array('35_Delete', $moduleaccess) || $adminrole == 0)
 											&nbsp;&nbsp;|&nbsp;&nbsp;<a href="javascript:void(0);" onclick="chkdelete({{ $order->order_id }})"><i class="fa fa-trash fa-lg" aria-hidden="true"></i></a>
 											@endif
 											</td>
@@ -304,7 +308,7 @@
 						@endif
 					</div>
 					
-					@if(in_array('21_Bulk Action', $moduleaccess) || $adminrole == 0)
+					@if(in_array('35_Bulk Action', $moduleaccess) || $adminrole == 0)
 					<div class="col-md-2" style="float:right; text-align:right; margin-bottom:20px;">
 					<select name="bulk_action" id="bulk_action" class="form-control">
 						<option value="">Select </option>

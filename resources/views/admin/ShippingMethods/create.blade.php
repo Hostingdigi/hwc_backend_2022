@@ -102,6 +102,16 @@
 													<div class="col-12">
                                                         <div class="form-group row">
                                                             <div class="col-md-4">
+                                                                <span>Display Order</span>
+                                                            </div>
+                                                            <div class="col-md-8">
+                                                                 <input type="number" id="DisplayOrder" class="form-control" name="DisplayOrder" placeholder="Display Order" value="{{ $displayorder }}">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+													<div class="col-12">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-4">
                                                                 <span>Status</span>
                                                             </div>
                                                             <div class="col-md-8">

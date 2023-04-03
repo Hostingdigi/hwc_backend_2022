@@ -38,9 +38,9 @@
 								<div class="img-box">
 								<a href="{{ url('/prod/'.$promoitem->UniqueKey) }}">
 									@if($promoitem->Image != '')
-										<img src="{{ url('/uploads/product/'.$promoitem->Image) }}" class="card-img-top" alt="{{ $promoitem->EnName }}">
+										<img src="{{ url('/uploads/product/'.$promoitem->Image) }}" class="card-img-top" alt="{{ $promoitem->EnName }}" title="{{ $promoitem->EnName }}">
 									@else
-										<img src="{{ url('/images/noimage.png') }}" class="card-img-top" alt="{{ $promoitem->EnName }}">
+										<img src="{{ url('/images/noimage.png') }}" class="card-img-top" alt="{{ $promoitem->EnName }}" title="{{ $promoitem->EnName }}">
 									@endif									
 								</a>
 								</div>
@@ -49,42 +49,55 @@
 										<div class="heartIcon"><a href="#"><i class="fa fa-heart-o" aria-hidden="true" style="padding: 10px 15px; color: #999; font-size: 21px;"></i></a></div>									
 									@endif
 									<h5 class="card-title text-center"><a href="{{ url('/prod/'.$promoitem->UniqueKey) }}" alt="{{ $promoitem->EnName }}" title="{{ $promoitem->EnName }}">
-									@if(strlen($promoitem->EnName) > 30){{ substr($promoitem->EnName, 0, 30) }}...@else {{ $promoitem->EnName }} @endif</a></h5>									
-									<div class="row">
-										@php	
-											$displayprice = $promoitem->Price;
-											$price = new \App\Models\Price();
-											$displayprice = $price->getPrice($promoitem->Id);
-											$installmentPrice = $price->getInstallmentPrice($displayprice);
-										@endphp
-										
-										@if($displayprice < $promoitem->Price)
-										<div class="col-6">
-											<div class="newrate">
-											${{ number_format($displayprice, 2) }}
-											</div>
-										</div>
-										<div class="col-6">
-											<div class="oldrate">${{ number_format($promoitem->Price, 2) }}</div>
-										</div>
-										@else
-											<div class="col-12">
-												<div class="newrate text-center">
-												${{ number_format($displayprice, 2) }}
+									@if(strlen($promoitem->EnName) > 30){{ substr($promoitem->EnName, 0, 30) }}...@else {{ $promoitem->EnName }} @endif</a></h5>
+
+									@if($promoitem->Price >0)
+										<div class="row">
+											@php	
+												$actualprice = $promoitem->Price;
+												$price = new \App\Models\Price();
+												$displayprice = $price->getPrice($promoitem->Id);
+												$installmentPrice = $price->getInstallmentPrice($displayprice);
+												$gstprice = $price->getGSTPrice($displayprice, 'SG');
+												$actualgstprice = $price->getGSTPrice($actualprice, 'SG');
+												$installmentgstPrice = $price->getInstallmentPrice($gstprice);
+											@endphp
+											
+											@if($gstprice < $actualgstprice)
+											<div class="col-6">
+												<div class="newrate">
+												S${{ number_format($gstprice, 2) }}
 												</div>
 											</div>
-										@endif
-									</div>	
-									<div class="text-center mt-3">
-										or installments of ${{ number_format($installmentPrice, 2) }} with <img src="{{ url('/images/8dc4dab.png') }}" style="width:46px; vertical-align: inherit;">
-									</div>
+											<div class="col-6">
+												<div class="oldrate">S${{ number_format($actualgstprice, 2) }}</div>
+											</div>
+											@else
+												<div class="col-12">
+													<div class="newrate text-center">
+													S${{ number_format($gstprice, 2) }}
+													</div>
+												</div>
+											@endif
+										</div>	
+										<div class="text-center mt-3">
+											or installments of S${{ number_format($installmentgstPrice, 2) }} with <img src="{{ url('/images/8dc4dab.png') }}" style="width:80px; vertical-align: middle;">
+										</div>
+									@else
+										<div class="text-center mt-3">
+											<div class="prod-price-col-red">COMING SOON</div>	
+										</div>
+										<div class="text-center mt-3" style="margin-top:2.8rem!important;">
+											Stay Tuned
+										</div>						
+									@endif
 									<div class="text-center mt-3">
 									@if($promoitem->Quantity > 0)
 										@php																	
 											$options = \App\Models\ProductOptions::where('Prod', '=', $promoitem->Id)->count();
 										@endphp
 										 
-										@if($options > 0)
+										@if($options > 0 || $promoitem->Price ==0)
 											<a href="{{ url('/prod/'.$promoitem->UniqueKey) }}" class="site-btn bg-dark mx-auto textyellow">More Details</a>
 										@else
 											<a href="javascript:void(0);" onclick="addtocart('{{ $promoitem->Id }}');" id="addcart{{ $promoitem->Id }}" class="site-btn bg-dark mx-auto textyellow">Add to Cart</a>
@@ -256,7 +269,7 @@ $homecategories = \App\Models\Category::where('TypeStatus', '=', '1')->where('of
 						@if($homecategory->Image && file_exists(public_path('/uploads/category/'.$homecategory->Image)))
 							<img src="{{ url('/uploads/category/'.$homecategory->Image) }}" alt="{{ $homecategory->EnName }}" class="homecat">
 						@else
-							<img src="{{ url('/images/noimage.png') }}" alt="{{ $homecategory->EnName }}" class="homecat">
+							<img src="{{ url('/images/noimage.png') }}" alt="{{ $homecategory->EnName }}" class="homecat" title="{{ $homecategory->EnName }}">
 						@endif
 						<div class="caption">
 							<h4 class="pt-3 pb-1">{{ $homecategory->EnName }}</h4>

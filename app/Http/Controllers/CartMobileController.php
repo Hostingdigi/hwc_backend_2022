@@ -995,10 +995,10 @@ class CartMobileController extends Controller
         $type = $request->type;
         $data = $paymentmenthods = [];
         if ($type == 2) {
-            $paymethods = PaymentMethods::where('status', '=', '1')->whereIn('type', [1, 2])->get();
+            $paymethods = PaymentMethods::where('Id', '!=', 5)->where('status', '=', '1')->whereIn('type', [1, 2])->get();
 
         } else if ($type == 3) {
-            $paymethods = PaymentMethods::where('status', '=', '1')->whereIn('type', [1, 3])->get();
+            $paymethods = PaymentMethods::where('Id', '!=', 5)->where('status', '=', '1')->whereIn('type', [1, 3])->get();
 
         } else {
             return response()->json(['response' => 'Error', 'message' => 'Type is empty']);
@@ -1084,17 +1084,65 @@ class CartMobileController extends Controller
                 $taxValue = $countrydata->taxpercentage;
             }
 
+            $couponId = 0;
+            if (isset($orderinfo['couponid']) && !empty($orderinfo['couponid'])) {
+                $coupondata = Couponcode::whereRaw("LOWER(coupon_code) = '" . trim(strtolower($orderinfo['couponid'])) . "'")->where('status', '=', '1')->first();
+                if ($coupondata) {
+                    $couponId = $coupondata->id;
+                }
+            }
+
+            //calculate fuelcharges - Start
+            $handlingfee = $fuelcharges = 0;
+            if ($shippinginfo['ship_country'] != 'SG') {
+                $shCart = new \App\Models\Cart();
+                $shippingbox = '';
+                $quantity = $boxfees = 0;
+                $totalweight = $deliverycosttotalitem = $totaldeliverycost = 0;
+                foreach ($orderinfo['products'] as $item) {
+                    $product = Product::where('Id', '=', $item['id'])->first();
+                    $shippingbox = $product->ShippingBox;
+                    $totalweight = $item['weight'];
+                    if ($shippingbox == "L" || $shippingbox == "XL" || $shippingbox == "XXL" || $shippingbox == "P") {
+                        $deliverycostperitem = $shCart->shippingCost($shippinginfo['ship_country'], $orderinfo['shipmethod'], $shippingbox, $item['quantity'], str_replace(',', '', $orderinfo['subtotal']), str_replace(',', '', $orderinfo['tax_collected']), $item['weight']);
+                        $deliverycosttotalitem += $deliverycostperitem * $item['quantity'];
+                    } else {
+                        $product_weight = $item['weight'] * $item['quantity'];
+                        //$totalweight += $product_weight;
+                    }
+                    $quantity = 1;
+                    $boxfees += $shCart->getPackagingFee($shippinginfo['ship_country'], $totalweight, str_replace(',', '', $orderinfo['subtotal']), str_replace(',', '', $orderinfo['tax_collected']), $orderinfo['shipmethod'], $shippingbox, $quantity);
+                }
+                if ($totalweight > 0) {
+                    $totaldeliverycost = $shCart->shippingCost($shippinginfo['ship_country'], $orderinfo['shipmethod'], $shippingbox, $quantity, str_replace(',', '', $orderinfo['subtotal']), str_replace(',', '', $orderinfo['tax_collected']), $totalweight);
+                }
+
+                $changedShippingCost = $deliverycosttotalitem + (float) str_replace(',', '', $totaldeliverycost);
+
+                $fuelcharges = $this->cartServices->getFuelCharges($changedShippingCost, $shippinginfo['ship_country']);
+                $fuelSettings = PaymentSettings::where('Id', '1')->select('fuelcharge_percentage')->first();
+                $handlingfee = $this->cartServices->getHandlingFee($totalweight, $shippinginfo['ship_country']);
+            } else {
+                $changedShippingCost = $orderinfo['shippingcost'];
+            }
+            //calculate fuelcharges - End
+
             $ordermaster = new OrderMaster;
             $ordermaster['user_id'] = $userid;
             $ordermaster['ship_method'] = $orderinfo['shipmethod'];
             $ordermaster['pay_method'] = $orderinfo['paymethod'];
-            $ordermaster['shipping_cost'] = str_replace(',', '', $orderinfo['shippingcost']);
+            $ordermaster['fuelcharge_percentage'] = $shippinginfo['ship_country'] != 'SG' ? ($fuelSettings ? $fuelSettings->fuelcharge_percentage : 0) : 0;
+            $ordermaster['fuelcharges'] = $fuelcharges;
+            $ordermaster['handlingfee'] = $handlingfee;
+            $ordermaster['shipping_cost'] = $changedShippingCost;
+            //$ordermaster['shipping_cost'] = str_replace(',', '', $orderinfo['shippingcost']);
+
             $ordermaster['packaging_fee'] = str_replace(',', '', $orderinfo['packagingfee']);
             $ordermaster['tax_collected'] = str_replace(',', '', $orderinfo['tax_collected']);
             $ordermaster['tax_label'] = trim($taxtitle . ' (' . $taxValue . '%)');
             $ordermaster['tax_percentage'] = $taxValue;
             $ordermaster['discount_amount'] = str_replace(',', '', $discount);
-            $ordermaster['discount_id'] = $couponid;
+            $ordermaster['discount_id'] = $couponId;
             $ordermaster['payable_amount'] = str_replace(',', '', $orderinfo['payable_amount']);
             $ordermaster['order_status'] = '0';
             $ordermaster['order_from'] = '1';
@@ -1673,7 +1721,15 @@ class CartMobileController extends Controller
             }
         }
 
-        return view('public/Payment.paypalpayment', compact('orderid', 'order', 'orderdetails', 'payenv', 'paymenturl', 'apikey', 'apisignature', 'userid', 'currency', 'grandtotal'));
+        $discounttext = '';
+        if (!empty($order->discount_id)) {
+            $coupondata = Couponcode::where('id', '=', $order->discount_id)->where('status', '=', '1')->first();
+            if ($coupondata) {
+                $discounttext = 'Coupon discount(' . ($coupondata->discount_type == 1 ? $coupondata->discount . '%)' : '$' . $coupondata->discount . ')');
+            }
+        }
+
+        return view('public/Payment.paypalpayment', compact('orderid', 'order', 'orderdetails', 'payenv', 'paymenturl', 'apikey', 'apisignature', 'userid', 'currency', 'grandtotal', 'discounttext'));
     }
 
     public function stripepayment(Request $request)
@@ -2172,7 +2228,7 @@ class CartMobileController extends Controller
             $totalweight = $deliverycosttotalitem = $totaldeliverycost = 0;
 
             foreach ($cartdetails as $item) {
-
+                $totalweight += $item->productWeight;
                 $shippingbox = $item->shippingbox;
                 if ($shippingbox == "L" || $shippingbox == "XL" || $shippingbox == "XXL" || $shippingbox == "P") {
                     $deliverycostperitem = $cart->shippingCost($country, $deliverymethod, $shippingbox, $item->prod_quantity, $subtotal, $gst, $item->productWeight);
@@ -2180,9 +2236,9 @@ class CartMobileController extends Controller
                     $deliverycosttotalitem += $deliverycostperitem * $item->prod_quantity;
                 } else {
                     $product_weight = $item->productWeight * $item->prod_quantity;
-                    $totalweight += $product_weight;
+                    //$totalweight += $product_weight;
                 }
-                $quantity = 1; //$item->prod_quantity;
+                $quantity = $item->prod_quantity;
                 $boxfees += $cart->getPackagingFee($country, $totalweight, $subtotal, $gst, $deliverymethod, $shippingbox, $quantity);
 
             }
@@ -2192,30 +2248,38 @@ class CartMobileController extends Controller
                 $totaldeliverycost = $cart->shippingCost($country, $deliverymethod, $shippingbox, $quantity, $subtotal, $gst, $totalweight);
             }
 
-            $deliverycost = $deliverycosttotalitem + $totaldeliverycost;
+            //$deliverycost = $deliverycosttotalitem + $totaldeliverycost;
+            $deliverycost = $totaldeliverycost;
             $packingfee = number_format(($packingfee + $boxfees), 2);
 
             #$deliverycost = $cart->shippingCost($country, $deliverymethod, $shippingbox, $quantity, $subtotal, $gst);
             #$packingfee = number_format(($packingfee + $boxfees), 2);
 
             $discounttype = $disamount = 0;
-            $discounttext = '';
+            $discountInvalid = false;
+            $discounttext = $discounterrortext = '';
             if (isset($orderinfo['couponcode']) && !empty($orderinfo['couponcode'])) {
                 $coupondata = Couponcode::where('coupon_code', '=', trim($orderinfo['couponcode']))->where('status', '=', '1')->first();
                 if ($coupondata) {
                     $discounttext = 'Coupon discount(' . ($coupondata->discount_type == 1 ? $coupondata->discount . '%)' : '$' . $coupondata->discount . ')');
                     $discounttype = $coupondata->discount_type;
                     $disamount = $coupondata->discount;
+                } else {
+                    $discountInvalid = true;
+                    $discounterrortext = 'Invalid coupon code';
                 }
             }
+            $fuelcharges = $this->cartServices->getFuelCharges($deliverycost, $country);
+            $handlingfee = $this->cartServices->getHandlingFee($totalweight, $country);
+            $deliverycost += $fuelcharges + $handlingfee;
 
-            $discount = $cart->getDiscount($subtotal, $gst, $deliverycost, $packingfee, $discounttype, $disamount);
-            $grandtotal = $cart->getGrandTotal($subtotal, $gst, $deliverycost, $packingfee, $discount);
+            $discount = $cart->getDiscount($subtotal, $gst, $deliverycost, $packingfee, $discounttype, $disamount, $fuelcharges, $handlingfee);
+            $grandtotal = $cart->getGrandTotal($subtotal, $gst, $deliverycost, $packingfee, $discount, 0, 0);
 
         }
 
         return response()->json(['response' => 'success', 'message' => 'Shipping & Packaing Price', 'gstText' => $gstText, 'gst' => $gst, 'packagingprice' => $packingfee, 'shippingprice' => $deliverycost,
-            'grandtotal' => $grandtotal, 'deliverycosttotalitem' => $deliverycosttotalitem, 'totaldeliverycost' => $totaldeliverycost, 'totalweight' => $totalweight, 'subtotal_text' => 'w/o ' . $taxDetails['taxLabelOnly'], 'subtotal' => $subtotal, 'discount' => $discount, 'discount_text' => $discounttext]);
+            'grandtotal' => $grandtotal, 'deliverycosttotalitem' => $deliverycosttotalitem, 'totaldeliverycost' => $totaldeliverycost, 'totalweight' => $totalweight, 'subtotal_text' => 'w/o ' . $taxDetails['taxLabelOnly'], 'subtotal' => $subtotal, 'discount' => $discount, 'discount_text' => $discounttext, 'is_discount_invalid' => $discountInvalid, 'discount_error_text' => $discounterrortext, 'fuelcharges' => number_format($fuelcharges, 2), 'handlingfee' => number_format($handlingfee, 2)]);
     }
 
     public function getshipandpackingprice(Request $request)

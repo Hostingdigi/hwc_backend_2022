@@ -145,6 +145,16 @@
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    <div class="col-12">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-4">
+                                                                <span>Payment Logo </span>
+                                                            </div>
+                                                            <div class="col-md-8">
+                                                                <input type="file" id="payment_logo" class="form-control" name="payment_logo" placeholder="Payment Logo" required>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                     <div class="col-md-8 offset-md-4">
                                                         <button type="submit" class="btn btn-primary mr-1 mb-1">Add</button>
                                                         <button type="reset" class="btn btn-outline-warning mr-1 mb-1">Reset</button>

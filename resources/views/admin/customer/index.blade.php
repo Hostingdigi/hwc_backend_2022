@@ -59,7 +59,7 @@
 													</div>
 													<div class="col-md-9">
 													<select class="form-control" name="cust_type">
-														<option value="0">Select Group</option>
+														<option value="">Select Group</option>
 														@if($groups)
 															@foreach($groups as $group)
 															<option value="{{ $group->Id }}" @if($group->Id == $cust_type) selected @endif>{{ $group->GroupTitle }}</option>

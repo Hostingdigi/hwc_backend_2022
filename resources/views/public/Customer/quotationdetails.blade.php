@@ -283,10 +283,8 @@
                 <ul class="list-group list-group-sm list-group-flush-y list-group-flush-x">
                   <li class="list-group-item d-flex">
                     <span>Subtotal
-												<br>
-						<small>[ w/o {{ !empty($orders->tax_label) ? $orders->tax_label : 'Tax' }} ]</small>
-					</span>
-                    <span class="ml-auto">S${{ number_format($orders->payable_amount - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected), 2) }}</span>
+                    </span>
+                    <span class="ml-auto">S${{ number_format($orders->payable_amount - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected + $orders->fuelcharges + $orders->handlingfee), 2) }}</span>
                   </li>
                   <li class="list-group-item d-flex">
                     <span>{{($orders->tax_label !='')?$orders->tax_label:'Tax'}}</span>
@@ -296,6 +294,18 @@
                     <span>Shipping</span>
                     <span class="ml-auto">S${{ number_format($orders->shipping_cost, 2) }}</span>
                   </li>
+				  @if($orders->fuelcharges >0 )
+				  <li class="list-group-item d-flex">
+                    <span>{{(int)$orders->fuelcharge_percentage}}% Fuel Charges</span>
+                    <span class="ml-auto">S${{ number_format($orders->fuelcharges, 2) }}</span>
+                  </li>
+				  @endif
+				  @if($orders->handlingfee >0 )
+				  <li class="list-group-item d-flex">
+                    <span>Handling Fee</span>
+                    <span class="ml-auto">S${{ number_format($orders->handlingfee, 2) }}</span>
+                  </li>
+				  @endif
 				  <li class="list-group-item d-flex">
                     <span>Packaging Fee</span>
                     <span class="ml-auto">S${{ number_format($orders->packaging_fee, 2) }}</span>

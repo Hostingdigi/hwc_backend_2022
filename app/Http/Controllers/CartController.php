@@ -18,6 +18,7 @@ use App\Models\PaymentSettings;
 use App\Models\Price;
 use App\Models\Product;
 use App\Models\ProductOptions;
+use App\Models\SessionCart;
 use App\Models\Settings;
 use App\Models\ShippingMethods;
 use App\Services\CartServices;
@@ -46,7 +47,8 @@ class CartController extends Controller
      */
     public function index()
     {
-        $cartItems = $this->cartServices->cartItems();
+        $billinginfo = Session::has('billinginfo') ? Session::get('billinginfo') : [];
+        $cartItems = $this->cartServices->cartItems($billinginfo['ship_country'] ?? null);
         $cartdata = $cartItems['cartItems'];
         $subtotal = $cartItems['subTotal'];
         $grandtotal = $cartItems['grandTotal'];
@@ -434,7 +436,7 @@ class CartController extends Controller
         }
 
         $billinginfo = Session::has('billinginfo') ? Session::get('billinginfo') : [];
-        $cartItems = $this->cartServices->cartItems($billinginfo['bill_country'] ?? null);
+        $cartItems = $this->cartServices->cartItems($billinginfo['ship_country'] ?? null);
         $cartdata = $cartItems['cartItems'];
         $subtotal = $cartItems['subTotal'];
         $grandtotal = $cartItems['grandTotal'];
@@ -553,18 +555,77 @@ class CartController extends Controller
         $cartItems = $this->cartServices->cartItems($country);
         $cartdata = $cartItems['cartItems'];
         $subtotal = $cartItems['subTotal'];
-        $grandtotal = $cartItems['grandTotal'];
+        $fuelcharges = $cartItems['fuelcharges'];
+        $handlingfee = $cartItems['handlingfee'];
         $gst = $cartItems['taxDetails']['taxTotal'];
+        $taxPercentage = $cartItems['taxDetails']['taxPercentage'];
         $taxtitle = $cartItems['taxDetails']['taxLabel'];
         $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
-        $country = $cartItems['countryCode'];
-        $countryid = $cartItems['countryId'];
-        $discount = $cartItems['discountDetails']['discountTotal'];
-        $discounttext = $cartItems['discountDetails']['title'];
-        $customer = Session::has('customer_id') ? Customer::where('cust_id', Session::get('customer_id'))->first() : [];
         $deliverytype = $cartItems['deliveryDetails']['title'];
         $packingfee = $cartItems['packingFees'];
         $deliverycost = $cartItems['deliveryDetails']['deliveryTotal'];
+        $discount = $cartItems['discountDetails']['discountTotal'];
+        $discounttext = $cartItems['discountDetails']['title'];
+
+        $fuelSettings = PaymentSettings::where('Id', '1')->select('fuelcharge_percentage')->first();
+        $fuelcharge_percentage = $country != 'SG' ? ($fuelSettings ? $fuelSettings->fuelcharge_percentage : 0) : 0;
+
+        if (Session::get('customer_id') == 30548 || 1 == 1) {
+            $cust_id = Session::get('customer_id');
+            $SesCartObj = SessionCart::where('cust_id', $cust_id)->first();
+            $if_items_unavailabel = isset($request->if_items_unavailabel) ? $request->if_items_unavailabel : '';
+            $delivery_instructions = isset($request->delivery_instructions) ? $request->delivery_instructions : '';
+
+            if (isset($SesCartObj)) {
+                $SesCartObj->billinginfo = json_encode($billinginfo);
+                $SesCartObj->deliverymethod = $deliverymethod;
+                $SesCartObj->if_unavailable = $if_items_unavailabel;
+                $SesCartObj->delivery_instructions = $delivery_instructions;
+                $SesCartObj->fuelcharge_percentage = $fuelcharge_percentage;
+                $SesCartObj->fuelcharges = $fuelcharges;
+                $SesCartObj->handlingfee = $handlingfee;
+                $SesCartObj->gst = $gst;
+                $SesCartObj->taxPercentage = $taxPercentage;
+                $SesCartObj->taxtitle = $taxtitle;
+                $SesCartObj->taxLabelOnly = $taxLabelOnly;
+                $SesCartObj->deliverytype = $deliverytype;
+                $SesCartObj->packingfee = $packingfee;
+                $SesCartObj->deliverycost = $deliverycost;
+                $SesCartObj->discount = $discount;
+                $SesCartObj->discounttext = $discounttext;
+                $SesCartObj->updated_at = date("Y-m-d H:i:s");
+                $SesCartObj->save();
+            } else {
+                $SesCartObj = new SessionCart();
+                $SesCartObj->cust_id = $cust_id;
+                $SesCartObj->billinginfo = json_encode($billinginfo);
+                $SesCartObj->deliverymethod = $deliverymethod;
+                $SesCartObj->if_unavailable = $if_items_unavailabel;
+                $SesCartObj->delivery_instructions = $delivery_instructions;
+                $SesCartObj->fuelcharge_percentage = $fuelcharge_percentage;
+                $SesCartObj->fuelcharges = $fuelcharges;
+                $SesCartObj->handlingfee = $handlingfee;
+                $SesCartObj->gst = $gst;
+                $SesCartObj->taxPercentage = $taxPercentage;
+                $SesCartObj->taxtitle = $taxtitle;
+                $SesCartObj->taxLabelOnly = $taxLabelOnly;
+                $SesCartObj->deliverytype = $deliverytype;
+                $SesCartObj->packingfee = $packingfee;
+                $SesCartObj->deliverycost = $deliverycost;
+                $SesCartObj->discount = $discount;
+                $SesCartObj->discounttext = $discounttext;
+                $SesCartObj->created_at = date("Y-m-d H:i:s");
+                $SesCartObj->updated_at = date("Y-m-d H:i:s");
+                $SesCartObj->save();
+            }
+        }
+
+        $grandtotal = $cartItems['grandTotal'];
+
+        $country = $cartItems['countryCode'];
+        $countryid = $cartItems['countryId'];
+        $customer = Session::has('customer_id') ? Customer::where('cust_id', Session::get('customer_id'))->first() : [];
+
         $paymentmethods = PaymentMethods::where('type', '=', '1')->where('status', '=', '1')->get();
         $ordertype = 1;
 
@@ -575,7 +636,9 @@ class CartController extends Controller
             }
         }
 
-        return view('public/Cart.placeorder', compact('cartdata', 'sesid', 'subtotal', 'gst', 'grandtotal', 'paymentmethods', 'taxtitle', 'deliverycost', 'deliverytype', 'packingfee', 'discounttext', 'discount', 'ordertype', 'taxLabelOnly'));
+        $sesid = Session::has('customer_id') ? Session::get('customer_id') : '';
+
+        return view('public/Cart.placeorder', compact('cartdata', 'sesid', 'subtotal', 'gst', 'grandtotal', 'paymentmethods', 'taxtitle', 'deliverycost', 'deliverytype', 'packingfee', 'discounttext', 'discount', 'ordertype', 'taxLabelOnly', 'fuelcharges', 'handlingfee'));
 
     }
 
@@ -592,6 +655,14 @@ class CartController extends Controller
         $sesid = Session::get('_token');
         if (Session::has('cartdata')) {
             $cartdata = Session::get('cartdata');
+        }
+
+        if (Session::get('customer_id') == 30548) {
+            Session::put('billinginfo', json_decode($request->billinginfo, true));
+            Session::put('deliverymethod', $request->deliverymethod);
+            Session::put('if_unavailable', $request->if_unavailable);
+            Session::put('delivery_instructions', $request->delivery_instructions);
+
         }
 
         if ($cartdata) {
@@ -930,12 +1001,18 @@ class CartController extends Controller
             }
         }
 
+        $fuelSettings = PaymentSettings::where('Id', '1')->select('fuelcharge_percentage')->first();
+
         $ordermaster = new OrderMaster;
         $ordermaster['user_id'] = $userid;
         $ordermaster['ship_method'] = Session::get('deliverymethod');
         $ordermaster['pay_method'] = '';
         $ordermaster['shipping_cost'] = $deliverycost;
         $ordermaster['packaging_fee'] = $packingfee;
+        $ordermaster['fuelcharge_percentage'] = $billinginfo['ship_country'] != 'SG' ? ($fuelSettings ? $fuelSettings->fuelcharge_percentage : 0) : 0;
+        $ordermaster['fuelcharges'] = isset($cartItems['fuelcharges']) ? $cartItems['fuelcharges'] : 0.00;
+        $ordermaster['handlingfee'] = isset($cartItems['handlingfee']) ? $cartItems['handlingfee'] : 0.00;
+
         $ordermaster['tax_label'] = isset($cartItems['taxDetails']['taxLabel']) ? $cartItems['taxDetails']['taxLabel'] : '';
         $ordermaster['tax_percentage'] = isset($cartItems['taxDetails']['taxPercentage']) ? $cartItems['taxDetails']['taxPercentage'] : '';
         $ordermaster['tax_collected'] = $gst;
@@ -1549,6 +1626,7 @@ class CartController extends Controller
                 $country = $countrydata->countrycode;
             }
 
+            $cartItems = $this->cartServices->cartItems($country);
             $taxes = $cart->getGST($subtotal, $country);
 
             if ($country != '') {
@@ -1559,9 +1637,13 @@ class CartController extends Controller
                 $gst = $taxes;
             }
 
-            $discount = $cart->getDiscount($subtotal, $gst, 0, 0, $coupondata->discount_type, $coupondata->discount);
+            $discount = $cart->getDiscount($subtotal, 0, 0, 0, $coupondata->discount_type, $coupondata->discount);
 
-            $grandtotal = $cart->getGrandTotal($subtotal, $gst, 0, 0, $discount);
+            //$grandtotal = $cart->getGrandTotal($subtotal, $gst, 0, 0, $discount);
+
+            $subtotal = $cartItems['subTotal'];
+            $grandtotal = $cartItems['grandTotal'];
+            $gst = $cartItems['taxDetails']['taxTotal'];
 
             $discounttext = '';
             if ($coupondata->discount_type == 1) {

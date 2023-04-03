@@ -30,7 +30,7 @@
 								{!! $bannerad->Video !!}
 							</div> 
 						@else
-							<a href="{{ $bannerad->ban_link }}"><img src="{{ env('IMG_URL').('/uploads/bannerads/'.$bannerad->EnBanimage) }}" alt="{{ $bannerad->ban_name }}" class="img-fluid"></a>
+							<a href="{{ $bannerad->ban_link }}"><img src="{{ url('/').'/uploads/bannerads/'.$bannerad->EnBanimage }}" alt="{{ $bannerad->ban_name }}" class="img-fluid"></a>
 						@endif
 					</div>
 				@endforeach
@@ -180,16 +180,28 @@
 											<tr><td colspan="4">&nbsp;</td></tr>
 											<tr>
 												<td colspan="2"></td><td>Sub Total</td>
-												<td style="text-align:right">S${{ number_format($orders->payable_amount - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected), 2) }}</td>										
+												<td style="text-align:right">S${{ number_format(($orders->payable_amount + $orders->discount_amount) - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected + $orders->fuelcharges + $orders->handlingfee), 2) }}</td>										
 											</tr>
 											<tr>
-												<td colspan="2"></td><td>Tax</td>
+												<td colspan="2"></td><td>{{($orders->tax_label !='')?$orders->tax_label:'Tax'}}</td>
 												<td style="text-align:right">S${{ number_format($orders->tax_collected, 2) }}</td>
 											</tr>
 											<tr>
 												<td colspan="2"></td><td>Shipping</td>
 												<td style="text-align:right">S${{ number_format($orders->shipping_cost, 2) }}</td>
 											</tr>
+											@if($orders->fuelcharges >0 )
+											<tr>
+												<td colspan="2"></td><td>{{(int)$orders->fuelcharge_percentage}}% Fuel Charges</td>
+												<td style="text-align:right">S${{ number_format($orders->fuelcharges, 2) }}</td>
+											</tr>
+											@endif
+											@if($orders->handlingfee >0 )
+											<tr>
+												<td colspan="2"></td><td>Handling Fee</td>
+												<td style="text-align:right">S${{ number_format($orders->handlingfee, 2) }}</td>
+											</tr>
+											@endif
 											<tr>
 												<td colspan="2"></td><td>Packaging Fee</td>
 												<td style="text-align:right">S${{ number_format($orders->packaging_fee, 2) }}</td>

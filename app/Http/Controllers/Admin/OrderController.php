@@ -1376,14 +1376,14 @@ class OrderController extends Controller
 
     public function show($id)
     {
-        $orders = OrderMaster::where('order_id', $id)->first();
-        $orderdetails = OrderDetails::where('order_id', $id)->get();
-        $orderdeliveryinfo = OrderDeliveryInfo::where('order_id', $id)->orderBy('delivery_id', "desc")->first();
+        $orders = OrderMaster::where('order_id', '=', $id)->first();
+        $orderdetails = OrderDetails::where('order_id', '=', $id)->get();
+        $orderdeliveryinfo = OrderDeliveryInfo::where('order_id', '=', $id)->orderBy('delivery_id', "desc")->first();
 
         $shipCountryData = Country::where('countrycode', $orders->ship_country)->first();
         $billCountryData = Country::where('countrycode', $orders->bill_country)->first();
 
-        $settings = Settings::where('id', '1')->first();
+        $settings = Settings::where('id', '=', '1')->first();
         return view('admin/Order.orderdetails', compact('orders', 'id', 'orderdetails', 'settings', 'orderdeliveryinfo', 'shipCountryData', 'billCountryData'));
     }
 

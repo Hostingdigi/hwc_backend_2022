@@ -5,7 +5,7 @@
       <div class="container">
 
         <ol>
-          <li><a href="index.html">Home</a></li>
+          <li><a href="{{ url('/') }}">Home</a></li>
 		  <li><div class="pageheading">Brands</div></li>
         </ol>
       </div>
@@ -83,10 +83,9 @@
 										$rowcount = 1;
 									@endphp
 									@foreach($alphas as $alpha)
-										@php
-											
+										@php											
 											$brands = [];
-											if($filter == '0-9' || $alpha == '0-9') {
+											if($filter == '0-9' || ($alpha == '0-9' && $brandname == '')) {
 												$brands = \App\Models\Brand::where('BrandStatus', '=', '1')->where('EnName', 'LIKE', '0%')->orWhere('EnName', 'LIKE', '1%')->orWhere('EnName', 'LIKE', '2%')->orWhere('EnName', 'LIKE', '3%')->orWhere('EnName', 'LIKE', '4%')->orWhere('EnName', 'LIKE', '5%')->orWhere('EnName', 'LIKE', '6%')->orWhere('EnName', 'LIKE', '7%')->orWhere('EnName', 'LIKE', '8%')->orWhere('EnName', 'LIKE', '9%')->orderBy('EnName', 'ASC')->get();											
 											} else {
 												if($brandname != '') {

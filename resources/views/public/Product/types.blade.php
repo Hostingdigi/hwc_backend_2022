@@ -152,10 +152,10 @@
 																<a href="{{ url('/category/'.$type->UniqueKey) }}">
 															@endif
 															@if($type->Image != '' && file_exists(public_path('/uploads/category/'.$type->Image)))
-																<img class="main-img img-fluid" src="{{ url('/uploads/category/'.$type->Image) }}" alt="{{ $type->EnName }}">
-																<img class="sec-img img-fluid" src="{{ url('/uploads/category/'.$type->Image) }}" alt="{{ $type->EnName }}">
+																<img class="main-img img-fluid" src="{{ url('/uploads/category/'.$type->Image) }}" alt="{{ $type->EnName }}" title="{{ $type->EnName }}">
+																<img class="sec-img img-fluid" src="{{ url('/uploads/category/'.$type->Image) }}" alt="{{ $type->EnName }}" title="{{ $type->EnName }}">
 															@else
-																<img class="main-img img-fluid" src="{{ url('/images/noimage.png') }}" alt="{{ $type->EnName }}">																
+																<img class="main-img img-fluid" src="{{ url('/images/noimage.png') }}" alt="{{ $type->EnName }}" title="{{ $type->EnName }}">																
 															@endif
 															</a>
 														</div>

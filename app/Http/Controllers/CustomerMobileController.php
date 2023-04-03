@@ -719,7 +719,8 @@ class CustomerMobileController extends Controller
                 $orderlist[$o]['shipmethod'] = $shipmethod;
                 $orderlist[$o]['tax_collected'] = $order->tax_collected;
                 $orderlist[$o]['tax_label'] = $order->tax_label;
-                $orderlist[$o]['payable_amount'] = ($order->payable_amount-$order->shipping_cost-$order->packaging_fee-$order->tax_collected);
+                $orderlist[$o]['subtotal_amount'] = number_format(($order->payable_amount - $order->shipping_cost - $order->packaging_fee - $order->tax_collected), 2);
+                $orderlist[$o]['payable_amount'] = $order->payable_amount;
                 $orderlist[$o]['paymethod'] = $order->pay_method;
                 $orderstatus = 'Payment Pending';
                 if ($order->order_status == 0) {
@@ -780,7 +781,7 @@ class CustomerMobileController extends Controller
                         $prod = Product::where('Id', '=', $orderdetail->prod_id)->select('Image')->first();
                         if ($prod) {
                             if ($prod->Image) {
-                                $orderlist[$o]['products'][$p]['image'] = env('IMG_URL') . '/uploads/product/' . $prod->Image;
+                                $orderlist[$o]['products'][$p]['image'] = url('/') . '/uploads/product/' . $prod->Image;
                             } else {
                                 $orderlist[$o]['products'][$p]['image'] = url('/') . '/images/noimage.png';
                             }

@@ -34,18 +34,20 @@
                         <table class="table table-striped table-bordered dataex-html5-selectors" id="subscriber">
                             <thead>
                                 <tr style="background:#CCC;">
+									<th>Method ID</th>
                                     <th>Method</th>
                                     <th>Price</th>                                                                        
-                                    
+                                    <th>Display Order</th>
 									<th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                @foreach($shippingmethods as $shippingmethod)
                                     <tr>
+										<td>{{ $shippingmethod->Id }}</td>
                                         <td>{{ $shippingmethod->EnName }}</td>
 										<td>{{ $shippingmethod->Price }}</td>
-						
+										<td>{{ $shippingmethod->DisplayOrder }}</td>
 										<td align="center">
 										@if(in_array('28_Status', $moduleaccess) || $adminrole == 0)
 										<a href="javascript:void(0);" onclick="chkupdatestatus({{ $shippingmethod->Id }}, {{ $shippingmethod->Status }})">

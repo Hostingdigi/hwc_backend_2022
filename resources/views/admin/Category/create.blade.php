@@ -236,6 +236,12 @@ $(".imageUpload").change(function(event){
     readURL(this);
 });
 
+$('#EnName').keyup(function() {
+	var title = $('#EnName').val();
+	title = title.replace(/[^a-z0-9\s]/gi, '').replace(/[_\s]/g, '-');
+	$('#UniqueKey').val(title.toLowerCase());
+});
+
 function readURL(input) {
 
     if (input.files && input.files[0]) {

@@ -4,7 +4,7 @@
   <div class="container">
 	<ol>
 		<li><a href="{{ url('/') }}">Home</a></li>		
-		<li><div class="pageheading">Promotional Products</div></li>
+		<li><div class="pageheading">New Arrivals</div></li>
 	</ol>
   </div>
 </section>
@@ -17,53 +17,9 @@
         <section class="category">
             <div class="container">
                 <div class="row">
-                    <div class="col-md-3">
+                    <div class="d-none d-sm-block col-md-3">
                         
-						@if(count($brands) > 0)
-                        <div class="cat-brand">
-                            <div class="sec-title">
-                                <h6>Brands</h6>
-                            </div>
-                            <div class="brand-box">
-                                <ul class="list-unstyled">
-								@php $brandids = [0]; @endphp
-								@if($bid)
-									@php $brandids = @explode(',', $bid); @endphp
-								@endif	
-								@if($brands)
-									@foreach($brands as $brand)
-                                    <li><input type="checkbox" id="brand{{ $brand->BrandId }}" value="{{ $brand->BrandId }}" name="brands[]" class="brands" data-value="{{ $brand->BrandId }}" onchange="setbrand(this.value);" @if(in_array($brand->BrandId, $brandids)) checked @endif><label for="{{ $brand->EnName }}">{{ $brand->EnName }}</label></li>
-                                    @endforeach
-								@endif
-                                </ul>
-								
-                            </div>
-                        </div>
-						@endif
 						
-						
-						<div class="cat-brand">
-                            <div class="sec-title">
-                                <h6>Categories</h6>
-                            </div>
-							
-							<div class="brand-box">
-                                <ul class="list-unstyled">
-								@php $categoryids = [0]; @endphp
-								@if($catid)
-									@php $categoryids = @explode(',', $catid); @endphp
-								@endif	
-								@if($categories)
-									@foreach($categories as $category)
-                                    <li><input type="checkbox" id="category{{ $category->TypeId }}" value="{{ $category->TypeId }}" name="categories[]" class="brands" data-value="{{ $category->TypeId }}" onchange="setcategory(this.value);" @if(in_array($category->TypeId, $categoryids)) checked @endif><label for="{{ $category->EnName }}"> {{ $category->EnName }}</label></li>
-                                    @endforeach
-								@endif
-                                </ul>
-                            </div>
-							
-                        </div> 
-						
-						<div class="view-all sidelist"><a href="{{ url('/promotions') }}">Clear Filter</a></div>
                        
                         @if(count($producttags) > 0)
                         <div class="pro-tag">
@@ -101,53 +57,16 @@
 					
                     <div class="col-md-9">
                         <div class="product-box">
-                            <div class="cat-box d-flex justify-content-between">
-                                <!-- Nav tabs -->
-                                <!--div class="view">
-                                    <ul class="nav nav-tabs" role="tablist">
-                                        <li class="nav-item">
-                                            <a class="nav-link active" data-toggle="tab" href="#grid"><i class="fa fa-th-large"></i></a>
-                                        </li>
-                                        <li class="nav-item">
-                                            <a class="nav-link" data-toggle="tab" href="#list"><i class="fa fa-th-list"></i></a>
-                                        </li>
-                                    </ul>
-                                </div-->
-                                <div class="sortby">
-                                    <span>Sort By</span>
-                                    <select class="sort-box" id="sortby" name="sortby">
-                                        <option value="DisplayOrder" @if($sortby == 'DisplayOrder') selected @endif>Position</option>
-                                        <option value="EnName" @if($sortby == 'EnName') selected @endif>Name</option>
-                                        <option value="StandardPrice" @if($sortby == 'StandardPrice') selected @endif>Price</option>
-                                        
-                                    </select>
-                                </div>
-                                <div class="show-item">
-                                    <span>Show</span>
-                                    <select class="show-box" id="showrecord" name="showrecord">
-                                        <option value="20" @if($show == 20) selected @endif>20</option>
-                                        <option value="28" @if($show == 28) selected @endif>28</option>
-                                        <option value="36" @if($show == 36) selected @endif>36</option>
-                                    </select>
-                                </div>
-								
-                                <div class="page" style="display:none;">
-									@if($promoproducts->total() == 0)
-										<p>Page 0 of 0</p>
-									@else
-										<p>Page {{ $page }} of {{ $promoproducts->lastPage() }}</p>
-									@endif
-                                </div>
-                            </div>
+                            
                             <!-- Tab panes -->
-							@if($promoproducts->total() == 0)
+							@if($newproducts->total() == 0)
 								<div class="" align="center">No Promotional Products Found!</div>
 							@endif	
                             <div class="tab-content">
                                 <div class="tab-pane fade show active" id="grid" role="tabpanel">
                                     <div class="row" id="productslist">	
-										@if($promoproducts)
-											@foreach($promoproducts as $product)
+										@if($newproducts)
+											@foreach($newproducts as $product)
 												@php
 													$options = 0;
 												@endphp	
@@ -180,7 +99,7 @@
 														</div>
 														<div class="tab-heading">
 															<p><a href="{{ url('/prod/'.$product->UniqueKey) }}" title="{{ $product->EnName }}" alt="{{ $product->EnName }}">
-															@if(strlen($product->EnName) > 30){{ substr($product->EnName, 0, 30) }}...@else {{ $product->EnName }} @endif</a></p>
+															@if(strlen($product->EnName) > 32){{ substr($product->EnName, 0, 32) }}...@else {{ $product->EnName }} @endif</a></p>
 														</div>
 														
 														<div class="img-content d-flex justify-content-between">
@@ -252,50 +171,48 @@
                                 
                             </div>
 							<div class="pagination-box" style="float:right;">
-								@if ($promoproducts->hasPages() && 1==2)
+								@if ($newproducts->hasPages())
 								
 									<ul class="list-unstyled list-inline text-center">
 										{{-- Previous Page Link --}}
-										@if ($promoproducts->onFirstPage())
+										@if ($newproducts->onFirstPage())
 											<li class="disabled list-inline-item"><span><<</span></li>
 										@else
-											<li class="list-inline-item"><a href="{{ $promoproducts->appends($_GET)->previousPageUrl() }}" rel="prev"><<</a></li>
+											<li class="list-inline-item"><a href="{{ $newproducts->appends($_GET)->previousPageUrl() }}" rel="prev"><<</a></li>
 										@endif
 
-										@if($promoproducts->currentPage() > 3)
-											<li class="hidden-xs list-inline-item"><a href="{{ $promoproducts->appends($_GET)->url(1) }}">1</a></li>
+										@if($newproducts->currentPage() > 3)
+											<li class="hidden-xs list-inline-item"><a href="{{ $newproducts->appends($_GET)->url(1) }}">1</a></li>
 										@endif
-										@if($promoproducts->currentPage() > 4)
+										@if($newproducts->currentPage() > 4)
 											<li class="list-inline-item"><span>...</span></li>
 										@endif
-										@foreach(range(1, $promoproducts->lastPage()) as $i)
-											@if($i >= $promoproducts->currentPage() - 2 && $i <= $promoproducts->currentPage() + 2)
-												@if ($i == $promoproducts->currentPage())
+										@foreach(range(1, $newproducts->lastPage()) as $i)
+											@if($i >= $newproducts->currentPage() - 2 && $i <= $newproducts->currentPage() + 2)
+												@if ($i == $newproducts->currentPage())
 													<li class="active list-inline-item"><a href="">{{ $i }}</a></li>
 												@else
-													<li class="list-inline-item"><a href="{{ $promoproducts->appends($_GET)->url($i) }}">{{ $i }}</a></li>
+													<li class="list-inline-item"><a href="{{ $newproducts->appends($_GET)->url($i) }}">{{ $i }}</a></li>
 												@endif
 											@endif
 										@endforeach
-										@if($promoproducts->currentPage() < $promoproducts->lastPage() - 3)
+										@if($newproducts->currentPage() < $newproducts->lastPage() - 3)
 											<li class="list-inline-item"><span>...</span></li>
 										@endif
-										@if($promoproducts->currentPage() < $promoproducts->lastPage() - 2)
-											<li class="hidden-xs list-inline-item"><a href="{{ $promoproducts->appends($_GET)->url($promoproducts->lastPage()) }}">{{ $promoproducts->lastPage() }}</a></li>
+										@if($newproducts->currentPage() < $newproducts->lastPage() - 2)
+											<li class="hidden-xs list-inline-item"><a href="{{ $newproducts->appends($_GET)->url($newproducts->lastPage()) }}">{{ $newproducts->lastPage() }}</a></li>
 										@endif
 
 										{{-- Next Page Link --}}
-										@if ($promoproducts->hasMorePages())
-											<li class="list-inline-item"><a href="{{ $promoproducts->appends($_GET)->nextPageUrl() }}" rel="next">>></a></li>
+										@if ($newproducts->hasMorePages())
+											<li class="list-inline-item"><a href="{{ $newproducts->appends($_GET)->nextPageUrl() }}" rel="next">>></a></li>
 										@else
 											<li class="disabled  list-inline-item"><span>>></span></li>
 										@endif
 									</ul>
 								@endif
 								
-								@if($promoproducts->total() > 20)
-								<a href="javascript:void(0);" id="loadmore" class="loadmorebtn mx-auto">Load More</a>
-								@endif
+								
 								<input type="hidden" id="pagenum" value="1">
 								
 							</div>
@@ -315,51 +232,8 @@
 </html>
 <script type="text/javascript">
 $(document).ready(function() {
-	$('#sortby').change(function() {
-		var sortby = $('#sortby').val();
-		var showrecord = $('#showrecord').val();
-		var cid = "{{ $catid }}";
-		var bid = "{{ $bid }}";
-		if(sortby != '' && showrecord != '') {
-			window.location = "{{ url('/promotions/') }}"+"?sortby="+sortby+"&show="+showrecord+"&cid="+cid+"&bid="+bid;
-		}
-	});
-	$('#showrecord').change(function() {
-		var sortby = $('#sortby').val();
-		var showrecord = $('#showrecord').val();
-		var cid = "{{ $catid }}";
-		var bid = "{{ $bid }}";
-		if(sortby != '' && showrecord != '') {
-			window.location = "{{ url('/promotions/') }}"+"?sortby="+sortby+"&show="+showrecord+"&cid="+cid+"&bid="+bid;
-		}
-	});
-
-	$('#loadmore').click(function() {
-		var sortby = $('#sortby').val();
-		var showrecord = $('#showrecord').val();
-		var cid = "{{ $catid }}";
-		var bid = "{{ $bid }}";
-		var pagenum = $('#pagenum').val();
-		pagenum = parseInt(pagenum) + 1;
-		$('#pagenum').val(pagenum);
-		var token = "{!! csrf_token() !!}";
-		$.ajax({
-			type: "POST",
-			url: '{{ url("/") }}/getproductslist',				
-			data: {'page': pagenum, 'IsPromotion': '1', 'cid': cid, 'bid': bid, 'sortby': sortby, 'show': showrecord, 'searchkey': ''},
-			headers: {'X-CSRF-TOKEN': token},		
-			success: function(response) {
-				
-				if(response != '') {
-					$('#productslist').append(response);
-				} else {
-					$('#loadmore').hide();
-				}
-			},error: function(ts) {				
-				console.log("Error:"+ts.responseText);  
-			}
-		});
-	});		
+	
+	
 });
 
 function setbrand(brandid) {	

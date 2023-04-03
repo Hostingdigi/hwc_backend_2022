@@ -90,7 +90,7 @@
 
                                                             <div class="col-md-8">
 
-                                                                <textarea name="EnName" class="form-control" required></textarea>
+                                                                <textarea name="EnName" id="EnName" class="form-control" required></textarea>
 
                                                             </div>
 
@@ -110,7 +110,7 @@
 
                                                             <div class="col-md-8">
 
-                                                                <textarea name="UniqueKey" class="form-control"></textarea>
+                                                                <textarea name="UniqueKey" id="UniqueKey" class="form-control"></textarea>
 
                                                             </div>
 
@@ -130,6 +130,24 @@
 
                                                             <div class="col-md-8">
 																<textarea name="ProdCode" class="form-control" required></textarea>			
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>  
+
+                                                    <div class="col-12">
+
+                                                        <div class="form-group row">
+
+                                                            <div class="col-md-4">
+
+                                                                <span>Barcode <br>(Use comma separater for multiple values)<span class="badge badge-dot badge-danger"> </span></span>
+
+                                                            </div>
+
+                                                            <div class="col-md-8">
+																<textarea name="barcode" class="form-control" ></textarea>			
                                                             </div>
 
                                                         </div>
@@ -836,7 +854,7 @@
 
                                                             <div class="col-md-8">
 
-                                                                <textarea id="editor" class="form-control editor" name="EnInfo" placeholder="Content"></textarea>                                                               
+                                                                <textarea id="editor" class="form-control editor" name="EnInfo" placeholder="Content"></textarea>
 
                                                             </div>
 
@@ -1003,7 +1021,7 @@
 <script>
 
 	 CKEDITOR.replace( 'editor' );
-
+	CKEDITOR.replace( 'Specs' );
 
 $images = $('.imageOutput')
 
@@ -1013,6 +1031,12 @@ $(".imageUpload").change(function(event){
 
     readURL(this);
 
+});
+
+$('#EnName').keyup(function() {
+	var title = $('#EnName').val();
+	title = title.replace(/[^a-z0-9\s]/gi, '').replace(/[_\s]/g, '-');
+	$('#UniqueKey').val(title.toLowerCase());
 });
 
 

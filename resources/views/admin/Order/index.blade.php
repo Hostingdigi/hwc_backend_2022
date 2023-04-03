@@ -1,4 +1,10 @@
 @include('admin.includes.header')
+<style>
+html body .content .content-wrapper {
+    padding: calc(2.2rem - 0.4rem) 1.5rem 0;
+   
+}
+</style>
 <link rel="stylesheet" type="text/css" href="{{asset('app-assets/vendors/css/pickers/pickadate/pickadate.css')}}">
 <body class="horizontal-layout horizontal-menu 2-columns  navbar-floating footer-static  " data-open="hover" data-menu="horizontal-menu" data-col="2-columns">
 
@@ -46,9 +52,10 @@
 													<div class="col-md-8">
 														<select class="form-control" name="order_status" id="order_status">
 															<option value = "" @if($orderstatus == '') selected @endif>Show All Orders</option>
-															<option value = "1" @if($orderstatus == '1') selected @endif>Payment Pending</option>
-															<option value = "2" @if($orderstatus == '2') selected @endif>Paid,Shipment Pending</option>
-															<option value = "3" @if($orderstatus == '3') selected @endif>Shipped</option>
+															<option value = "0" @if($orderstatus == '0') selected @endif>Payment Pending</option>
+															<option value = "1" @if($orderstatus == '1') selected @endif>Paid,Shipment Pending</option>
+															<option value = "2" @if($orderstatus == '2') selected @endif>Shipped</option>
+															<option value = "9" @if($orderstatus == '9') selected @endif>Ready For Collection</option>
 														</select>
 													</div>
 												</div>
@@ -105,7 +112,9 @@
 													<div class="col-md-2">
 													<select class="form-control" name="filter_column" id="filter_column">			
 															<option value = "cust_firstname" @if($filtercolumn == 'cust_firstname') selected @endif>First Name</option>
-															<option value = "cust_lastname" @if($filtercolumn == 'cust_lastname') selected @endif>Last Name</option>			
+															<option value = "cust_lastname" @if($filtercolumn == 'cust_lastname') selected @endif>Last Name</option>
+															<option value = "cust_email" @if($filtercolumn == 'cust_email') selected @endif>Email</option>
+															<option value = "cust_phone" @if($filtercolumn == 'cust_phone') selected @endif>Phone</option>	
 													</select>
 													</div>
 													<div class="col-md-2">
@@ -133,6 +142,36 @@
 															<option value = "4" @if($sortcolumn == '4') selected @endif>First Name Descending</option>
 															<option value = "5" @if($sortcolumn == '5') selected @endif>Last Name Ascending</option>
 															<option value = "6" @if($sortcolumn == '6') selected @endif>Last Name Descending</option>
+													</select>
+													</div>
+												</div>
+											</div>
+											<div class="col-12">
+												<div class="form-group row">
+													<div class="col-md-4">
+														<span>Payment Method</span>
+													</div>
+													<div class="col-md-8">
+													<select name="pay_method" class="form-control" id="pay_method">	
+														<option value="" @if($paymethod == '') selected @endif>Show All</option>
+														<option value="Hoolah" @if($paymethod == 'Hoolah') selected @endif>Hoolah</option>
+														<option value="Debit / Credit Card" @if($paymethod == 'Debit / Credit Card') selected @endif>Debit / Credit Card</option>
+														<option value="Paypal" @if($paymethod == 'Paypal') selected @endif>Paypal</option>
+														<option value="Atome" @if($paymethod == 'Atome') selected @endif>Atome</option>
+													</select>
+													</div>
+												</div>
+											</div>
+											<div class="col-12">
+												<div class="form-group row">
+													<div class="col-md-4">
+														<span>Order From</span>
+													</div>
+													<div class="col-md-8">
+													<select name="order_from" class="form-control" id="order_from">	
+														<option value="" @if($order_from == '') selected @endif>Show All</option>
+														<option value="0" @if($order_from == '0') selected @endif>Website</option>
+														<option value="1" @if($order_from == '1') selected @endif>Mobile App</option>
 													</select>
 													</div>
 												</div>
@@ -169,6 +208,8 @@
 									<th>Invoice Type</th>
 									<th>Delivery In</th>
 									<th>Status</th>
+									<th>Payment Method</th>
+									<th>Order From</th>
 									<th>Actions</th>
                                 </tr>
                             </thead>
@@ -208,9 +249,9 @@
 											
 											{{ $order->order_id }}
 											</td>
-											<td>{{ date('d M Y h:i A', strtotime($order->date_entered)) }}</td>
+											<td>{{ date('d M Y', strtotime($order->date_entered)) }}</td>
 											<td>{{ $order->bill_fname }} {{ $order->bill_lname }}</td>
-											<td>${{ $order->payable_amount }}</td>
+											<td>S${{ $order->payable_amount }}</td>
 											<td>
 												@if($order->order_type == "1")
 													Online Order
@@ -219,14 +260,16 @@
 												@endif
 											</td>
 											<td>@if($deliveryin != '') {{ $deliveryin }} @elseif($order->delivery_times == 1) Single Delivery @else Multiple Delivery @endif</td>
-											<td>@if($order->order_status == 0) Payment Pending @elseif($order->order_status == 1) Paid, Shipping Pending @elseif($order->order_status == 2) Shipped @elseif($order->order_status == 3) Shipped @elseif($order->order_status == 5) On the Way To You @elseif($order->order_status == 6) Partially Delivered @elseif($order->order_status == 7) Partially Refund @elseif($order->order_status == 8) Fully Refund @elseif($order->order_status == 9) Ready For Collection @endif</td>
+											<td>@if($order->order_status == 0) Payment Pending @elseif($order->order_status == 1) Paid, Shipping Pending @elseif($order->order_status == 2) Shipped @elseif($order->order_status == 3) Shipped @elseif($order->order_status == 4) Delivered @elseif($order->order_status == 5) On the Way To You @elseif($order->order_status == 6) Partially Delivered @elseif($order->order_status == 7) Partially Refund @elseif($order->order_status == 8) Fully Refund @elseif($order->order_status == 9) Ready For Collection @endif</td>
+											<td>{{ $order->pay_method }}</td>
+											<td>@if($order->order_from == 0) Website @else Mobile App @endif</td>
 											<td align="center">
 											@if(in_array('21_View', $moduleaccess) || $adminrole == 0)
 											<a href="{{ url('/admin/orders/'.$order->order_id) }}"><i class="fa fa-search" aria-hidden="true"></i></a>&nbsp;&nbsp;|&nbsp;&nbsp;
 											@endif
 
 											@if(in_array('21_Edit', $moduleaccess) || $adminrole == 0)
-												@if($order->order_type == 1)
+												@if($order->order_status > 0)
 													@if($deliveryin != '')
 														<a href="{{ url('/admin/orders/'.$order->order_id.'/selfcollect') }}"><i class="fa fa-shopping-bag fa-lg" aria-hidden="true"></i></a>
 													@elseif($order->delivery_times == 1)

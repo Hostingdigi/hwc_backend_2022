@@ -13,6 +13,7 @@ use App\Models\ProductOptions;
 use App\Models\Settings;
 use App\Models\Subscriber;
 use Illuminate\Http\Request;
+use Mail;
 use Session;
 
 class HomeController extends Controller
@@ -116,7 +117,13 @@ class HomeController extends Controller
                     $headers .= "MIME-Version: 1.0\r\n";
                     $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
-                    @mail($email, $emailsubject, $emailcontent, $headers);
+                    #@mail($email, $emailsubject, $emailcontent, $headers);
+                    Mail::send([], [], function ($message) use ($email, $emailsubject, $emailcontent) {
+                        $message->to($email)
+                            ->subject($emailsubject)
+                            ->from(env('MAIL_USERNAME'), env('APP_NAME'))
+                            ->setBody($emailcontent, 'text/html');
+                    });
                 }
 
                 $subscribestatus = 'Success';
@@ -159,17 +166,17 @@ class HomeController extends Controller
         $salutation = $request->salutation;
         $enquiry_type = $request->enquiry_type;
         $message = $request->message;
-        if (!empty($email)) {
-            $settings = Settings::find(1);
+        if ($email) {
+            $settings = Settings::where('id', '=', '1')->first();
             $adminemail = $settings->admin_email;
             $companyname = $settings->company_name;
             $ccemail = $settings->cc_email;
 
-            $logo = url('img/logo.png');
+            $logo = url('/') . '/img/logo.png';
             $logo = '<img src="' . $logo . '">';
 
             $emailsubject = $emailcontent = '';
-            $emailtemplate = EmailTemplate::where([['template_type', '=', '9'], ['status', '=', '1']])->first();
+            $emailtemplate = EmailTemplate::where('template_type', '=', '9')->where('status', '=', '1')->first();
             if ($emailtemplate) {
                 $emailsubject = $emailtemplate->subject;
                 $emailcontent = $emailtemplate->content;
@@ -191,25 +198,28 @@ class HomeController extends Controller
                 $headers .= "MIME-Version: 1.0\r\n";
                 $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
-                /*Mail::send([],[], function($message) use ($adminemail, $emailsubject, $emailcontent) {
-                $message->to($adminemail)
-                ->subject($emailsubject)
-                ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                ->setBody($emailcontent, 'text/html');
-                });*/
+                Mail::send([], [], function ($message) use ($adminemail, $emailsubject, $emailcontent) {
+                    $message->to($adminemail)
+                        ->subject($emailsubject)
+                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
+                        ->setBody($emailcontent, 'text/html');
+                });
 
+                #@mail($adminemail, $emailsubject, $emailcontent, $headers);
                 if ($ccemail != '') {
-                    /*Mail::send([],[], function($message) use ($ccemail, $emailsubject, $emailcontent) {
-                $message->to($ccemail)
-                ->subject($emailsubject)
-                ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                ->setBody($emailcontent, 'text/html');
-                });*/
+                    Mail::send([], [], function ($message) use ($ccemail, $emailsubject, $emailcontent) {
+                        $message->to($ccemail)
+                            ->subject($emailsubject)
+                            ->from(env('MAIL_USERNAME'), env('APP_NAME'))
+                            ->setBody($emailcontent, 'text/html');
+                    });
+                    #@mail($ccemail, $emailsubject, $emailcontent, $headers);
                 }
             }
-            return redirect('contact-us')->with('success', 'Thank you for contacting us.');
+            return redirect('/contact-us')->with('success', 'Thank you for contacting us.');
         }
         return redirect('contact-us')->with('message', 'Please try again. Something went wrong.');
+
     }
 
     public function submitfeedback(Request $request)
@@ -248,10 +258,22 @@ class HomeController extends Controller
                 $headers .= "MIME-Version: 1.0\r\n";
                 $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
-                @mail('balamurugan.sk@gmail.com', $emailsubject, $emailcontent, $headers);
-                /*if($ccemail != '') {
-            @mail($adminemail, $emailsubject, $emailcontent, $headers);
-            }*/
+                #@mail($adminemail, $emailsubject, $emailcontent, $headers);
+                Mail::send([], [], function ($message) use ($adminemail, $emailsubject, $emailcontent) {
+                    $message->to($adminemail)
+                        ->subject($emailsubject)
+                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
+                        ->setBody($emailcontent, 'text/html');
+                });
+                if ($ccemail != '') {
+                    #@mail($ccemail, $emailsubject, $emailcontent, $headers);
+                    Mail::send([], [], function ($message) use ($ccemail, $emailsubject, $emailcontent) {
+                        $message->to($ccemail)
+                            ->subject($emailsubject)
+                            ->from(env('MAIL_USERNAME'), env('APP_NAME'))
+                            ->setBody($emailcontent, 'text/html');
+                    });
+                }
             }
         }
         return redirect('/feedback')->with('success', 'Thank you for your feedback!');

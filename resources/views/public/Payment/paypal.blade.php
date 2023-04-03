@@ -101,17 +101,17 @@
 													</div>
 													<div class="col-md-9 no-pm">
 														<p>{{ $cart['productName'] }}</p>
-														<p class="hint">{{ $cart['qty'] }} X ${{ number_format($cart['price'],2) }}</p>
+														<p class="hint">{{ $cart['qty'] }} X S${{ number_format($cart['price'],2) }}</p>
 														@if($cart['productoption'])
 															<p class="hint">Option: {{ $cart['productoption'] }}</p>
 														@endif
-														@if($cart['size'])
+														@if($cart['size'] && 1==2)
 															<p class="hint">Size: {{ $cart['size'] }}</p>
 														@endif
-														@if($cart['productWeight'])
+														@if($cart['productWeight'] && 1==2)
 															<p class="hint">Weight: {{ $cart['productWeight'] }} Kg</p>
 														@endif	
-														@if($cart['color'])
+														@if($cart['color'] && 1==2)
 															<p class="hint">Color: {{ $cart['color'] }}</p>
 														@endif	
 														
@@ -119,23 +119,29 @@
 												</div>
 											</div>
 											<div class="prc">
-												<p>${{ number_format($cart['total'],2) }}</p>
+												<p>S${{ number_format($cart['total'],2) }}</p>
 											</div>
 										</li>
 										@endforeach
 									@endif
 									
 									<li class="subtot">Sub Total 
-										<span>S${{ number_format(str_replace(',','',$subtotal), 2) }}</span>
+									    <span>S${{ number_format(str_replace(',','',$subtotal), 2) }}</span>
 										@if(!empty($taxLabelOnly))
                 						<small style="font-size:92%;word-break: break-word;"><br>[w/o - {{$taxLabelOnly}}]</small>
                 						@endif
 									</li>
-									<li class="subtot" style="border-top: 1px solid #e5e5e5;">{{ $taxtitle }} <span>${{ number_format(str_replace(',','',$gst), 2) }}</span></li>
-									<li>Shipping ({{ $deliverytype }}) <span>${{ number_format(str_replace(',','',$deliverycost), 2) }}</span></li>
-									<li>Packaging Fee <span>${{ number_format(str_replace(',','',$packingfee), 2) }}</span></li>
-									@if($discount != 0 && $discounttext != '')<li id="dis">Discount({{ $discounttext }})<span>${{ number_format(str_replace(',','',$discount), 2) }}</span></li>@endif
-									<li>Grand Total <span>${{ number_format(str_replace(',','',$grandtotal), 2) }}</span></li>
+									<li class="subtot" style="border-top: 1px solid #e5e5e5;">{{ $taxtitle }} <span>S${{ number_format(str_replace(',','',$gst), 2) }}</span></li>
+									<li class="subtot" style="border-top: 1px solid #e5e5e5;padding-top:13px;">Shipping ({{ $deliverytype }}) <span>${{ number_format(str_replace(',','',$deliverycost), 2) }}</span></li>
+									@if($fuelcharges >0)
+									<li>Fuel Charges <span>S${{number_format(str_replace(',','',$fuelcharges), 2) }}</span></li>
+									@endif
+									@if($handlingfee >0)
+									<li>Handling Fee <span>S${{number_format(str_replace(',','',$handlingfee), 2) }}</span></li>
+									@endif
+									<li>Packaging Fee <span>S${{ number_format(str_replace(',','',$packingfee), 2) }}</span></li>
+									@if($discount != 0 && $discounttext != '')<li id="dis">Discount({{ $discounttext }})<span>S${{ number_format(str_replace(',','',$discount), 2) }}</span></li>@endif
+									<li>Grand Total <span>S${{ number_format(str_replace(',','',$grandtotal), 2) }}</span></li>
 								</ul>
 							</div>
 						</div>
@@ -155,7 +161,7 @@ paypal.Button.render({
   env: '{{ $payenv }}',
  
   client: {
-	@if($payenv == 'live')  
+	@if($payenv == 'production')  
 	production: '{{ $apikey }}'
 	@else
 	sandbox: '{{ $apikey }}'
@@ -168,14 +174,21 @@ paypal.Button.render({
 		  total: '{{ str_replace("", " ", $grandtotal) }}',
 		  currency: '{{ $currency }}'
 		}
-	  }]
+	  }],
+	  redirect_urls: {
+		return_url: '{{ url("/") }}/success?orderid={{ $orderincid }}',
+		cancel_url: '{{ url("/") }}/cancelpayment?orderid={{ $orderincid }}'
+	  }
 	});
   },
   onAuthorize: function (data, actions) {
 	return actions.payment.execute()
 	  .then(function () {
-		window.location = "{{ url('/') }}/success?orderid={{ $orderincid }}";
+		actions.redirect();
 	  });
+  },
+  onCancel: function (data, actions) {
+    actions.redirect();
   }
 }, '#paypal-button');
 

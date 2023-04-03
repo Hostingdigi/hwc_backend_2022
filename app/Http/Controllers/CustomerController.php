@@ -407,51 +407,58 @@ class CustomerController extends Controller
         $email = $request->cust_email;
         $customer = Customer::where('cust_username', '=', $email)->orWhere('cust_email', '=', $email)->first();
         if ($customer) {
-            $custemail = $customer->cust_email;
-            $custname = $customer->cust_firstname . ' ' . $customer->cust_lastname;
-            $settings = Settings::where('id', '=', '1')->first();
-            $adminemail = $settings->admin_email;
-            $companyname = $settings->company_name;
+            if ($customer->password_reset_count >= 3) {
+                return redirect('/forgotpassword')->with('message', 'You have been tried more than 3 times. Please contact our support team at it@hardwarecity.com.sg');
+            } else {
+                $password_reset_count = $customer->password_reset_count + 1;
 
-            $replyto = $adminemail;
+                Customer::where('cust_id', '=', $customer->cust_id)->update(array('password_reset_count' => $password_reset_count));
+                $custemail = $customer->cust_email;
+                $custname = $customer->cust_firstname . ' ' . $customer->cust_lastname;
+                $settings = Settings::where('id', '=', '1')->first();
+                $adminemail = $settings->admin_email;
+                $companyname = $settings->company_name;
 
-            $url = url('/') . '/resetpassword/' . base64_encode($custemail);
+                $replyto = $adminemail;
 
-            $reseturl = '<a href="' . $url . '">Reset Password</a>';
+                $url = url('/') . '/resetpassword/' . base64_encode($custemail);
 
-            $logo = url('/') . '/img/logo.png';
-            $logo = '<img src="' . $logo . '">';
+                $reseturl = '<a href="' . $url . '">Reset Password</a>';
 
-            $emailsubject = $emailcontent = '';
-            $emailtemplate = EmailTemplate::where('template_type', '=', '6')->where('status', '=', '1')->first();
-            if ($emailtemplate) {
+                $logo = url('/') . '/img/logo.png';
+                $logo = '<img src="' . $logo . '">';
 
-                $emailsubject = $emailtemplate->subject;
-                $emailcontent = $emailtemplate->content;
+                $emailsubject = $emailcontent = '';
+                $emailtemplate = EmailTemplate::where('template_type', '=', '6')->where('status', '=', '1')->first();
+                if ($emailtemplate) {
 
-                $emailsubject = str_replace('{companyname}', $companyname, $emailsubject);
-                $emailcontent = str_replace('{companyname}', $companyname, $emailcontent);
-                $emailcontent = str_replace('{logo}', $logo, $emailcontent);
-                $emailcontent = str_replace('{customername}', $custname, $emailcontent);
-                $emailcontent = str_replace('{resetpasswordlink}', $reseturl, $emailcontent);
+                    $emailsubject = $emailtemplate->subject;
+                    $emailcontent = $emailtemplate->content;
 
-                $headers = 'From: ' . $companyname . ' ' . $adminemail . '' . "\r\n";
-                $headers .= 'Reply-To: ' . $adminemail . "\r\n";
-                $headers .= 'X-Mailer: PHP/' . phpversion();
-                $headers .= "MIME-Version: 1.0\r\n";
-                $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
+                    $emailsubject = str_replace('{companyname}', $companyname, $emailsubject);
+                    $emailcontent = str_replace('{companyname}', $companyname, $emailcontent);
+                    $emailcontent = str_replace('{logo}', $logo, $emailcontent);
+                    $emailcontent = str_replace('{customername}', $custname, $emailcontent);
+                    $emailcontent = str_replace('{resetpasswordlink}', $reseturl, $emailcontent);
 
-                #@mail($custemail, $emailsubject, $emailcontent, $headers);
+                    $headers = 'From: ' . $companyname . ' ' . $adminemail . '' . "\r\n";
+                    $headers .= 'Reply-To: ' . $adminemail . "\r\n";
+                    $headers .= 'X-Mailer: PHP/' . phpversion();
+                    $headers .= "MIME-Version: 1.0\r\n";
+                    $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
-                Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                    $message->to($custemail)
-                        ->subject($emailsubject)
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->setBody($emailcontent, 'text/html');
-                });
+                    #@mail($custemail, $emailsubject, $emailcontent, $headers);
+
+                    Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
+                        $message->to($custemail)
+                            ->subject($emailsubject)
+                            ->from(env('MAIL_USERNAME'), env('APP_NAME'))
+                            ->setBody($emailcontent, 'text/html');
+                    });
+                }
+
+                return redirect('/forgotpassword')->with('success', 'Password rest link successully sent to registered email!');
             }
-
-            return redirect('/forgotpassword')->with('success', 'Password rest link successully sent to registered email!');
         } else {
             return redirect()->back()->withInput($request->only('cust_email'))->with('message', 'Invalid Username / Email!');
         }
@@ -578,6 +585,8 @@ class CustomerController extends Controller
         $expiredate = date('Y-m-d H:i:s', strtotime($orders->created_at . '+' . $quoteexpiry . ' days'));
 
         if (strtotime($expiredate) < strtotime($curdate)) {
+            $showbtn = 0;
+        } else if (strtotime($orders->created_at) < strtotime('2022-12-31 00:00:01')) {
             $showbtn = 0;
         }
 

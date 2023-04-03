@@ -63,6 +63,9 @@
 																	<option value="12">Order Collection Information</option>
 																	<option value="13">Order Status Update</option>
 																	<option value="14">Order Delivery Status Update</option>
+																	<option value="15">Q&A Form</option>
+																	<option value="16">Order Success</option>
+																	<option value="17">Order Cancelled</option>
 																</select>
 															</div>
 														</div>

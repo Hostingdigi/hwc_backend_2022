@@ -15,6 +15,7 @@ use App\Models\Paymentlog;
 use App\Models\PaymentMethods;
 use App\Models\PaymentSettings;
 use App\Models\Product;
+use App\Models\SessionCart;
 use App\Models\Settings;
 use App\Models\ShippingMethods;
 use App\Services\CartServices;
@@ -50,11 +51,46 @@ class PaymentController extends Controller
     public function stripe()
     {
 
-        $billinginfo = Session::has('billinginfo') ? Session::get('billinginfo') : [];
+        if (Session::get('customer_id') == 30548 || 1 == 1) {
+            $cust_id = Session::get('customer_id');
+            $SesCartObj = SessionCart::where('cust_id', $cust_id)->first();
+            $billinginfo = json_decode($SesCartObj->billinginfo, true);
+            $paymentmethod = ($SesCartObj->paymentmethod != '') ? $SesCartObj->paymentmethod : 0;
+            $deliverymethod = $SesCartObj->deliverymethod;
+            $if_items_unavailabel = $SesCartObj->if_unavailable;
+            $delivery_instructions = $SesCartObj->delivery_instructions;
+            $fuelcharge_percentage = $SesCartObj->fuelcharge_percentage;
+            $fuelcharges = $SesCartObj->fuelcharges;
+            $handlingfee = $SesCartObj->handlingfee;
+            $gst = $SesCartObj->gst;
+            $taxtitle = $SesCartObj->taxtitle;
+            $taxLabelOnly = $SesCartObj->taxLabelOnly;
+            $deliverytype = $SesCartObj->deliverytype;
+            $packingfee = $SesCartObj->packingfee;
+            $deliverycost = $SesCartObj->deliverycost;
+            $discount = $SesCartObj->discount;
+            $discounttext = $SesCartObj->discounttext;
+
+        } else {
+            $billinginfo = Session::get('billinginfo');
+            $paymentmethod = Session::has('paymentmethod') ? Session::get('paymentmethod') : 0;
+            if (Session::has('deliverymethod')) {
+                $deliverymethod = Session::get('deliverymethod');
+            }
+            $if_items_unavailabel = Session::get('if_unavailable');
+            $delivery_instructions = Session::get('delivery_instructions');
+
+        }
+
+        //$billinginfo = Session::has('billinginfo') ? Session::get('billinginfo') : [];
         $cartItems = $this->cartServices->cartItems($billinginfo['ship_country'] ?? null);
         $cartdata = $cartItems['cartItems'];
         $subtotal = $cartItems['subTotal'];
-        $grandtotal = $cartItems['grandTotal'];
+
+        $grandtotal = $subtotal + $gst + $deliverycost + $packingfee + $fuelcharges + $handlingfee;
+        $grandtotal = $grandtotal - $discount;
+        $grandtotal = $grandtotal;
+        /*$grandtotal = $cartItems['grandTotal'];
         $gst = $cartItems['taxDetails']['taxTotal'];
         $taxtitle = $cartItems['taxDetails']['taxLabel'];
         $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
@@ -63,9 +99,9 @@ class PaymentController extends Controller
         $deliverycost = $cartItems['deliveryDetails']['deliveryTotal'];
         $discount = $cartItems['discountDetails']['discountTotal'];
         $discounttext = $cartItems['discountDetails']['title'];
-        $fuelcharges = isset($cartItems['fuelcharges']) ? $cartItems['fuelcharges'] : 0.00;
-        $handlingfee = isset($cartItems['handlingfee']) ? $cartItems['handlingfee'] : 0.00;
-
+        $fuelcharges = isset($cartItems['fuelcharges'])?$cartItems['fuelcharges']:0.00;
+        $handlingfee = isset($cartItems['handlingfee'])?$cartItems['handlingfee']:0.00;
+         */
         $orderincid = 0;
 
         // Stripe Key
@@ -418,29 +454,50 @@ class PaymentController extends Controller
             return redirect('cancelpayment');
         }
 
-        $billinginfo = Session::has('billinginfo') ? Session::get('billinginfo') : [];
+        if (Session::get('customer_id') == 30548 || 1 == 1) {
+            $cust_id = Session::get('customer_id');
+            $SesCartObj = SessionCart::where('cust_id', $cust_id)->first();
+            $billinginfo = json_decode($SesCartObj->billinginfo, true);
+            $paymentmethod = ($SesCartObj->paymentmethod != '') ? $SesCartObj->paymentmethod : 0;
+            $deliverymethod = $SesCartObj->deliverymethod;
+            $if_items_unavailabel = $SesCartObj->if_unavailable;
+            $delivery_instructions = $SesCartObj->delivery_instructions;
+            $fuelcharge_percentage = $SesCartObj->fuelcharge_percentage;
+            $fuelcharges = $SesCartObj->fuelcharges;
+            $handlingfee = $SesCartObj->handlingfee;
+            $gst = $SesCartObj->gst;
+            $taxtitle = $SesCartObj->taxtitle;
+            $taxLabelOnly = $SesCartObj->taxLabelOnly;
+            $deliverytype = $SesCartObj->deliverytype;
+            $packingfee = $SesCartObj->packingfee;
+            $deliverycost = $SesCartObj->deliverycost;
+            $discount = $SesCartObj->discount;
+            $discounttext = $SesCartObj->discounttext;
+
+        }
+
+        //$billinginfo = Session::has('billinginfo') ? Session::get('billinginfo') : [];
         $cartItems = $this->cartServices->cartItems($billinginfo['ship_country'] ?? null);
         $cartdata = $cartItems['cartItems'];
         $subtotal = $cartItems['subTotal'];
-        $grandtotal = $cartItems['grandTotal'];
-        $gst = $cartItems['taxDetails']['taxTotal'];
+
+        $grandtotal = $subtotal + $gst + $deliverycost + $packingfee + $fuelcharges + $handlingfee;
+        $grandtotal = $grandtotal - $discount;
+        $grandtotal = $grandtotal;
+
+        //$grandtotal = $cartItems['grandTotal'];
+        /*$gst = $cartItems['taxDetails']['taxTotal'];
         $taxtitle = $cartItems['taxDetails']['taxLabel'];
         $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
         $deliverytype = $cartItems['deliveryDetails']['title'];
         $packingfee = $cartItems['packingFees'];
         $deliverycost = $cartItems['deliveryDetails']['deliveryTotal'];
         $discount = $cartItems['discountDetails']['discountTotal'];
-        $discounttext = $cartItems['discountDetails']['title'];
+        $discounttext = $cartItems['discountDetails']['title']; */
 
         $paymethodname = $emailsubject = $emailcontent = $companyname = $adminemail = $ccemail = '';
         $paymentmethod = 0;
         $sesid = Session::get('_token');
-
-        if (Session::has('paymentmethod')) {
-            $paymentmethod = Session::get('paymentmethod');
-        }
-
-        $billinginfo = Session::get('billinginfo');
 
         //Create order
         $orderCreate = $this->orderServices->createOrder();
@@ -1267,18 +1324,36 @@ class PaymentController extends Controller
             $cartdata = Session::get('cartdata');
         }
 
-        if (Session::has('paymentmethod')) {
-            $paymentmethod = Session::get('paymentmethod');
+        //$billinginfo = Session::get('billinginfo');
+        if (Session::get('customer_id') == 30548 || 1 == 1) {
+            $cust_id = Session::get('customer_id');
+            $SesCartObj = SessionCart::where('cust_id', $cust_id)->first();
+            $billinginfo = json_decode($SesCartObj->billinginfo, true);
+            $paymentmethod = ($SesCartObj->paymentmethod != '') ? $SesCartObj->paymentmethod : 0;
+            $deliverymethod = $SesCartObj->deliverymethod;
+            $if_items_unavailabel = $SesCartObj->if_unavailable;
+            $delivery_instructions = $SesCartObj->delivery_instructions;
+            $fuelcharge_percentage = $SesCartObj->fuelcharge_percentage;
+            $fuelcharges = $SesCartObj->fuelcharges;
+            $handlingfee = $SesCartObj->handlingfee;
+            $gst = $SesCartObj->gst;
+            $taxPercentage = $SesCartObj->taxPercentage;
+            $taxtitle = $SesCartObj->taxtitle;
+            $taxLabelOnly = $SesCartObj->taxLabelOnly;
+            $deliverytype = $SesCartObj->deliverytype;
+            $packingfee = $SesCartObj->packingfee;
+            $deliverycost = $SesCartObj->deliverycost;
+            $discount = $SesCartObj->discount;
+            $discounttext = $SesCartObj->discounttext;
         }
 
-        $billinginfo = Session::get('billinginfo');
-
+        $paymentmethod = 6; // for paypal payment method
         $cartItems = $this->cartServices->cartItems($billinginfo['ship_country'] ?? null);
         $cartdata2 = $cartItems['cartItems'];
         $subtotal = $cartItems['subTotal'];
         $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
-        $fuelcharges = isset($cartItems['fuelcharges']) ? $cartItems['fuelcharges'] : 0.00;
-        $handlingfee = isset($cartItems['handlingfee']) ? $cartItems['handlingfee'] : 0.00;
+        //$fuelcharges = isset($cartItems['fuelcharges']) ? $cartItems['fuelcharges'] : 0.00;
+        //$handlingfee = isset($cartItems['handlingfee']) ? $cartItems['handlingfee'] : 0.00;
         /*$grandtotal = $cartItems['grandTotal'];
         $gst = $cartItems['taxDetails']['taxTotal'];
         $taxtitle = $cartItems['taxDetails']['taxLabel'];
@@ -1296,10 +1371,6 @@ class PaymentController extends Controller
         $country = '';
 
         $country = $billinginfo['ship_country'];
-
-        if (Session::has('deliverymethod')) {
-            $deliverymethod = Session::get('deliverymethod');
-        }
 
         // Shipping Cost
 
@@ -1400,7 +1471,7 @@ class PaymentController extends Controller
             $fuelSettings = PaymentSettings::where('Id', '1')->select('fuelcharge_percentage')->first();
             $ordermaster = new OrderMaster;
             $ordermaster['user_id'] = $userid;
-            $ordermaster['ship_method'] = Session::get('deliverymethod');
+            $ordermaster['ship_method'] = $deliverymethod;
             $ordermaster['pay_method'] = $paymethodname;
             $ordermaster['shipping_cost'] = $deliverycost;
             $ordermaster['packaging_fee'] = $packingfee;
@@ -1415,8 +1486,8 @@ class PaymentController extends Controller
             $ordermaster['discount_amount'] = $discount;
             $ordermaster['discount_id'] = $couponid;
             $ordermaster['order_status'] = '0';
-            $ordermaster['if_items_unavailabel'] = Session::get('if_unavailable');
-            $ordermaster['delivery_instructions'] = Session::get('delivery_instructions');
+            $ordermaster['if_items_unavailabel'] = $if_items_unavailabel;
+            $ordermaster['delivery_instructions'] = $delivery_instructions;
             $ordermaster['bill_fname'] = $billinginfo['bill_fname'];
             $ordermaster['bill_lname'] = $billinginfo['bill_lname'];
             $ordermaster['bill_email'] = $billinginfo['bill_email'];
@@ -1557,26 +1628,41 @@ class PaymentController extends Controller
             $cartdata = Session::get('cartdata');
         }
 
-        if (Session::has('paymentmethod')) {
-            $paymentmethod = Session::get('paymentmethod');
+        if (Session::get('customer_id') == 30548 || 1 == 1) {
+            $cust_id = Session::get('customer_id');
+            $SesCartObj = SessionCart::where('cust_id', $cust_id)->first();
+            $billinginfo = json_decode($SesCartObj->billinginfo, true);
+            $paymentmethod = ($SesCartObj->paymentmethod != '') ? $SesCartObj->paymentmethod : 0;
+            $deliverymethod = $SesCartObj->deliverymethod;
+            $if_items_unavailabel = $SesCartObj->if_unavailable;
+            $delivery_instructions = $SesCartObj->delivery_instructions;
+            $fuelcharge_percentage = $SesCartObj->fuelcharge_percentage;
+            $fuelcharges = $SesCartObj->fuelcharges;
+            $handlingfee = $SesCartObj->handlingfee;
+            $gst = $SesCartObj->gst;
+            $taxPercentage = $SesCartObj->taxPercentage;
+            $taxtitle = $SesCartObj->taxtitle;
+            $taxLabelOnly = $SesCartObj->taxLabelOnly;
+            $deliverytype = $SesCartObj->deliverytype;
+            $packingfee = $SesCartObj->packingfee;
+            $deliverycost = $SesCartObj->deliverycost;
+            $discount = $SesCartObj->discount;
+            $discounttext = $SesCartObj->discounttext;
+
         }
 
-        $billinginfo = Session::get('billinginfo');
+        $paymentmethod = 7;
+
         $cartItems = $this->cartServices->cartItems($billinginfo['ship_country'] ?? null);
-        $fuelcharges = isset($cartItems['fuelcharges']) ? $cartItems['fuelcharges'] : 0.00;
-        $handlingfee = isset($cartItems['handlingfee']) ? $cartItems['handlingfee'] : 0.00;
 
         $cart = new Cart();
-        $subtotal = $cart->getSubTotal();
+        //$subtotal = $cart->getSubTotal();
+        $subtotal = $cartItems['subTotal'];
 
         $orderid = $countryid = $orderincid = 0;
         $country = '';
 
         $country = $billinginfo['ship_country'];
-
-        if (Session::has('deliverymethod')) {
-            $deliverymethod = Session::get('deliverymethod');
-        }
 
         // Shipping Cost
 
@@ -1584,17 +1670,18 @@ class PaymentController extends Controller
 
         $totalweight = 0;
 
-        $taxes = $cart->getGST($subtotal, $country);
+        /*$taxes = $cart->getGST($subtotal, $country);// hidded for DB
 
-        if ($country != '') {
-            $taxvals = @explode("|", $taxes);
-            $taxtitle = $taxvals[0];
-            $gst = $taxvals[1];
+        if($country != '') {
+        $taxvals = @explode("|", $taxes);
+        $taxtitle = $taxvals[0];
+        $gst = $taxvals[1];
         } else {
-            $gst = $taxes;
+        $gst = $taxes;
         }
 
-        $gst = $cartItems['taxDetails']['taxTotal'];
+        //$gst = $cartItems['taxDetails']['taxTotal'];
+         */
 
         $settings = PaymentSettings::where('Id', '=', '1')->select('min_package_fee')->first();
         if ($country != 'SG') {
@@ -1615,27 +1702,34 @@ class PaymentController extends Controller
             }
         }
 
-        $packingfee = number_format(($packingfee + $boxfees), 2);
+        //$packingfee = number_format(($packingfee + $boxfees), 2); // hidded for DB
 
-        $discounttype = $disamount = 0;
+        /*$discounttype = $disamount = 0;// hidded for DB
         $discounttext = '';
-        if (Session::has('couponcode')) {
-            $discounttype = Session::get('discounttype');
-            $disamount = Session::get('discount');
-            $discounttext = Session::get('discounttext');
+        if(Session::has('couponcode')) {
+        $discounttype = Session::get('discounttype');
+        $disamount = Session::get('discount');
+        $discounttext = Session::get('discounttext');
         }
-
+         */
         //$discount = $cart->getDiscount($subtotal, $gst, $deliverycost, $packingfee, $discounttype, $disamount);
-        $discount = $cartItems['discountDetails']['discountTotal'];
+        //$discount = $cartItems['discountDetails']['discountTotal'];
         //$grandtotal = $cart->getGrandTotal($subtotal, $gst, $deliverycost, $packingfee, $discount);
-        $grandtotal = $cartItems['grandTotal'];
 
+        //$grandtotal = $cartItems['grandTotal']; //// hidded for DB
         $subtotal = str_replace(',', '', $subtotal);
+
+        $grandtotal = $subtotal + $gst + $deliverycost + $packingfee + $fuelcharges + $handlingfee;
+        $grandtotal = $grandtotal - $discount;
+        $grandtotal = $grandtotal;
+
+        /*$subtotal = str_replace(',', '', $subtotal);
         $deliverycost = str_replace(',', '', $deliverycost);
         $packingfee = str_replace(',', '', $packingfee);
         $gst = str_replace(',', '', $gst);
         $grandtotal = str_replace(',', '', $grandtotal);
         $discount = str_replace(',', '', $discount);
+         */
 
         $sesid = Session::get('_token');
         if (Session::has('cartdata')) {
@@ -1676,7 +1770,7 @@ class PaymentController extends Controller
             $fuelSettings = PaymentSettings::where('Id', '1')->select('fuelcharge_percentage')->first();
             $ordermaster = new OrderMaster;
             $ordermaster['user_id'] = $userid;
-            $ordermaster['ship_method'] = Session::get('deliverymethod');
+            $ordermaster['ship_method'] = $deliverymethod;
             $ordermaster['pay_method'] = $paymethodname;
             $ordermaster['shipping_cost'] = $deliverycost;
             $ordermaster['packaging_fee'] = $packingfee;
@@ -1684,15 +1778,15 @@ class PaymentController extends Controller
             $ordermaster['fuelcharges'] = $fuelcharges;
             $ordermaster['handlingfee'] = $handlingfee;
 
-            $ordermaster['tax_label'] = isset($cartItems['taxDetails']['taxLabel']) ? $cartItems['taxDetails']['taxLabel'] : '';
-            $ordermaster['tax_percentage'] = isset($cartItems['taxDetails']['taxPercentage']) ? $cartItems['taxDetails']['taxPercentage'] : '';
+            $ordermaster['tax_label'] = $taxLabelOnly;
+            $ordermaster['tax_percentage'] = $taxPercentage;
             $ordermaster['tax_collected'] = $gst;
             $ordermaster['payable_amount'] = $grandtotal;
             $ordermaster['discount_amount'] = $discount;
             $ordermaster['discount_id'] = $couponid;
             $ordermaster['order_status'] = '0';
-            $ordermaster['if_items_unavailabel'] = Session::get('if_unavailable');
-            $ordermaster['delivery_instructions'] = Session::get('delivery_instructions');
+            $ordermaster['if_items_unavailabel'] = $if_items_unavailabel;
+            $ordermaster['delivery_instructions'] = $delivery_instructions;
             $ordermaster['bill_fname'] = $billinginfo['bill_fname'];
             $ordermaster['bill_lname'] = $billinginfo['bill_lname'];
             $ordermaster['bill_email'] = $billinginfo['bill_email'];
@@ -1977,97 +2071,104 @@ class PaymentController extends Controller
         ]);
 
         if ($request->has('error')) {
-            Log::alert('ORDER ID : ' . $orderid . ' grabpay payment return error.{' . $request->error . '}');
-            return redirect('cancelpayment', ['orderid' => $orderid]);
+            return redirect("cancelpayment?orderid=$orderid");
         }
 
         if (!$request->has('error')) {
-            if ($request->has('code') && isset($_COOKIE['code_verifier'])) {
-                //Step 1 - get token
-                try {
-                    $clientId = $clientSec = '';
-                    $paymentmethod = PaymentMethods::where('id', '5')->first();
-                    if ($paymentmethod) {
-                        $clientId = $paymentmethod->test_api_signature;
-                        $clientSec = $paymentmethod->api_signature;
-                    }
-                    $oAuthTokenResult = $this->commonCurl([
-                        'url' => 'https://partner-api.grab.com/grabid/v1/oauth2/token',
-                        'header' => [
-                            'Content-Type: application/json',
-                        ],
-                        'payload' => [
-                            'code' => $request->code,
-                            'client_id' => $clientId,
-                            'grant_type' => 'authorization_code.',
-                            'redirect_uri' => url('success?grabpay=get_oauth_token'),
-                            'code_verifier' => $_COOKIE['code_verifier'] ?? '',
-                            'client_secret' => $clientSec,
-                        ],
-                    ]);
 
-                    if ($oAuthTokenResult == false) {
-                        Log::alert('ORDER ID : ' . $orderid . ' oauth token curl error.');
-                        return redirect('cancelpayment', ['orderid' => $orderid]);
-                    }
+            /*if ($request->has('code') && isset($_COOKIE['code_verifier'])) {
+            echo "hi";
+            echo print_r($request->code);
+            echo $_COOKIE['code_verifier'];
+            //exit;
+            //Step 1 - get token
+            try {
+            $clientId = $clientSec = '';
+            $paymentmethod = PaymentMethods::where('id', '5')->first();
+            if ($paymentmethod) {
+            $clientId = $paymentmethod->test_api_signature;
+            $clientSec = $paymentmethod->api_signature;
+            }
+            $oAuthTokenResult = $this->commonCurl([
+            'url' => 'https://partner-api.grab.com/grabid/v1/oauth2/token',
+            'header' => [
+            'Content-Type: application/json',
+            ],
+            'payload' => [
+            'code' => $request->code,
+            'client_id' => $clientId,
+            'grant_type' => 'authorization_code.',
+            'redirect_uri' => url('success?grabpay=get_oauth_token'),
+            'code_verifier' => $_COOKIE['code_verifier'] ?? '',
+            'client_secret' => $clientSec,
+            ],
+            ]);
 
-                    Log::alert('ORDER ID : ' . $orderid . ' oauth api response => '.json_encode($oAuthTokenResult));
-                    $resultObj = json_decode($oAuthTokenResult);
+            if ($oAuthTokenResult == false) {
+            Log::alert('ORDER ID : ' . $orderid . ' oauth token curl error.');
+            return redirect("cancelpayment?orderid=$orderid");
+            }
+            Log::alert('ORDER ID : ' . $orderid . ' oauth api response => '.json_encode($oAuthTokenResult));
+            $resultObj = json_decode($oAuthTokenResult);
 
-                    //Step 2 - Complete charge
-                    if (isset($resultObj->access_token)) {
-                        if (isset($_COOKIE['partnerTxID'])) {
-                            $gpay = new GrabPayFunctions;
-                            $dateTime = gmdate("D, d M Y H:i:s \G\M\T");
-                            $completeGrabpayPayment = $this->commonCurl([
-                                'url' => 'https://partner-api.grab.com/grabpay/partner/v2/charge/complete',
-                                'header' => [
-                                    'Content-Type: application/json',
-                                    'Authorization: ' . $resultObj->access_token,
-                                    'X-GID-AUX-POP: ' . $gpay->generatePopSignature($clientSec, $resultObj->access_token, $dateTime),
-                                    'Date: ' . $dateTime,
-                                ],
-                                'payload' => [
-                                    'partnerTxID' => $_COOKIE['partnerTxID'],
-                                ],
-                            ]);
+            //Step 2 - Complete charge
+            if (isset($resultObj->access_token)) {
+            if (isset($_COOKIE['partnerTxID'])) {
+            $gpay = new GrabPayFunctions;
+            $dateTime = gmdate("D, d M Y H:i:s \G\M\T");
+            $completeGrabpayPayment = $this->commonCurl([
+            'url' => 'https://partner-api.grab.com/grabpay/partner/v2/charge/complete',
+            'header' => [
+            'Content-Type: application/json',
+            'Authorization: ' . $resultObj->access_token,
+            'X-GID-AUX-POP: ' . $gpay->generatePopSignature($clientSec, $resultObj->access_token, $dateTime),
+            'Date: ' . $dateTime,
+            ],
+            'payload' => [
+            'partnerTxID' => $_COOKIE['partnerTxID'],
+            ],
+            ]);
 
-                            if ($completeGrabpayPayment == false) {
-                                Log::alert('ORDER ID : ' . $orderid . ' grabpay complete api curl error.');
-                                return redirect('cancelpayment', ['orderid' => $orderid]);
-                            }
-
-                            $completeResultObj = json_decode($completeGrabpayPayment);
-
-                            if ((isset($completeResultObj->txStatus) && $completeResultObj->txStatus != 'success') ||
-                                isset($completeResultObj->code)) {
-                                Paymentlog::updateOrCreate(
-                                    ['order_id' => $orderid],
-                                    [
-                                        'received_values' => serialize($completeResultObj),
-                                        'status' => 'failure',
-                                    ]);
-                                Log::alert('ORDER ID : ' . $orderid . ' grabpay complete api failed.');
-                                return redirect('cancelpayment', ['orderid' => $orderid]);
-                            }
-
-                        } else {
-                            Log::alert('ORDER ID : ' . $orderid . ' grabpay complete api partnerTxID cookie value is not available.');
-                            return redirect('cancelpayment', ['orderid' => $orderid]);
-                        }
-                    } else {
-                        Log::alert('ORDER ID : ' . $orderid . ' grabpay oauth token api not return access_token key.');
-                        return redirect('cancelpayment', ['orderid' => $orderid]);
-                    }
-
-                } catch (\Throwable $th) {
-                    Log::alert('ORDER ID : ' . $orderid . ' grabpay trycatch hit. so payment is not completed.');
-                    return redirect('cancelpayment', ['orderid' => $orderid]);
-                }
+            if ($completeGrabpayPayment == false) {
+            Log::alert('ORDER ID : ' . $orderid . ' grabpay complete api curl error.');
+            return redirect("cancelpayment?orderid=$orderid");
             }
 
-            OrderMaster::where('order_id', $orderid)->update(['order_status' => '1']);
-            $order = OrderMaster::where('order_id', $orderid)->select('order_type')->first();
+            $completeResultObj = json_decode($completeGrabpayPayment);
+
+            if ((isset($completeResultObj->txStatus) && $completeResultObj->txStatus != 'success') ||
+            isset($completeResultObj->code)) {
+            Paymentlog::updateOrCreate(
+            ['order_id' => $orderid],
+            [
+            'received_values' => serialize($completeResultObj),
+            'status' => 'failure',
+            ]);
+            Log::alert('ORDER ID : ' . $orderid . ' grabpay complete api failed.');
+            return redirect("cancelpayment?orderid=$orderid");
+            }
+
+            } else {
+            Log::alert('ORDER ID : ' . $orderid . ' grabpay complete api partnerTxID cookie value is not available.');
+            return redirect("cancelpayment?orderid=$orderid");
+            }
+            } else {
+            Log::alert('ORDER ID : ' . $orderid . ' grabpay oauth token api not return access_token key.');
+            return redirect("cancelpayment?orderid=$orderid");
+            }
+
+            } catch (\Throwable $th) {
+            Log::alert('ORDER ID : ' . $orderid . ' grabpay trycatch hit. so payment is not completed.');
+            return redirect("cancelpayment?orderid=$orderid");
+            }
+            }else if ($request->has('code') || isset($_COOKIE['code_verifier'])){
+            Log::alert('ORDER ID : ' . $orderid . ' Cookie or code missing, Verifier:'.isset($_COOKIE['code_verifier'])?json_encode($_COOKIE['code_verifier']):'empty');
+            Log::alert('ORDER ID : ' . $orderid . ' Cookie or code missing Code :'.isset($request->code)?json_encode($request->code):'empty');
+            return redirect("cancelpayment?orderid=$orderid");
+            } */
+
+            OrderMaster::where('order_id', '=', $orderid)->update(array('order_status' => '1'));
+            $order = OrderMaster::where('order_id', '=', $orderid)->select('order_type')->first();
             if ($order) {
                 if ($order->order_type == 2) {
                     OrderMaster::where('order_id', '=', $orderid)->update(array('quotation_status' => '1'));
@@ -2605,8 +2706,26 @@ class PaymentController extends Controller
         $paymethodname = $deliverytype = $emailsubject = $emailcontent = $companyname = $adminemail = $ccemail = $taxtitle = '';
         $packingfee = $deliverycost = $deliverymethod = 0;
         $sesid = Session::get('_token');
-        $paymentmethod = Session::has('paymentmethod') ? Session::get('paymentmethod') : 0;
-        $billinginfo = Session::get('billinginfo');
+
+        if (Session::get('customer_id') == 30548) {
+            $cust_id = Session::get('customer_id');
+            $SesCartObj = SessionCart::where('cust_id', $cust_id)->first();
+            $billinginfo = json_decode($SesCartObj->billinginfo, true);
+            $paymentmethod = ($SesCartObj->paymentmethod != '') ? $SesCartObj->paymentmethod : 0;
+            $deliverymethod = $SesCartObj->deliverymethod;
+            $if_items_unavailabel = $SesCartObj->if_unavailable;
+            $delivery_instructions = $SesCartObj->delivery_instructions;
+
+        } else {
+            $billinginfo = Session::get('billinginfo');
+            $paymentmethod = Session::has('paymentmethod') ? Session::get('paymentmethod') : 0;
+            if (Session::has('deliverymethod')) {
+                $deliverymethod = Session::get('deliverymethod');
+            }
+            $if_items_unavailabel = Session::get('if_unavailable');
+            $delivery_instructions = Session::get('delivery_instructions');
+
+        }
 
         $cart = new Cart();
         $orderid = $countryid = $orderincid = 0;
@@ -2631,10 +2750,6 @@ class PaymentController extends Controller
         $discounttext = $cartItems['discountDetails']['title'];
         $fuelcharges = isset($cartItems['fuelcharges']) ? $cartItems['fuelcharges'] : 0.00;
         $handlingfee = isset($cartItems['handlingfee']) ? $cartItems['handlingfee'] : 0.00;
-
-        if (Session::has('deliverymethod')) {
-            $deliverymethod = Session::get('deliverymethod');
-        }
 
         // Shipping Cost
         $deliverytype = $cart->getDeliveryMethod($deliverymethod);
@@ -2692,8 +2807,8 @@ class PaymentController extends Controller
         $ordermaster['discount_amount'] = $discount;
         $ordermaster['discount_id'] = $couponid;
         $ordermaster['order_status'] = '0';
-        $ordermaster['if_items_unavailabel'] = Session::get('if_unavailable');
-        $ordermaster['delivery_instructions'] = Session::get('delivery_instructions');
+        $ordermaster['if_items_unavailabel'] = $if_items_unavailabel;
+        $ordermaster['delivery_instructions'] = $delivery_instructions;
 
         $ordermaster['bill_fname'] = $billinginfo['bill_fname'];
         $ordermaster['bill_lname'] = $billinginfo['bill_lname'];

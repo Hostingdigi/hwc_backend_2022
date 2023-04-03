@@ -48,7 +48,7 @@
                                     <tr>
 											<!--td><input type="checkbox" value="{{ $order->order_id }}" name="productids[]"></td-->
                                         	<td>{{ $order->order_id }}</td>
-											<td>{{ date('d M Y h:i A', strtotime($order->created_at)) }}</td>
+											<td>{{ date('d M Y', strtotime($order->created_at)) }}</td>
 											<td>{{ $order->bill_fname }} {{ $order->bill_lname }}</td>
 											<td>${{ $order->payable_amount }}</td>
 											<td>

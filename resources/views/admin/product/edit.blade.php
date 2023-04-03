@@ -50,6 +50,12 @@
 
 @include('admin.includes.mainmenu')
 
+@php
+if($adminrole ==5)
+    $field_display = "readonly";
+else
+    $field_display = "";
+@endphp
 
 
 <div class="app-content content" style="background-color:#fff;">
@@ -100,7 +106,7 @@
 
                                 <div class="card-header">
 
-                                    <h4 class="card-title">Add New</h4>
+                                    <h4 class="card-title">Update Product</h4>
 
                                 </div>
 
@@ -133,7 +139,7 @@
                                                             <div class="col-md-8">
 
 																
-<textarea name="EnName" class="form-control" required>{{ $product->EnName }}</textarea>
+<textarea name="EnName" id="EnName" class="form-control" required {{$field_display}}>{{ $product->EnName }}</textarea>
 
                                                             </div>
 
@@ -154,7 +160,7 @@
                                                             <div class="col-md-8">
 
 																
-<textarea name="UniqueKey" class="form-control" required>{{ $product->UniqueKey }}</textarea>
+<textarea name="UniqueKey" id="UniqueKey" class="form-control" required {{$field_display}}>{{ $product->UniqueKey }}</textarea>
 
                                                             </div>
 
@@ -174,14 +180,34 @@
 
                                                             <div class="col-md-8">
 
-																<textarea name="ProdCode" class="form-control" required>{{ $product->ProdCode }}</textarea>
+																<textarea name="ProdCode" class="form-control" required {{$field_display}}>{{ $product->ProdCode }}</textarea>
 
                                                             </div>
 
                                                         </div>
 
                                                     </div>
+                                                    <div class="col-12">
 
+                                                        <div class="form-group row">
+
+                                                            <div class="col-md-4">
+
+                                                                <span>Barcode <br>(Use comma separater for multiple values)</span>
+
+                                                            </div>
+
+                                                            <div class="col-md-8">
+
+																<textarea name="barcode" class="form-control" >{{ $product->barcode }}</textarea>
+
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div>
+                                                    
+                                                    @if($adminrole !=5)
 													<div class="col-12">
 
                                                         <div class="form-group row">
@@ -194,7 +220,7 @@
 
                                                             <div class="col-md-8">
 
-																<select name="Types" class="form-control" required>					
+																<select name="Types" class="form-control" {{$field_display}} required>					
 
 																@if(count($categories) > 0)						
 
@@ -253,7 +279,7 @@
 
                                                             <div class="col-md-8">
 
-																<select name="Brand" class="form-control">	
+																<select name="Brand" class="form-control" {{$field_display}}>	
 
 																<option value="0" selected="selected">No Brand</option>            		
 
@@ -274,6 +300,8 @@
                                                         </div>
 
                                                     </div>
+
+                                                   
 
 													 <div class="col-12">
 
@@ -427,7 +455,7 @@
 
                                                             <div class="col-md-8">
 
-																<textarea name="Specs" class="form-control">{{ $product->Specs }}</textarea>       
+																<textarea name="Specs" id="Specs" class="form-control editor">{{ $product->Specs }}</textarea>       
 
                                                             </div>
 
@@ -1093,6 +1121,8 @@
 
                                                     </div>
 
+                                                    @endif
+
                                                     <div class="col-md-8 offset-md-4">
 
                                                         <button type="submit" class="btn btn-primary mr-1 mb-1" name="submit_action">Save</button>
@@ -1138,7 +1168,7 @@
 <script>
 
 	 CKEDITOR.replace( 'editor' );
-
+	CKEDITOR.replace( 'Specs' );
 
 $images = $('.imageOutput')
 
@@ -1148,6 +1178,12 @@ $(".imageUpload").change(function(event){
 
     readURL(this);
 
+});
+
+$('#EnName').keyup(function() {
+	var title = $('#EnName').val();
+	title = title.replace(/[^a-z0-9\s]/gi, '').replace(/[_\s]/g, '-');
+	$('#UniqueKey').val(title.toLowerCase());
 });
 
 

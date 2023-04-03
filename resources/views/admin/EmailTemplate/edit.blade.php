@@ -65,6 +65,9 @@
 																	<option value="12" @if($emailtemplate->template_type == 12) selected @endif>Order Collection Information</option>
 																	<option value="13" @if($emailtemplate->template_type == 13) selected @endif>Order Status Update</option>
 																	<option value="14" @if($emailtemplate->template_type == 14) selected @endif>Order Delivery Status Update</option>
+																	<option value="15" @if($emailtemplate->template_type == 15) selected @endif>Q&A Form</option>
+																	<option value="16" @if($emailtemplate->template_type == 16) selected @endif>Order Success</option>
+																	<option value="17" @if($emailtemplate->template_type == 17) selected @endif>Order Cancelled</option>
 																</select>
 															</div>
 														</div>

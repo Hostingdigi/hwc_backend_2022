@@ -126,9 +126,23 @@
 												</div>
 												<div class="col-md-8">
 													<select class="form-control" name="offerCategory">
-														<option value="1" @if($offerCategory == '') selected @endif>Default</option>
+														<option value="" @if($offerCategory == '') selected @endif>Default</option>
 														<option value="1" @if($offerCategory == '1') selected @endif>Yes</option>
 														<option value="0" @if($offerCategory == '0') selected @endif>No</option>
+													</select>
+												</div>
+											</div>
+										</div>
+										<div class="col-12">
+											<div class="form-group row">
+												<div class="col-md-4">
+													<span>Status</span>
+												</div>
+												<div class="col-md-8">
+													<select class="form-control" name="TypeStatus">
+														<option value="" @if($TypeStatus == '') selected @endif>All Category</option>
+														<option value="1" @if($TypeStatus == '1') selected @endif>Active</option>
+														<option value="0" @if($TypeStatus == '0') selected @endif>In-Active</option>
 													</select>
 												</div>
 											</div>
@@ -252,6 +266,8 @@
 								<select name="bulk_action" id="bulk_action" class="form-control" onchange="bulk_update_item(this.value)">
 									<option value="">Select </option>
 									<option value="delete">Delete</option>
+									<option value="status_active">Mark as Active</option>
+									<option value="status_inactive">Mark as InActive</option>
 									<option value="assign_promo">Mark as Promo Prod</option>
 									<option value="remove_promo">Remove from Promo Prod</option>
 									<option value="update_disporder">Update Display Order</option>

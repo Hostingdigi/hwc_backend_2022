@@ -46,7 +46,7 @@
 							<div class="tab-content">
 								<div class="tab-pane fade show active" id="sg1" role="tabpanel">
 									@if($productdetail->LargeImage)
-										<img src="{{ env('IMG_URL').('/uploads/product/'.$productdetail->LargeImage) }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
+										<img src="{{ url('/uploads/product/'.$productdetail->LargeImage) }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 									@else
 										<img src="{{ url('images/noimage.png') }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 									@endif									
@@ -56,7 +56,7 @@
 									@foreach($galleries as $gallery)
 										<div class="tab-pane" id="sg{{ $g }}" role="tabpanel">
 											@if($gallery->LargeImage)
-												<img src="{{ env('IMG_URL').('/uploads/product/'.$gallery->LargeImage) }}" alt="" class="img-fluid">
+												<img src="{{ url('/uploads/product/'.$gallery->LargeImage) }}" alt="" class="img-fluid">
 											@else
 												<img src="{{ url('images/noimage.png') }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 											@endif
@@ -67,7 +67,7 @@
 							</div>
 							<div class="nav d-flex justify-content-between">
 								@if($productdetail->Image)
-									<a class="nav-item nav-link active" data-toggle="tab" href="#sg1"><img src="{{ env('IMG_URL').('/uploads/product/'.$productdetail->Image) }}" alt="{{ $productdetail->EnName }}"></a>
+									<a class="nav-item nav-link active" data-toggle="tab" href="#sg1"><img src="{{ url('/uploads/product/'.$productdetail->Image) }}" alt="{{ $productdetail->EnName }}"></a>
 								@else
 									<a class="nav-item nav-link active" data-toggle="tab" href="#sg1"><img src="{{ url('images/noimage.png') }}" alt="{{ $productdetail->EnName }}"></a>
 								@endif
@@ -76,7 +76,7 @@
 									@foreach($galleries as $gallery)
 										<a class="nav-item nav-link" data-toggle="tab" href="#sg{{ $g }}">
 											@if($gallery->Image)
-												<img src="{{ env('IMG_URL').('/uploads/product/'.$gallery->Image) }}" alt="" class="img-fluid">
+												<img src="{{ url('/uploads/product/'.$gallery->Image) }}" alt="" class="img-fluid">
 											@else
 												<img src="{{ url('images/noimage.png') }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 											@endif
@@ -151,52 +151,58 @@
 					@endphp
 					<input type="hidden" name="displayprice" id="displayprice" value="{{ $displayprice }}">
 					<input type="hidden" name="productprice" id="productprice" value="{{ $displayprice }}">
-					
-					<div class="row">
-					   <div class="col-5 prod-price-col">Price</div>
-					   @if($displayprice < $actualprice)
-					   <div class="col-5 prod-price-col-red">Promotion</div>
-						@endif
-					</div>
-					<div class="row mb-3">
+
+					@if($productdetail->Price > 0)
+						<div class="row">
+						<div class="col-5 prod-price-col">Price</div>
 						@if($displayprice < $actualprice)
-					   <div class="col-5">
-						  <div class="oldrate flft" id="oldprice">
-							S${{ number_format($actualprice, 2) }}
-						  </div>
-						 <!-- <div class="color-grey-tax">[ before GST / local tax ]</div>-->
-						 <!-- <div style="clear:both"></div>-->
-						 <!-- <div class="oldrate flft" id="oldgstprice">-->
-							<!--S${{ number_format($actualgstprice, 2) }}-->
-						 <!-- </div>-->
-						 <div class="color-grey-tax">[ with GST ]</div>
-					   </div>
-					   
-					   <div class="col-5">
-						  <div class="newrate flft redclr" id="actualprice">
-							S${{ number_format($displayprice, 2) }}
-						  </div>
-						 <!-- <div class="color-red-tax">[ before GST / local tax ]</div>-->
-						 <!-- <div style="clear:both"></div>-->
-						 <!-- <div class="newrate flft redclr" id="actualgstprice">-->
-							<!--S${{ number_format($gstprice, 2) }}-->
-						 <!-- </div>-->
-						 <div class="color-red-tax">[ with GST ]</div>
-					   </div>
-					   @else
+						<div class="col-5 prod-price-col-red">Promotion</div>
+							@endif
+						</div>
+						<div class="row mb-3">
+							@if($displayprice < $actualprice)
 						<div class="col-5">
-						  <div class="newrate flft blackclr" id="actualprice">
-							 S${{ number_format($displayprice, 2) }}
-						  </div>
-						  <!--<div class="color-black-tax">[ before GST / local tax ]</div>-->
-						  <!--<div style="clear:both"></div>-->
-						  <!--<div class="newrate flft blackclr" id="actualgstprice">-->
-							 <!--S${{ number_format($gstprice, 2) }}-->
-						  <!--</div>-->
-						  <div class="color-black-tax">[ with GST ]</div>
-					   </div>
-					   @endif
-					</div>
+							<div class="oldrate flft" id="oldprice">
+								S${{ number_format($actualprice, 2) }}
+							</div>
+							<!-- <div class="color-grey-tax">[ before GST / local tax ]</div>-->
+							<!-- <div style="clear:both"></div>-->
+							<!-- <div class="oldrate flft" id="oldgstprice">-->
+								<!--S${{ number_format($actualgstprice, 2) }}-->
+							<!-- </div>-->
+							<div class="color-grey-tax">[ with GST ]</div>
+						</div>
+						
+						<div class="col-5">
+							<div class="newrate flft redclr" id="actualprice">
+								S${{ number_format($displayprice, 2) }}
+							</div>
+							<!-- <div class="color-red-tax">[ before GST / local tax ]</div>-->
+							<!-- <div style="clear:both"></div>-->
+							<!-- <div class="newrate flft redclr" id="actualgstprice">-->
+								<!--S${{ number_format($gstprice, 2) }}-->
+							<!-- </div>-->
+							<div class="color-red-tax">[ with GST ]</div>
+						</div>
+						@else
+							<div class="col-5">
+							<div class="newrate flft blackclr" id="actualprice">
+								S${{ number_format($displayprice, 2) }}
+							</div>
+							<!--<div class="color-black-tax">[ before GST / local tax ]</div>-->
+							<!--<div style="clear:both"></div>-->
+							<!--<div class="newrate flft blackclr" id="actualgstprice">-->
+								<!--S${{ number_format($gstprice, 2) }}-->
+							<!--</div>-->
+							<div class="color-black-tax">[ with GST ]</div>
+						</div>
+						@endif
+						</div>
+					@else
+						<div class="row">
+							<div class="col-5 prod-price-col-red">COMING SOON</div>	
+						</div>
+					@endif
 					<!--div class="row mb-3">
 					@if($displayprice < $actualprice)
 					<div class="col-4">					
@@ -214,7 +220,7 @@
 					
 					
 				  </div-->
-						@if(count($options) > 0)
+						@if(count($options) > 0 && $productdetail->Price > 0)
 						<div class="row mb-3">
 							<div class="col-md-6">
 								<select name="options" id="options" class="form-control" required>
@@ -233,7 +239,7 @@
 						{!! $productdetail->ProdCode !!}
                         <!--p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since</p-->
 						
-						@if($productdetail->Quantity > 0)
+						@if($productdetail->Quantity > 0 && $productdetail->Price > 0)
 						
                         <div class="product__details__button">
                             <div class="quantity">
@@ -250,15 +256,17 @@
                     </div>
 				  </div>
 				  <div class=" mt-1">
-					@if($productdetail->Quantity > 0)
-						@if($productdetail->ProdStatus == 1)
-						<a href="javascript:void(0);" onclick="addtocart('{{ $productdetail->Id }}');" class="site-btn bg-dark mx-auto textyellow">Add to Cart</a>
+				  @if($productdetail->Price > 0)
+						@if($productdetail->Quantity > 0)
+							@if($productdetail->ProdStatus == 1)
+							<a href="javascript:void(0);" onclick="addtocart('{{ $productdetail->Id }}');" class="site-btn bg-dark mx-auto textyellow">Add to Cart</a>
+							@else
+							<a href="javascript:void(0);" class="site-btn bg-dark mx-auto textyellow">Item is Not Available</a>
+							@endif
 						@else
-						<a href="javascript:void(0);" class="site-btn bg-dark mx-auto textyellow">Item is Not Available</a>
+							<a href="javascript:void(0);" class="site-btn bg-dark mx-auto textyellow">Out of Stock</a>
+							<div class="emailus"><a href="javascript:void(0);" class="site-btn bg-dark mx-auto textyellow" data-toggle="modal" data-target="#enquiryModal">Email US for More Enquiry</a></div>
 						@endif
-					@else
-						<a href="javascript:void(0);" class="site-btn bg-dark mx-auto textyellow">Out of Stock</a>
-						<div class="emailus"><a href="javascript:void(0);" class="site-btn bg-dark mx-auto textyellow" data-toggle="modal" data-target="#enquiryModal">Email US for More Enquiry</a></div>
 					@endif
 				  </div>
 				  
@@ -465,23 +473,29 @@
 							<div class="box-Added-product" id="success{{ $relatedproduct->Id }}" style="display:none;"><span class="boxAdjest">Item has been Added into Your Cart</span></div>
 							<a href="{{ url('/prod/'.$relatedproduct->UniqueKey) }}">
 							@if($relatedproduct->Image)
-								<img src="{{ env('IMG_URL').('/uploads/product/'.$relatedproduct->Image) }}" class="card-img-top" alt="{{ $relatedproduct->EnName }}">
+								<img src="{{ url('/uploads/product/'.$relatedproduct->Image) }}" class="card-img-top" alt="{{ $relatedproduct->EnName }}">
 							@else
 								<img src="{{ url('images/noimage.png') }}" class="card-img-top" alt="{{ $relatedproduct->EnName }}">
 							@endif
 							</a>
 							<div class="product__item__text">
 								<h6 class="mt-3 mb-2 subcatlog"><a href="{{ url('/prod/'.$relatedproduct->UniqueKey) }}" alt="{{ $relatedproduct->EnName }}" title="{{ $relatedproduct->EnName }}">@if(strlen($relatedproduct->EnName) > 27){{ substr($relatedproduct->EnName, 0, 27) }}...@else {{ $relatedproduct->EnName }} @endif</a></h6>
-								
-								<div class="product__price">
-								@php	
-									$rdisplayprice = $relatedproduct->Price;
-									$price = new \App\Models\Price();
-									$rdisplayprice = $price->getPrice($relatedproduct->Id);
-									//$rdisplayprice = $price->getGSTPrice($rdisplayprice, 'SG');
-								@endphp
-								S${{ number_format($rdisplayprice, 2) }}
-								</div>
+
+								@if($relatedproduct->Price >0)
+									<div class="product__price">
+									@php	
+										$rdisplayprice = $relatedproduct->Price;
+										$price = new \App\Models\Price();
+										$rdisplayprice = $price->getPrice($relatedproduct->Id);
+										$rdisplayprice = $price->getGSTPrice($rdisplayprice, 'SG');
+									@endphp
+									S${{ number_format($rdisplayprice, 2) }}
+									</div>
+								@else
+									<div class="prod-price-col-red" style="font-size:14px;">	
+										COMING SOON
+									</div>					
+								@endif
 							</div>
 							<div class="text-center mt-3">
 							@if($relatedproduct->Quantity > 0)
@@ -489,7 +503,7 @@
 									$options = \App\Models\ProductOptions::where('Prod', '=', $relatedproduct->Id)->count();
 								@endphp
 								 
-								@if($options > 0)
+								@if($options > 0 || $relatedproduct->Price ==0)
 									<a href="{{ url('/prod/'.$relatedproduct->UniqueKey) }}" class="site-btn bg-dark mx-auto textyellow">More Details</a>
 								@else
 									<a href="javascript:void(0);" onclick="relatedaddtocart('{{ $relatedproduct->Id }}');" class="site-btn bg-dark mx-auto textyellow">Add to Cart</a>
@@ -569,12 +583,12 @@ $(document).ready(function() {
 			success: function(response) {
 				console.log(response);
 				var result = response.split("#");
-				$('#actualprice').html('S$'+result[0]);
+				$('#actualprice').html('$'+result[0]);
 				$('#productprice').val(result[0]);
-				$('#actualgstprice').html('S$'+result[1]);
+				$('#actualgstprice').html('$'+result[1]);
 				if(result[2] == 1) {
-					$('#oldprice').html('S$'+result[3]);
-					$('#oldgstprice').html('S$'+result[4]);
+					$('#oldprice').html('$'+result[3]);
+					$('#oldgstprice').html('$'+result[4]);
 				}
 			},error: function(ts) {				
 				console.log("Error:"+ts.responseText);  

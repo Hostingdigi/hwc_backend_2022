@@ -200,7 +200,7 @@
 									<tr><td colspan="4">&nbsp;</td></tr>
 									<tr>
 										<td colspan="2"></td><td colspan="2">Sub Total</td>
-										<td style="text-align:right">S${{ number_format(($orders->payable_amount + $orders->discount_amount) - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected), 2) }}</td>										
+										<td style="text-align:right">S${{ number_format(($orders->payable_amount + $orders->discount_amount) - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected + $orders->fuelcharges + $orders->handlingfee), 2) }}</td>										
 									</tr>
 									<tr>
 										<td colspan="2"></td><td colspan="2">{{($orders->tax_label !='')?$orders->tax_label:'Tax'}}</td>
@@ -210,6 +210,19 @@
 										<td colspan="2"></td><td colspan="2">Shipping</td>
 										<td style="text-align:right">S${{ number_format($orders->shipping_cost, 2) }}</td>
 									</tr>
+									@if($orders->fuelcharges >0 )
+									<tr>
+										<td colspan="2"></td><td colspan="2">{{(int)$orders->fuelcharge_percentage}}% Fuel Charges</td>
+										<td style="text-align:right">S${{ number_format($orders->fuelcharges, 2) }}</td>
+									</tr>
+									@endif
+									@if($orders->handlingfee >0 )
+									<tr>
+										<td colspan="2"></td><td colspan="2">Handling Fee</td>
+										<td style="text-align:right">S${{ number_format($orders->handlingfee, 2) }}</td>
+									</tr>
+									
+									@endif
 									<tr>
 										<td colspan="2"></td><td colspan="2">Packaging Fee</td>
 										<td style="text-align:right">S${{ number_format($orders->packaging_fee, 2) }}</td>
@@ -222,7 +235,7 @@
                 						
                 						@if($coupondata)
                 						    <tr>
-                							 <td colspan="2"></td><td colspan="2">Discount({{ ($coupondata->discount_type == 1 ? $coupondata->discount.'%' : 'S$'.$coupondata->discount) }})</td>
+                							 <td colspan="2"></td><td colspan="2">Coupon discount({{ ($coupondata->discount_type == 1 ? $coupondata->discount.'%' : 'S$'.$coupondata->discount) }})</td>
         									 <td style="text-align:right">S${{ number_format($orders->discount_amount, 2) }}</td>
         									</tr>
                 						@endif	

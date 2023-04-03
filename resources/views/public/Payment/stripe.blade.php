@@ -2,6 +2,7 @@
 <!-- Header section end -->
 	<section id="breadcrumbs" class="breadcrumbs">
       <div class="container">
+
         <ol>
           <li><a href="index.html">Home</a></li>
 		  <li><div class="pageheading">Checkout</div></li>
@@ -123,14 +124,20 @@
 										@endforeach
 									@endif
 									
-								<li class="subtot">Sub Total
+								    <li class="subtot">Sub Total 
 									<span>S${{ number_format(str_replace(',','',$subtotal), 2) }}</span>
 										@if(!empty($taxLabelOnly))
                 						<small style="font-size:92%;word-break: break-word;"><br>[w/o - {{$taxLabelOnly}}]</small>
                 						@endif
 									</li>
 									<li class="subtot" style="border-top: 1px solid #e5e5e5;">{{ $taxtitle }} <span>S${{ number_format(str_replace(',','',$gst), 2) }}</span></li>
-									<li>Shipping ({{ $deliverytype }}) <span>S${{ number_format(str_replace(',','',$deliverycost), 2) }}</span></li>
+									<li class="subtot" style="border-top: 1px solid #e5e5e5;padding-top:13px;">Shipping ({{ $deliverytype }}) <span>S${{ number_format(str_replace(',','',$deliverycost), 2) }}</span></li>
+									@if($fuelcharges >0)
+									<li class="subtot" style="border-top: 1px solid #e5e5e5;">Fuel Charges <span>S${{number_format(str_replace(',','',$fuelcharges), 2) }}</span></li>
+									@endif
+									@if($handlingfee >0)
+									<li>Handling Fee <span>S${{number_format(str_replace(',','',$handlingfee), 2) }}</span></li>
+									@endif
 									<li>Packaging Fee <span>S${{ number_format(str_replace(',','',$packingfee), 2) }}</span></li>
 									@if($discount != 0 && $discounttext != '')<li id="dis">Discount({{ $discounttext }})<span>S${{ number_format(str_replace(',','',$discount), 2) }}</span></li>@endif
 									<li>Grand Total <span>S${{ number_format(str_replace(',','',$grandtotal), 2) }}</span></li>

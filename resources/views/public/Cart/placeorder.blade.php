@@ -26,12 +26,26 @@
 					@endif
 					<div class="pay-box">
 						<ul class="list-unstyled">
+						@php
+							$arry_cus_lists = array(30548,30197,30334);
+							
+						@endphp
 							@if($paymentmethods)
 								@foreach($paymentmethods as $paymentmethod)
+								@if($paymentmethod->Id==5 && in_array($sesid,$arry_cus_lists))
+								        <li>
+									<input type="radio" id="paymethod{{ $paymentmethod->Id }}" name="paymentmethod" value="{{ $paymentmethod->Id }}" >
+									<label for="paymethod{{ $paymentmethod->Id }}"><span><i class="fa fa-circle"></i></span><img style="height:22px; margin:5px 0px 10px;" src="{{ url('/uploads/images/'.$paymentmethod->payment_logo) }}" /></label>
+								</li>
+									@endif
+								@if($paymentmethod->Id!=5)
+								    
 								<li>
 									<input type="radio" id="paymethod{{ $paymentmethod->Id }}" name="paymentmethod" value="{{ $paymentmethod->Id }}" >
 									<label for="paymethod{{ $paymentmethod->Id }}"><span><i class="fa fa-circle"></i></span><img style="height:22px; margin:5px 0px 10px;" src="{{ url('/uploads/images/'.$paymentmethod->payment_logo) }}" /></label>
 								</li>
+								@endif
+								
 								@endforeach
 							@endif
 						</ul>
@@ -67,7 +81,7 @@
 												<div class="row">
 													<div class="col-md-3">
 														@if($cart['image'] != '')															
-															<img src="{{ env('IMG_URL').('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100%">
+															<img src="{{ url('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100%">
 														@else
 															<img src="{{ url('/images/noimage.png') }}" alt="{{ $cart['productName'] }}" width="100%">
 														@endif
@@ -97,20 +111,34 @@
             						@endif
 									</li>
 									<li class="subtot" style="border-top: 1px solid #e5e5e5; padding-top:12px;">{{ $taxtitle }} <span>S${{ number_format(str_replace(',','',$gst), 2) }}</span></li>
-									<li>Shipping ({{ $deliverytype }}) <span>S${{ number_format($deliverycost, 2) }}</span></li>
+									<li class="subtot" style="border-top: 1px solid #e5e5e5; padding-top:12px;">Shipping ({{ $deliverytype }}) <span>S${{ number_format(str_replace(',','',$deliverycost), 2) }}</span></li>
+
+									@if($fuelcharges >0)
+										<li>{{env('FUEL_SUBCHARGE')}}% Fuel Surcharges<span>S${{ number_format(str_replace(',','',$fuelcharges), 2) }}</span></li>
+									@endif
+									@if($handlingfee >0)
+										<li>Handling Fee<span>S${{ number_format(str_replace(',','',$handlingfee), 2) }}</span></li>
+									@endif
+
 									<li>Packaging Fee <span>S${{ number_format($packingfee,2) }}</span></li>
 									@if($discount != 0 && $discounttext != '')<li id="dis">Discount({{ $discounttext }})<span>S${{ number_format(str_replace(',','',$discount), 2) }}</span></li>@endif
 									<li style="font-size: 29px;font-weight: bolder;">Grand Total <span>S${{ number_format(str_replace(',','',$grandtotal),2) }}</span></li>
+
 								</ul>
 							</div>
 						</div>
 					</div>
-					
+					@if( Session::get('customer_id')==30548 || 1==1)
+						<input type="hidden" name="billinginfo" value="{{Session::has('billinginfo')?json_encode(Session::get('billinginfo')):''}}">
+						<input type="hidden" name="deliverymethod" value="{{Session::has('deliverymethod')?Session::get('deliverymethod'):''}}">
+						<input type="hidden" name="if_unavailable" value="{{Session::has('if_unavailable')?Session::get('if_unavailable'):''}}">
+						<input type="hidden" name="delivery_instructions" value="{{Session::has('delivery_instructions')?Session::get('delivery_instructions'):''}}">
+					@endif
 				</div>
 			</div>
 		</div>
 	</div>
-</form>
+	</form>
 </section>
 <!-- End Checkout -->
 

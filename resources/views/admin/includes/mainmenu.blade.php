@@ -285,6 +285,12 @@
 							   <i class="fa fa-bell-o" aria-hidden="true"></i>Online Order</a>
 								</li>
 								@endif
+								@if(in_array('35', $accessrights))
+								<li data-menu="">
+								<a class="dropdown-item" href="{{ url('/admin/pendingorders') }}" data-toggle="dropdown" data-i18n="Groups">
+							   <i class="fa fa-bell-o" aria-hidden="true"></i>Pending Orders / Quotations</a>
+								</li>
+								@endif
 								@if(in_array('22', $accessrights))
 								<li data-menu="">
 								<a class="dropdown-item" href="#" data-toggle="dropdown" data-i18n="Customer">
@@ -375,7 +381,9 @@
 							</ul>
 						</li>
 						@endif
-					@endif		
+					@endif
+					
+
 						<li class="nav-item">
 						<a class="nav-link" href="{{ url('/admin/logout') }}">
 						<i class="feather icon-power"></i>
