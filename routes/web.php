@@ -295,6 +295,7 @@ Route::prefix('/admin')->group(function () {
     Route::get('/pendingorders', 'App\Http\Controllers\Admin\OrderController@pendingorders');
     Route::post('/pendingorders/pendingbulkaction', 'App\Http\Controllers\Admin\OrderController@pendingbulkaction');
     Route::get('/exportpendingorders', 'App\Http\Controllers\Admin\OrderController@exportpendingorders');
+    Route::post('remove-order-items', 'App\Http\Controllers\Admin\OrderController@removeOrderItems');
 
     Route::resource('/request_for_quote', 'App\Http\Controllers\Admin\QuoteController');
     Route::get('/request_for_quote/{id}/destroy', 'App\Http\Controllers\Admin\QuoteController@destroy');

@@ -112,4 +112,7 @@ Route::post('send-test-email', 'App\Http\Controllers\CommonMobileController@send
 Route::post('request-account-deactivate', 'App\Http\Controllers\CustomerMobileController@requestAccountDeactivate');
 Route::post('verify-account-deactivate', 'App\Http\Controllers\CustomerMobileController@verifyAccountDeactivate');
 
+Route::post('create_category', 'App\Http\Controllers\ApiController@createCategory');
+Route::post('create_sub_category', 'App\Http\Controllers\ApiController@createSubCategory');
+
 /* Mobile App - End */
