@@ -299,6 +299,12 @@ Route::get('/archiveorder/{orderid}', 'App\Http\Controllers\Admin\OrderControlle
 Route::get('/pendingorders', 'App\Http\Controllers\Admin\OrderController@pendingorders');
 Route::post('/pendingorders/pendingbulkaction', 'App\Http\Controllers\Admin\OrderController@pendingbulkaction');
 Route::get('/exportpendingorders', 'App\Http\Controllers\Admin\OrderController@exportpendingorders');
+Route::post('remove-order-items', 'App\Http\Controllers\Admin\OrderController@removeOrderItems');
+Route::post('fetch_otions_and_price', 'App\Http\Controllers\Admin\OrderController@fetchOtionsAndPrice');
+Route::post('fetch_otions_price', 'App\Http\Controllers\Admin\OrderController@fetchOtionsPrice');
+Route::post('add_more_items_to_order', 'App\Http\Controllers\Admin\OrderController@addMoreItemsToOrder');
+Route::post('update_order_item', 'App\Http\Controllers\Admin\OrderController@updateOrderItem');
+Route::get('search/prods', 'App\Http\Controllers\Admin\OrderController@searchProd');
 
 Route::resource('/request_for_quote', 'App\Http\Controllers\Admin\QuoteController');
 Route::get('/request_for_quote/{id}/destroy', 'App\Http\Controllers\Admin\QuoteController@destroy');

@@ -2,13 +2,17 @@
 
 namespace App\Services;
 
-use App\Models\Country;
-use App\Models\Customer;
 use App\Models\OrderDetails;
 use App\Models\OrderMaster;
 use App\Models\PaymentMethods;
 use App\Models\Product;
+use App\Models\Country;
+use App\Models\Couponcode;
+use App\Models\Customer;
 use App\Services\CartServices;
+use App\Models\PaymentSettings;
+use App\Models\SessionCart;
+
 use Session;
 
 class OrderServices
@@ -27,22 +31,48 @@ class OrderServices
             'orderId' => null,
         ];
 
-        $billinginfo = Session::has('billinginfo') ? Session::get('billinginfo') : [];
-        $cartItems = $this->cartServices->cartItems($billinginfo['ship_country'] ?? null);
+        if (Session::get('customer_id') == 30548 || 1 == 1) {
+            $cust_id = Session::get('customer_id');
+            $SesCartObj = SessionCart::where('cust_id', $cust_id)->first();
+            $billinginfo = json_decode($SesCartObj->billinginfo, true);
+            $paymentmethod = ($SesCartObj->paymentmethod != '') ? $SesCartObj->paymentmethod : 0;
+            $deliverymethod = $SesCartObj->deliverymethod;
+            $if_items_unavailabel = $SesCartObj->if_unavailable;
+            $delivery_instructions = $SesCartObj->delivery_instructions;
+            $fuelcharge_percentage =  $SesCartObj->fuelcharge_percentage;
+            $fuelcharges =  $SesCartObj->fuelcharges;
+            $handlingfee =  $SesCartObj->handlingfee;
+            $gst = $SesCartObj->gst;
+            $taxPercentage = $SesCartObj->taxPercentage;
+            $taxtitle = $SesCartObj->taxtitle;
+            $taxLabelOnly = $SesCartObj->taxLabelOnly;
+            $deliverytype = $SesCartObj->deliverytype;
+            $packingfee = $SesCartObj->packingfee;
+            $deliverycost = $SesCartObj->deliverycost;
+            $discount = $SesCartObj->discount;
+            $discounttext = $SesCartObj->discounttext;
+        }
 
+        $cartItems = $this->cartServices->cartItems($billinginfo['ship_country'] ?? null);
         $cartdata = $cartItems['cartItems'];
         $subtotal = $cartItems['subTotal'];
-        $grandtotal = $cartItems['grandTotal'];
-        $gst = $cartItems['taxDetails']['taxTotal'];
+
+        /*$gst = $cartItems['taxDetails']['taxTotal'];
         $taxtitle = $cartItems['taxDetails']['taxLabel'];
         $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
         $deliverytype = $cartItems['deliveryDetails']['title'];
         $packingfee = $cartItems['packingFees'];
         $deliverycost = $cartItems['deliveryDetails']['deliveryTotal'];
         $discount = $cartItems['discountDetails']['discountTotal'];
-        $discounttext = $cartItems['discountDetails']['title'];
+        $discounttext = $cartItems['discountDetails']['title']; */
 
-        $billinginfo = Session::get('billinginfo');
+        $grandtotal = $subtotal + $gst + $deliverycost + $packingfee + $fuelcharges + $handlingfee;
+        $grandtotal = $grandtotal - $discount;
+        $grandtotal = $grandtotal;
+
+        $grandtotal = $grandtotal;
+
+        //$billinginfo = Session::get('billinginfo');
         $countrydata = Country::where('countrycode', $billinginfo['bill_country'])->select('countryid')->first();
         $countryid = $countrydata ? $countrydata->countryid : 0;
         $orderid = $userid = null;
@@ -77,23 +107,23 @@ class OrderServices
         $fuelSettings = PaymentSettings::where('Id', '1')->select('fuelcharge_percentage')->first();
         $ordermaster = new OrderMaster;
         $ordermaster['user_id'] = $userid;
-        $ordermaster['ship_method'] = Session::get('deliverymethod');
+        $ordermaster['ship_method'] = $deliverymethod;
         $ordermaster['pay_method'] = $paymethodname;
         $ordermaster['shipping_cost'] = $deliverycost;
         $ordermaster['packaging_fee'] = $packingfee;
-        $ordermaster['tax_label'] = isset($cartItems['taxDetails']['taxLabel']) ? $cartItems['taxDetails']['taxLabel'] : '';
-        $ordermaster['tax_percentage'] = isset($cartItems['taxDetails']['taxPercentage']) ? $cartItems['taxDetails']['taxPercentage'] : '';
+        $ordermaster['tax_label'] = $taxLabelOnly;
+        $ordermaster['tax_percentage'] = $taxPercentage;
+        $ordermaster['fuelcharge_percentage'] = $billinginfo['ship_country'] != 'SG' ? ($fuelSettings ? $fuelSettings->fuelcharge_percentage : 0) : 0;
+        $ordermaster['fuelcharges'] = $fuelcharges;
+        $ordermaster['handlingfee'] = $handlingfee;
 
         $ordermaster['tax_collected'] = $gst;
-        $ordermaster['payable_amount'] = $grandtotal;
+        $ordermaster['payable_amount'] = $this->roundDecimal($grandtotal);
         $ordermaster['discount_amount'] = $discount;
         $ordermaster['discount_id'] = $couponid;
         $ordermaster['order_status'] = '0';
-        $ordermaster['fuelcharge_percentage'] = $billinginfo['ship_country'] != 'SG' ? ($fuelSettings ? $fuelSettings->fuelcharge_percentage : 0) : 0;
-        $ordermaster['fuelcharges'] = isset($cartItems['fuelcharges']) ? $cartItems['fuelcharges'] : 0.00;
-        $ordermaster['handlingfee'] = isset($cartItems['handlingfee']) ? $cartItems['handlingfee'] : 0.00;
-        $ordermaster['if_items_unavailabel'] = Session::get('if_unavailable');
-        $ordermaster['delivery_instructions'] = Session::get('delivery_instructions');
+        $ordermaster['if_items_unavailabel'] = $if_items_unavailabel;
+        $ordermaster['delivery_instructions'] = $delivery_instructions;
 
         $ordermaster['bill_fname'] = $billinginfo['bill_fname'];
         $ordermaster['bill_lname'] = $billinginfo['bill_lname'];
@@ -154,4 +184,31 @@ class OrderServices
         return $orderReturnData;
     }
 
+    public function manipulateOrderNumber($orderId, $orderDate)
+    {
+        $orderIdLength = strlen($orderId);
+        $leadZeros = [
+            1 => '000',
+            2 => '00',
+            3 => '0',
+        ];
+        $formattedOrderId = date('Ymd', strtotime($orderDate)) . ($leadZeros[$orderIdLength] ?? '') . $orderId;
+        return $formattedOrderId;
+    }
+
+    public function roundDecimal($value)
+    {
+        $addition = 0;
+        if (strpos($value, '.') !== false) {
+            list($whole, $decimal) = explode('.', $value);
+
+            if (!empty($decimal[1])) {
+                $v = $decimal[1];
+                if ($v >= 1 && $v < 5) : $addition = 5 - $v;
+                elseif ($v >= 6 && $v < 10) : $addition = 10 - $v;
+                endif;
+            }
+        }
+        return $addition != 0 ? ($value + ($addition / 100)) : $value;
+    }
 }
