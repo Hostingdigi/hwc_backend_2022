@@ -6,7 +6,13 @@
 <!-- BEGIN: Body-->
 @include('admin.includes.mainmenu')
     <!-- BEGIN: Header-->
-
+<style>
+    @media print {
+      .print-hide {
+        display: none;
+      }
+    }
+</style>
 
 <div class="app-content content" style="background-color:#fff;">
         <div class="content-overlay"></div>
@@ -151,10 +157,10 @@
 							@endif
 						</td></tr>
 						@endif
-						<tr><td colspan="2">&nbsp;</td></tr>
-						<tr><td colspan="2"><a href="javascript:(0);" class="btn btn-primary" id="addNewItem">Add New Item</a></td></tr>
-						<tr style="display:none;" class="newItemBlocks"><td colspan="2">&nbsp;</td></tr>
-						<tr style="display:none;" class="newItemBlocks">
+						<tr class="print-hide"><td colspan="2">&nbsp;</td></tr>
+						<tr class="print-hide"><td colspan="2"><a href="javascript:(0);" class="btn btn-primary" id="addNewItem">Add New Item</a></td></tr>
+						<tr style="display:none;" class="newItemBlocks print-hide"><td colspan="2">&nbsp;</td></tr>
+						<tr style="display:none;" class="newItemBlocks print-hide">
 							<td colspan="2">
 								<table class="table-bordered" width="100%" cellpadding="3">
 									<thead>
@@ -188,7 +194,7 @@
 										<th width="10%" style="text-align:right">Price</th>
 										<th width="20%" style="text-align:right">Status</th>
 										<th width="10%" style="text-align:right">Total</th>
-										<th width="15%" align="center">Actions</th>
+										<th width="15%" align="center" class="print-hide">Actions</th>
 									</tr>
 									@if($orderdetails)
 										@foreach($orderdetails as $orderdetail)	
@@ -208,7 +214,7 @@
 													</select>
 													<br>
 												@endif
-												
+
 												</td>
 												<td align="center">
 												    <span class="ed_hd_{{ $orderdetail->detail_id }}">{{ $orderdetail->prod_quantity }}</span>
@@ -246,7 +252,7 @@
 												<td style="text-align:right">
 												    S${{ $totalAmt }}
 												</td>
-												<td style="font-size:1.7rem !important;">
+												<td style="font-size:1.7rem !important;" class="print-hide">
 												    <a href="javascript:void(0);" title="Edit" data-row-type="item" class="text-info editRows ed_row_{{ $orderdetail->detail_id }}" data-row-id="{{ $orderdetail->detail_id }}"><i class="fa fa-pencil fa-fw"></i></a>
 												    <a href="javascript:void(0);" class="text-success ed_sh_{{ $orderdetail->detail_id }} saveRow" data-row-id="{{ $orderdetail->detail_id }}" title="Update" style="display:none"><i class="fa fa-check fa-fw"></i></a>
 												    <a href="" class="text-grey ed_sh_{{ $orderdetail->detail_id }}" data-row-id="{{ $orderdetail->detail_id }}" title="Cancel edit" style="display:none"><i class="fa fa-close fa-fw"></i></a>
@@ -331,7 +337,7 @@
 										<span class="ed_trow_{{ $orderdetail->order_id }} text-bold">S${{ number_format($orders->payable_amount, 2) }}</span>
 										<input id="payable_amount_total_{{ $orderdetail->order_id }}" type="number" min="0" class="form-control sh_trow_{{ $orderdetail->order_id }} w-100 float-right validNum tv_{{ $orderdetail->order_id }}" value="{{ $orders->payable_amount }}" style="display:none;" />
 										</td>
-										<td align="center" style="font-size:1.7rem !important;">
+										<td align="center" style="font-size:1.7rem !important;" class="print-hide">
 										    <a href="javascript:void(0);" title="Edit amount" class="text-info editRows ed_trow_{{ $orderdetail->order_id }}" data-row-type="total" data-row-id="{{ $orderdetail->order_id }}"><i class="fa fa-pencil fa-fw"></i></a>
 										    <a href="javascript:void(0);" title="Update" class="text-info saveTRow sh_trow_{{ $orderdetail->order_id }}" data-row-id="{{ $orderdetail->order_id }}" style="display:none"><i class="fa fa-check fa-fw"></i></a>
 										    <a href="" title="Cancel edit" class="text-grey sh_trow_{{ $orderdetail->order_id }}" data-row-id="{{ $orderdetail->order_id }}" title="Cancel edit" style="display:none"><i class="fa fa-close fa-fw"></i></a>
