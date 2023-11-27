@@ -176,8 +176,8 @@
 								</table>
 							</td>
 						</tr>
-						<tr style="display:none;" class="newItemBlocks"><td colspan="2">&nbsp;</td></tr>
-						<tr style="display:none;" class="newItemBlocks">
+						<tr style="display:none;" class="newItemBlocks print-hide"><td colspan="2">&nbsp;</td></tr>
+						<tr style="display:none;" class="newItemBlocks print-hide">
 							<td colspan="2">
 								<a href="javascript:(0);" class="btn btn-primary" id="saveNewItems">Save</a>
 								<a href="javascript:(0);" class="btn btn-outline-warning" id="clearNewItems">Cancel</a>
