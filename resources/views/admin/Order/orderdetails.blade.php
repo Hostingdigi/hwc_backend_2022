@@ -6,14 +6,6 @@
 <!-- BEGIN: Body-->
 @include('admin.includes.mainmenu')
     <!-- BEGIN: Header-->
-<style>
-    @media print {
-      .print-hide {
-        display: none;
-      }
-    }
-</style>
-
 <div class="app-content content" style="background-color:#fff;">
         <div class="content-overlay"></div>
         <div class="header-navbar-shadow"></div>

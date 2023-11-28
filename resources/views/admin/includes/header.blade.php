@@ -49,6 +49,11 @@
 			float:right;
 			position:relative;
 		}
+        @media print {
+            .print-hide {
+                display: none !important;
+            }
+        }
 	</style>
 
 </head>
