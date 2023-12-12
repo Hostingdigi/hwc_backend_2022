@@ -89,7 +89,7 @@ class PaymentController extends Controller
 
         $grandtotal = $subtotal + $gst + $deliverycost + $packingfee + $fuelcharges + $handlingfee;
         $grandtotal = $grandtotal - $discount;
-        $grandtotal = $grandtotal;
+        $grandtotal = $this->orderServices->roundDecimal($grandtotal);
         /*$grandtotal = $cartItems['grandTotal'];
         $gst = $cartItems['taxDetails']['taxTotal'];
         $taxtitle = $cartItems['taxDetails']['taxLabel'];
@@ -1467,6 +1467,7 @@ class PaymentController extends Controller
                     $couponid = $coupondata->id;
                 }
             }
+            $grandtotal = $this->orderServices->roundDecimal($grandtotal);
 
             $fuelSettings = PaymentSettings::where('Id', '1')->select('fuelcharge_percentage')->first();
             $ordermaster = new OrderMaster;
@@ -1781,7 +1782,7 @@ class PaymentController extends Controller
             $ordermaster['tax_label'] = $taxLabelOnly;
             $ordermaster['tax_percentage'] = $taxPercentage;
             $ordermaster['tax_collected'] = $gst;
-            $ordermaster['payable_amount'] = $grandtotal;
+            $ordermaster['payable_amount'] = $this->orderServices->roundDecimal($grandtotal);
             $ordermaster['discount_amount'] = $discount;
             $ordermaster['discount_id'] = $couponid;
             $ordermaster['order_status'] = '0';

@@ -184,6 +184,23 @@ class OrderServices
         return $orderReturnData;
     }
 
+    public function roundDecimal($value)
+    {
+        $addition = 0;
+        if (strpos($value, '.') !== false) {
+            list($whole, $decimal) = explode('.', $value);
+            
+            if(!empty($decimal[1])){
+                $v = $decimal[1];
+                if($v>=1 && $v<5): $addition = 5-$v;
+                elseif($v>=6 && $v<10): $addition = 10-$v;
+                endif;
+                $value = strlen($decimal)>2 ? $whole.'.'.($decimal[0].''. $decimal[1]) : $value;
+            }
+        }
+        return $addition!=0 ? ($value+($addition/100)) : $value;
+    }
+
     public function manipulateOrderNumber($orderId, $orderDate)
     {
         $orderIdLength = strlen($orderId);
@@ -194,21 +211,5 @@ class OrderServices
         ];
         $formattedOrderId = date('Ymd', strtotime($orderDate)) . ($leadZeros[$orderIdLength] ?? '') . $orderId;
         return $formattedOrderId;
-    }
-
-    public function roundDecimal($value)
-    {
-        $addition = 0;
-        if (strpos($value, '.') !== false) {
-            list($whole, $decimal) = explode('.', $value);
-
-            if (!empty($decimal[1])) {
-                $v = $decimal[1];
-                if ($v >= 1 && $v < 5) : $addition = 5 - $v;
-                elseif ($v >= 6 && $v < 10) : $addition = 10 - $v;
-                endif;
-            }
-        }
-        return $addition != 0 ? ($value + ($addition / 100)) : $value;
     }
 }

@@ -781,6 +781,9 @@ class ProductController extends Controller
 
         $content = '';
         if ($products) {
+            
+            $roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
+
             foreach ($products as $product) {
                 $content .= '<div class="col-lg-3 col-md-6 col-6"><div class="tab-item"><div class="tab-img">';
                 if ($product->Quantity <= 0) {
@@ -830,9 +833,9 @@ class ProductController extends Controller
                 $displayprice = $price->getDiscountPrice($product->Id);
                 $installmentPrice = $price->getInstallmentPrice($displayprice);
 
-                $actualprice = $price->getGSTPrice($actualprice, 'SG');
-                $displayprice = $price->getGSTPrice($displayprice, 'SG');
-                $installmentPrice = $price->getInstallmentPrice($displayprice);
+                $actualprice = $roundObj->roundDecimal($price->getGSTPrice($actualprice, 'SG'));
+                $displayprice = $roundObj->roundDecimal($price->getGSTPrice($displayprice, 'SG'));
+                $installmentPrice = $roundObj->roundDecimal($price->getInstallmentPrice($displayprice));
 
                 $content .= 'S$' . number_format($displayprice, 2) . '</li>';
 

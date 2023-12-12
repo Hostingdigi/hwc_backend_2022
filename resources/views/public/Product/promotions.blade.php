@@ -9,7 +9,8 @@
   </div>
 </section>
 @php 
-	$currenturl = \Request::url(); 	
+	$currenturl = \Request::url();
+	$roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
 @endphp
 
 
@@ -195,9 +196,9 @@
 																			$displayprice = $price->getDiscountPrice($product->Id);
 																			$installmentPrice = $price->getInstallmentPrice($displayprice);
 																			
-																			$actualprice = $price->getGSTPrice($actualprice, 'SG');
-																			$displayprice = $price->getGSTPrice($displayprice, 'SG');
-																			$installmentPrice = $price->getInstallmentPrice($displayprice);
+																			$actualprice = $roundObj->roundDecimal($price->getGSTPrice($actualprice, 'SG'));
+																			$displayprice = $roundObj->roundDecimal($price->getGSTPrice($displayprice, 'SG'));
+																			$installmentPrice = $roundObj->roundDecimal($price->getInstallmentPrice($displayprice));
 																		@endphp
 																		
 																		@if($displayprice < $actualprice)

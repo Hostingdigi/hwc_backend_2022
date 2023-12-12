@@ -26,6 +26,7 @@ use DB;
 use Illuminate\Http\Request;
 use Mail;
 use Session;
+use App\Services\OrderServices;
 
 class CartController extends Controller
 {
@@ -35,9 +36,11 @@ class CartController extends Controller
      * @return void
      */
     protected $cartServices = null;
-    public function __construct(CartServices $cartServices)
+    protected $orderServices = null;
+    public function __construct(CartServices $cartServices, OrderServices $orderServices)
     {
         $this->cartServices = $cartServices;
+        $this->orderServices = $orderServices;
     }
 
     /**
@@ -105,6 +108,7 @@ class CartController extends Controller
 
     public function addtocart(Request $request)
     {
+        $roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
         $productid = $request->prodid;
         $optionid = $request->optionid;
 
@@ -186,7 +190,7 @@ class CartController extends Controller
                     $ShippingBox = $product->ShippingBox;
                 }
 
-                $productprice = $productprice + $optionprice;
+                $productprice = $roundObj->roundDecimal($productprice + $optionprice);
 
                 $ses_productprice = $productprice;
                 $ses_total = $qty * $productprice;
@@ -620,7 +624,7 @@ class CartController extends Controller
             }
         }
 
-        $grandtotal = $cartItems['grandTotal'];
+        $grandtotal = $this->orderServices->roundDecimal($cartItems['grandTotal']);
 
         $country = $cartItems['countryCode'];
         $countryid = $cartItems['countryId'];

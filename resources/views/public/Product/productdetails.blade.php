@@ -140,11 +140,12 @@
                        
                     </div-->  
 					
-					@php	
+					@php
+					    $roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
 						$displayprice = $productdetail->Price;
 						$price = new \App\Models\Price();
-						$actualprice = $price->getGroupPrice($productdetail->Id);
-						$displayprice = $price->getDiscountPrice($productdetail->Id);
+						$actualprice = $roundObj->roundDecimal($price->getGroupPrice($productdetail->Id));
+						$displayprice = $roundObj->roundDecimal($price->getDiscountPrice($productdetail->Id));
 						$gstprice = $price->getGSTPrice($displayprice, 'SG');
 						$actualgstprice = $price->getGSTPrice($actualprice, 'SG');
 						//$displayprice = $price->getPrice($productdetail->Id);
@@ -489,7 +490,7 @@
 										$rdisplayprice = $price->getPrice($relatedproduct->Id);
 										$rdisplayprice = $price->getGSTPrice($rdisplayprice, 'SG');
 									@endphp
-									S${{ number_format($rdisplayprice, 2) }}
+									S${{ number_format($roundObj->roundDecimal($rdisplayprice), 2) }}
 									</div>
 								@else
 									<div class="prod-price-col-red" style="font-size:14px;">	
