@@ -8,5 +8,5 @@ use Illuminate\Database\Eloquent\Model;
 class MobileVersions extends Model
 {
     use HasFactory;
-    protected $table = 'mobileversions';
+	protected $table = 'mobileversions';
 }

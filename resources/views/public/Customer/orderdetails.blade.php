@@ -258,13 +258,13 @@
 											<span class="text-muted">Option: {{ $orderdetail->prod_option }}</span><br>
 										@endif
 									
-										<span class="text-muted">S${{ number_format(($product->Price * $orderdetail->prod_quantity), 2) }}
+										<span class="text-muted">S${{ number_format(($orderdetail->prod_unit_price * $orderdetail->prod_quantity), 2) }}
 											
 										</span>
 									</p>
 									<!-- Text -->
 									<div class="font-size-sm text-muted">
-										<span>{{ $orderdetail->prod_quantity }} X S${{ $product->Price }}</span>
+										<span>{{ $orderdetail->prod_quantity }} X S${{ $orderdetail->prod_unit_price }}</span>
 										@if($product->Price != $orderdetail->prod_unit_price)
 											&nbsp;<span style="color:green;">(Price/ Discount Rate has been adjusted)</span>
 										@endif

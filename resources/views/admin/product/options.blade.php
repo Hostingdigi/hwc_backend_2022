@@ -239,6 +239,17 @@ else
                                                             </div>
                                                         </div>
                                                     </div>
+
+                                                    <div class="col-12">
+                                                        <div class="form-group row">
+                                                            <div class="col-md-4">
+                                                                <span>SKU</span>
+                                                            </div>
+                                                            <div class="col-md-8">
+                                                               <input type="text" name="sku" value="@if($editoption){{ $editoption->barcode }}@endif" class="form-control"> 
+                                                            </div>
+                                                        </div>
+                                                    </div>
 													
 													<div class="col-12">
                                                         <div class="form-group row">

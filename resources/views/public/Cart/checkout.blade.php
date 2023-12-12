@@ -10,7 +10,9 @@
         </ol>
       </div>
     </section>
-	
+	@php
+		$roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
+	@endphp
 <!-- Checkout -->
 	
 	<section class="checkout">
@@ -178,7 +180,7 @@
 													</div>
 													<div class="col-md-9 no-pm">
 														<p>{{ $cart['productName'] }}</p>
-														<p class="hint">{{ $cart['qty'] }} X S${{ number_format($cart['price'],2) }}</p>
+														<p class="hint">{{ $cart['qty'] }} X S${{ number_format($roundObj->roundDecimal($cart['price']),2) }}</p>
 														@if($cart['productoption'])
 															<p class="hint">Option: {{ $cart['productoption'] }}</p>
 														@endif
@@ -187,7 +189,7 @@
 												</div>
 												</div>
 												<div class="prc">
-													<p>S${{ number_format($cart['total'],2) }}</p>
+													<p>S${{ number_format($roundObj->roundDecimal($cart['total']),2) }}</p>
 												</div>
 											</li>
 											@endforeach

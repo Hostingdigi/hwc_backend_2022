@@ -211,7 +211,7 @@ class CommonMobileController extends Controller
                 $allbrands[$x]['brand_name'] = $brand->EnName;
                 $allbrands[$x]['url_key'] = $brand->UniqueKey;
                 if ($brand->MobileImage != '') {
-                    $allbrands[$x]['image'] = env('IMG_URL') . '/uploads/brands/' . $brand->MobileImage;
+                    $allbrands[$x]['image'] = url('/') . '/uploads/brands/' . $brand->MobileImage;
                 } else {
                     $allbrands[$x]['image'] = '';
                 }
@@ -290,7 +290,7 @@ class CommonMobileController extends Controller
                 $allcategories[$x]['category_id'] = $category->TypeId;
                 $allcategories[$x]['url_key'] = $category->UniqueKey;
                 if ($category->MobileImage) {
-                    $allcategories[$x]['image'] = env('IMG_URL') . '/uploads/category/' . $category->MobileImage;
+                    $allcategories[$x]['image'] = url('/') . '/uploads/category/' . $category->MobileImage;
                 } else {
                     $allcategories[$x]['image'] = '';
                 }
@@ -323,7 +323,7 @@ class CommonMobileController extends Controller
                 $allbanners[$x]['ban_link'] = $banner->ban_link;
                 $allbanners[$x]['ban_caption'] = strip_tags($banner->ban_caption);
                 if ($banner->EnBanMobileimage) {
-                    $allbanners[$x]['image'] = env('IMG_URL') . '/uploads/promotionsbanner/' . $banner->EnBanMobileimage;
+                    $allbanners[$x]['image'] = url('/') . '/uploads/promotionsbanner/' . $banner->EnBanMobileimage;
                 } else {
                     $allbanners[$x]['image'] = '';
                 }
@@ -457,7 +457,7 @@ class CommonMobileController extends Controller
                 $adbanners[$x]['ban_link'] = $banner->ban_link;
                 $adbanners[$x]['ban_caption'] = $banner->ban_caption;
                 if ($banner->EnBanMobileimage) {
-                    $adbanners[$x]['image'] = env('IMG_URL') . '/uploads/bannermaster/' . $banner->EnBanMobileimage;
+                    $adbanners[$x]['image'] = url('/') . '/uploads/bannermaster/' . $banner->EnBanMobileimage;
                 } else {
                     $adbanners[$x]['image'] = '';
                 }

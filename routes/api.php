@@ -115,4 +115,12 @@ Route::post('verify-account-deactivate', 'App\Http\Controllers\CustomerMobileCon
 Route::post('create_category', 'App\Http\Controllers\ApiController@createCategory');
 Route::post('create_sub_category', 'App\Http\Controllers\ApiController@createSubCategory');
 
+Route::post('create_product', 'App\Http\Controllers\ApiController@createProduct');
+Route::post('productStatusUpdate', 'App\Http\Controllers\ApiController@productStatusUpdate');
+Route::post('stock_update', 'App\Http\Controllers\ApiController@stockUpdate');
+
+Route::post('product_all_update', 'App\Http\Controllers\ApiController@productAllUpdate');
+
+Route::get('dailyorders', 'App\Http\Controllers\ApiController@listDailyOrders');
+
 /* Mobile App - End */

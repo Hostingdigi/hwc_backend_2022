@@ -9,7 +9,7 @@
   </div>
 </section>
 @php 
-	$currenturl = \Request::url();
+	$currenturl = \Request::url(); 	
 	$roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
 @endphp
 

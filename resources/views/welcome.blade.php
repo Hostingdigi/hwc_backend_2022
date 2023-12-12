@@ -2,7 +2,7 @@
 
     @include('banner')
 	@php 
-		$currenturl = \Request::url(); 
+		$currenturl = \Request::url();
         $roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
 	@endphp
 	
@@ -267,11 +267,10 @@ $homecategories = \App\Models\Category::where('TypeStatus', '=', '1')->where('of
 				<div class="col-lg-3 col-md-4 col-sm-6">
 					<div class="">
 						<a href="{{ url('/type/'.$homecategory->UniqueKey) }}">
-						    <img src="{{ url('/uploads/category/'.$homecategory->Image) }}" alt="{{ $homecategory->EnName }}" class="homecat">
 						@if($homecategory->Image && file_exists(public_path('/uploads/category/'.$homecategory->Image)))
-							<!--<img src="{{ url('/uploads/category/'.$homecategory->Image) }}" alt="{{ $homecategory->EnName }}" class="homecat">-->
+							<img src="{{ url('/uploads/category/'.$homecategory->Image) }}" alt="{{ $homecategory->EnName }}" class="homecat">
 						@else
-							<!--<img src="{{ url('/images/noimage.png') }}" alt="{{ $homecategory->EnName }}" class="homecat" title="{{ $homecategory->EnName }}">-->
+							<img src="{{ url('/images/noimage.png') }}" alt="{{ $homecategory->EnName }}" class="homecat" title="{{ $homecategory->EnName }}">
 						@endif
 						<div class="caption">
 							<h4 class="pt-3 pb-1">{{ $homecategory->EnName }}</h4>
@@ -318,11 +317,10 @@ $homecategories = \App\Models\Category::where('TypeStatus', '=', '1')->where('of
 		@foreach($homebrands as $homebrand)	
 			<div class="col-lg-2 col-md-4 col-sm-6 col-6">	
 				<a href="{{ url('/brand/'.$homebrand->UniqueKey) }}">
-				    <img src="{{ url('/uploads/brands/'.$homebrand->Image) }}" alt="{{ $homebrand->EnName }}" style="width:100%; margin:0px 0px 21px 0px;">
 				@if($homebrand->Image && file_exists(public_path('/uploads/brands/'.$homebrand->Image)))
-					<!--<img src="{{ url('/uploads/brands/'.$homebrand->Image) }}" alt="{{ $homebrand->EnName }}" style="width:100%; margin:0px 0px 21px 0px;">-->
+					<img src="{{ url('/uploads/brands/'.$homebrand->Image) }}" alt="{{ $homebrand->EnName }}" style="width:100%; margin:0px 0px 21px 0px;">
 				@else
-					<!--<img src="{{ url('/images/noimage.png') }}" alt="{{ $homebrand->EnName }}" style="width:100%; margin:0px 0px 21px 0px;">-->
+					<img src="{{ url('/images/noimage.png') }}" alt="{{ $homebrand->EnName }}" style="width:100%; margin:0px 0px 21px 0px;">
 				@endif	
 				</a>
 			</div>

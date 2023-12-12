@@ -31,28 +31,29 @@ class OrderServices
             'orderId' => null,
         ];
 
-        if (Session::get('customer_id') == 30548 || 1 == 1) {
-            $cust_id = Session::get('customer_id');
-            $SesCartObj = SessionCart::where('cust_id', $cust_id)->first();
-            $billinginfo = json_decode($SesCartObj->billinginfo, true);
-            $paymentmethod = ($SesCartObj->paymentmethod != '') ? $SesCartObj->paymentmethod : 0;
-            $deliverymethod = $SesCartObj->deliverymethod;
-            $if_items_unavailabel = $SesCartObj->if_unavailable;
-            $delivery_instructions = $SesCartObj->delivery_instructions;
-            $fuelcharge_percentage =  $SesCartObj->fuelcharge_percentage;
-            $fuelcharges =  $SesCartObj->fuelcharges;
-            $handlingfee =  $SesCartObj->handlingfee;
+        if(Session::get('customer_id')==30548 || 1==1){
+			$cust_id = Session::get('customer_id');
+			$SesCartObj = SessionCart::where('cust_id',$cust_id )->first();
+			$billinginfo = json_decode($SesCartObj->billinginfo,true);
+			$paymentmethod = ($SesCartObj->paymentmethod !='') ? $SesCartObj->paymentmethod : 0;
+			$deliverymethod = $SesCartObj->deliverymethod;
+			$if_items_unavailabel = $SesCartObj->if_unavailable;
+			$delivery_instructions = $SesCartObj->delivery_instructions;
+			$fuelcharge_percentage =  $SesCartObj->fuelcharge_percentage;
+			$fuelcharges =  $SesCartObj->fuelcharges;
+			$handlingfee =  $SesCartObj->handlingfee;
             $gst = $SesCartObj->gst;
             $taxPercentage = $SesCartObj->taxPercentage;
             $taxtitle = $SesCartObj->taxtitle;
-            $taxLabelOnly = $SesCartObj->taxLabelOnly;
-            $deliverytype = $SesCartObj->deliverytype;
+			$taxLabelOnly = $SesCartObj->taxLabelOnly;
+			$deliverytype = $SesCartObj->deliverytype;
             $packingfee = $SesCartObj->packingfee;
-            $deliverycost = $SesCartObj->deliverycost;
-            $discount = $SesCartObj->discount;
+			$deliverycost = $SesCartObj->deliverycost;
+			$discount = $SesCartObj->discount;
             $discounttext = $SesCartObj->discounttext;
-        }
 
+		}
+        
         $cartItems = $this->cartServices->cartItems($billinginfo['ship_country'] ?? null);
         $cartdata = $cartItems['cartItems'];
         $subtotal = $cartItems['subTotal'];
@@ -66,10 +67,10 @@ class OrderServices
         $discount = $cartItems['discountDetails']['discountTotal'];
         $discounttext = $cartItems['discountDetails']['title']; */
 
-        $grandtotal = $subtotal + $gst + $deliverycost + $packingfee + $fuelcharges + $handlingfee;
-        $grandtotal = $grandtotal - $discount;
+        $grandtotal = $subtotal + $gst + $deliverycost + $packingfee+ $fuelcharges + $handlingfee;
+		$grandtotal = $grandtotal - $discount;
         $grandtotal = $grandtotal;
-
+        
         $grandtotal = $grandtotal;
 
         //$billinginfo = Session::get('billinginfo');
@@ -163,7 +164,7 @@ class OrderServices
             $orderdetails['prod_id'] = $cart['productId'];
             $orderdetails['prod_name'] = $cart['productName'];
             $orderdetails['prod_quantity'] = $cart['qty'];
-            $orderdetails['prod_unit_price'] = $cart['price'];
+            $orderdetails['prod_unit_price'] = $this->roundDecimal($cart['price']);
             $orderdetails['prod_option'] = $cart['productoption'];
             $orderdetails['Weight'] = $cart['weight'];
             $orderdetails['prod_code'] = $cart['productcode'];
@@ -184,6 +185,17 @@ class OrderServices
         return $orderReturnData;
     }
 
+    public function manipulateOrderNumber($orderId,$orderDate){
+        $orderIdLength = strlen($orderId);
+        $leadZeros = [
+            1 => '000',
+            2 => '00',
+            3 => '0',
+        ];
+        $formattedOrderId = date('Ymd', strtotime($orderDate)).($leadZeros[$orderIdLength] ?? '').$orderId;
+        return $formattedOrderId;
+    }
+
     public function roundDecimal($value)
     {
         $addition = 0;
@@ -201,15 +213,4 @@ class OrderServices
         return $addition!=0 ? ($value+($addition/100)) : $value;
     }
 
-    public function manipulateOrderNumber($orderId, $orderDate)
-    {
-        $orderIdLength = strlen($orderId);
-        $leadZeros = [
-            1 => '000',
-            2 => '00',
-            3 => '0',
-        ];
-        $formattedOrderId = date('Ymd', strtotime($orderDate)) . ($leadZeros[$orderIdLength] ?? '') . $orderId;
-        return $formattedOrderId;
-    }
 }
