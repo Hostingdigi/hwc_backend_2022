@@ -567,36 +567,68 @@ class PaymentController extends Controller
 
         if ($stripecustomer) {
 
-            $response = Stripe\Charge::create([
-                "amount" => $grandtotal * 100,
-                "currency" => $currency,
-                "source" => $request->stripeToken,
-                "description" => "Payment from hardwarecity.com.sg",
-                "metadata" => ["order_id" => $orderCreate['orderId']],
-                "source" => $source['id'],
-                "customer" => $stripecustomer['id'],
-                "shipping" => [
-                    'name' => $billinginfo['ship_fname'] . ' ' . $billinginfo['ship_lname'],
-                    'address' => $shippingAddress,
-                ],
-            ]);
+			$defaultErrorMessage = 'Something went wrong.please contact administrator.';
 
-            if ($response) {
-                $transid = $response['id'];
-                OrderMaster::where('order_id', $orderCreate['orderId'])->update(['trans_id' => $transid, 'order_status' => '1']);
+			try {
+				// Use Stripe's library to make requests...
+				$response = Stripe\Charge::create([
+					"amount" => $grandtotal * 100,
+					"currency" => $currency,
+					"source" => $request->stripeToken,
+					"description" => "Payment from hardwarecity.com.sg",
+					"metadata" => ["order_id" => $orderCreate['orderId']],
+					"source" => $source['id'],
+					"customer" => $stripecustomer['id'],
+					"shipping" => [
+						'name' => $billinginfo['ship_fname'] . ' ' . $billinginfo['ship_lname'],
+						'address' => $shippingAddress,
+					],
+				]);
 
-                if (!empty($discounttext) && !empty($discount)) {
-                    CouponCodeUsage::insert(['coupon_id' => $couponid, 'customer_id' => $userid, 'order_id' => $orderCreate['orderId']]);
-                }
-            }
+				if ($response) {
+					$transid = $response['id'];
+					OrderMaster::where('order_id', $orderCreate['orderId'])->update(['trans_id' => $transid, 'order_status' => '1']);
+					if (!empty($discounttext) && !empty($discount)) CouponCodeUsage::insert(['coupon_id' => $couponid, 'customer_id' => $userid, 'order_id' => $orderCreate['orderId']]);
+				}
 
-            //Clear sessions
-            $sessionsValues = ['cartdata', 'deliverymethod', 'if_unavailable', 'billinginfo', 'paymentmethod', 'discount', 'discounttext',
-                'couponcode', 'discounttype', 'old_order_id'];
-            foreach ($sessionsValues as $session) {Session::forget($session);}
+				//Clear sessions
+				$sessionsValues = [
+					'cartdata', 'deliverymethod', 'if_unavailable', 'billinginfo', 'paymentmethod', 'discount', 'discounttext',
+					'couponcode', 'discounttype', 'old_order_id'
+				];
+				foreach ($sessionsValues as $session) Session::forget($session);
 
+			} catch (\Stripe\Exception\CardException $e) {
+				// Since it's a decline, \Stripe\Exception\CardException will be caught
+				echo 'Status is:' . $e->getHttpStatus() . '\n';
+				echo 'Type is:' . $e->getError()->type . '\n';
+				echo 'Code is:' . $e->getError()->code . '\n';
+				// param is '' in this case
+				echo 'Param is:' . $e->getError()->param . '\n';
+				echo 'Message is:' . $e->getError()->message . '\n';
+				return redirect()->back()->with('pay_error', $e->getError()->message ?? $defaultErrorMessage);
+			} catch (\Stripe\Exception\RateLimitException $e) {
+				// Too many requests made to the API too quickly
+				return redirect()->back()->with('pay_error', $e->getError()->message ?? $defaultErrorMessage);
+			} catch (\Stripe\Exception\InvalidRequestException $e) {
+				// Invalid parameters were supplied to Stripe's API
+				return redirect()->back()->with('pay_error', $e->getError()->message ?? $defaultErrorMessage);
+			} catch (\Stripe\Exception\AuthenticationException $e) {
+				// Authentication with Stripe's API failed
+				// (maybe you changed API keys recently)
+				return redirect()->back()->with('pay_error', $e->getError()->message ?? $defaultErrorMessage);
+			} catch (\Stripe\Exception\ApiConnectionException $e) {
+				// Network communication with Stripe failed
+				return redirect()->back()->with('pay_error', $e->getError()->message ?? $defaultErrorMessage);
+			} catch (\Stripe\Exception\ApiErrorException $e) {
+				// Display a very generic error to the user, and maybe send
+				// yourself an email
+				return redirect()->back()->with('pay_error', $e->getError()->message ?? $defaultErrorMessage);
+			} catch (\Exception $e) {
+				return redirect()->back()->with('pay_error', $e->getMessage() ?? $defaultErrorMessage);
+				// Something else happened, completely unrelated to Stripe
+			}
             return redirect('success?orderid=' . $orderCreate['orderId']);
-
         }
 
         return redirect('cancelpayment');
@@ -2737,8 +2769,193 @@ class PaymentController extends Controller
 		return view('public/Payment.cancelpayment');
 	}
 	
-	public function atomecallback() {
-	    //echo "hai";
+	public function atomecallback(Request $request) {
+
+		if(isset($request->referenceId) && !empty($request->referenceId)){
+			
+			$referenceId = $request->referenceId;
+			// Fetch payment details
+			$paymode = 'live';
+			$paymentmethod = PaymentMethods::where('id', '7')->orWhere('payment_name', 'LIKE', '%Atome')->first();
+			
+			if($paymentmethod) {
+				$paymode = $paymentmethod->payment_mode;
+				if($paymode == 'live') {
+					$apikey = $paymentmethod->api_key;
+					$apisignature = $paymentmethod->api_signature;
+					$paymenturl = $paymentmethod->live_url;
+				} else {
+					$apikey = $paymentmethod->test_api_key;
+					$apisignature = $paymentmethod->test_api_signature;
+					$paymenturl = $paymentmethod->testing_url;
+				}
+			}
+			
+			$authString = 'Basic '.base64_encode($apikey.':'.$apisignature);
+
+			$apiUrl = $paymenturl.'/payments/'.$referenceId;
+			$ch = curl_init($apiUrl);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); // Return the response as a string
+			curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json','Authorization: '.$authString]); // Set the content type to JSON (optional)
+			$response = curl_exec($ch);
+			if (curl_errno($ch)) Log::info('Curl Error occured & REFERENCE ID: '.$referenceId.' & ERROR : '.serialize(curl_error($ch)));
+			curl_close($ch);
+
+			$data = json_decode($response, true);
+
+			if ($data === null) {
+				Log::info('Error occured while decoding json & REFERENCE ID: '.$referenceId.' & RETURN DATA: '.serialize($data));
+			} else {
+				if(isset($data['code'])){
+					Log::info('Error occured & REFERENCE ID: '.$referenceId.' & RETURN DATA: '.serialize($data));   
+				}else{
+					$orderid = $referenceId;
+
+					if($data['status']=='PAID') OrderMaster::where('order_id', $orderid)->update(['order_status' => '1']);
+						
+					$order = OrderMaster::where('order_id', $orderid)->first();
+					if ($order) {
+						if ($order->order_type == 2) OrderMaster::where('order_id', $orderid)->update(['quotation_status' => '1']);
+						
+						$orderdetails = OrderDetails::where('order_id', $orderid)->get();
+						
+						$logo = url('/').'/front/img/logo.png';
+						$logo = '<img src="'.$logo.'">';
+						
+						$itemdetails = '<table style="width:100%;" border="0" cellpadding="5" cellspacing="0">';
+						$itemdetails .= '<tr><th width="40%" style="text-align:left; border:1px solid #dee2e6;">Item</th><th width="15%" style="text-align:center; border:1px solid #dee2e6;">Quantity</th><th width="25%" style="text-align:right; border:1px solid #dee2e6;">Price</th><th width="20%" style="text-align:right; border:1px solid #dee2e6;">Total</th></tr>'; 			
+
+						$orderid = $order->order_id;
+						if(strlen($orderid) == 3) {
+							$orderid = date('Ymd', strtotime($order->date_entered)).'0'.$orderid;
+						} elseif(strlen($orderid) == 2) {
+							$orderid = date('Ymd', strtotime($order->date_entered)).'00'.$orderid;
+						} elseif(strlen($orderid) == 1) {
+							$orderid = date('Ymd', strtotime($order->date_entered)).'000'.$orderid;
+						} else {
+							$orderid = date('Ymd', strtotime($order->date_entered)).$orderid;
+						}
+				
+						$taxes = Country::where('countrycode', '=', $order->ship_country)->first();
+						$tax = $taxes ? $taxes->taxtitle . ' - ' . $taxes->taxpercentage : '';
+						
+						if($orderdetails) {
+							foreach($orderdetails as $orderdetail) {
+								$itemdetails .= '<tr><td style="border:1px solid #dee2e6;">'.$orderdetail->prod_name;
+								if($orderdetail->prod_option != '') $itemdetails .= '<span style="color: #6c757d !important">Option: '.$orderdetail->prod_option.'</span>';
+								$itemdetails .= '</td><td style="text-align:center; border:1px solid #dee2e6;">'. $orderdetail->prod_quantity.'</td>';
+								$itemdetails .= '<td style="text-align:right; border:1px solid #dee2e6;">S$'.$orderdetail->prod_unit_price.'</td>';
+								$itemdetails .= '<td style="text-align:right; border:1px solid #dee2e6;">S$'.number_format(($orderdetail->prod_quantity * $orderdetail->prod_unit_price), 2).'</td></tr>';
+							}
+						}
+				
+						$itemdetails .= '<tr><td colspan="4" style="border:1px solid #dee2e6;">&nbsp;</td></tr>';			
+						$itemdetails .= '<tr><td colspan="2" style="border:1px solid #dee2e6;">&nbsp;</td><td style="border:1px solid #dee2e6;">Sub Total</td><td style="text-align:right; border:1px solid #dee2e6;">S$'. number_format($order->payable_amount - ($order->shipping_cost + $order->packaging_fee + $order->tax_collected), 2).'</td></tr>';
+						$itemdetails .= '<tr><td colspan="2" style="border:1px solid #dee2e6;">&nbsp;</td><td style="border:1px solid #dee2e6;">Tax ('.$tax.'%)</td><td style="text-align:right; border:1px solid #dee2e6;">S$'.number_format($order->tax_collected, 2).'</td></tr>';
+						$itemdetails .= '<tr><td colspan="2" style="border:1px solid #dee2e6;">&nbsp;</td><td style="border:1px solid #dee2e6;">Shipping</td><td style="text-align:right; border:1px solid #dee2e6;">S$'.number_format($order->shipping_cost, 2).'</td></tr>';
+						$itemdetails .= '<tr><td colspan="2" style="border:1px solid #dee2e6;">&nbsp;</td><td style="border:1px solid #dee2e6;">Packaging Fee</td><td style="text-align:right; border:1px solid #dee2e6;">S$'.number_format($order->packaging_fee, 2).'</td></tr>';
+						if($order->discount_amount != '0.00') $itemdetails .= '<tr><td colspan="2" style="border:1px solid #dee2e6;">&nbsp;</td><td style="border:1px solid #dee2e6;">Discount</td><td style="text-align:right; border:1px solid #dee2e6;">S$'.number_format($order->discount_amount, 2).'</td></tr>';
+						$itemdetails .= '<tr><td colspan="2" style="border:1px solid #dee2e6;">&nbsp;</td><td style="border:1px solid #dee2e6;"><b>Grand Total</b></td><td style="text-align:right; border:1px solid #dee2e6;"><b>S$'.number_format($order->payable_amount, 2).'</b></td></tr>';
+						
+						$emailsubject = $emailcontent =  $companyname = $adminemail = $ccemail = $customername = 
+						$customeremail = $companydetails = $statusdetails =  $shippinginfo = $billinginfo = $shipmethod = '';
+						
+						$setting = Settings::where('id', '1')->first();
+						if($setting) {
+							$companyname = $setting->company_name;
+							$adminemail = $setting->admin_email;
+							$ccemail = $setting->cc_email;
+							
+							$companydetails .= '<table><tr><td>'.nl2br($setting->company_address).'</td></tr>';
+							$companydetails .= '<tr><td>Fax: '.$setting->company_fax.'</td></tr>';
+							$companydetails .= '<tr><td>GST No: '.$setting->GST_res_no.'</td></tr></table>';
+							
+							$statusdetails .= '<table><tr><td style="vertical-align:top">Date: '.date("d/m/Y", strtotime($order->date_entered)).'</td></tr>';
+							
+							if($order->order_status == 0) {
+								$statusdetails .= '<tr><td>Status: Payment Pending</td></tr>';
+							} elseif($order->order_status == 1) {
+								$statusdetails .= '<tr><td>Status: Paid, Shipping Pending</td></tr>';
+							}
+							
+							$shipping = ShippingMethods::where('Id', $order->ship_method)->select('EnName')->first();
+							if($shipping) {
+								$statusdetails .= '<tr><td>Delivery Method: '.$shipping->EnName.'</td></tr>';
+								$shipmethod = $shipping->EnName;
+							}
+							
+							if($order->if_items_unavailabel == 1) {
+								$statusdetails .= '<tr><td>If item(s) unavailable: Call Me</td></tr>';
+							} elseif($order->if_items_unavailabel == 2) {
+								$statusdetails .= '<tr><td>If item(s) unavailable: Do Not Replace</td></tr>';
+							} else {
+								$statusdetails .= '<tr><td>If item(s) unavailable: Replace</td></tr>';
+							}
+							
+							if(stripos($shipmethod, 'Self Collect') !== false) {
+								$shippinginfo .= '<table><tr><td>'.$shipmethod.'</td></tr></table>';
+							} else {
+								$shippinginfo .= '<table><tr><td>'.$order->ship_fname.' '.$order->ship_lname.'</td></tr>';
+								$shippinginfo .= '<tr><td>'.$order->ship_ads1.'</td></tr>';
+								if($order->ship_ads2) $shippinginfo .= '<tr><td>'.$order->ship_ads2.'</td></tr>';
+								$shippinginfo .= '<tr><td>'.$order->ship_city.'</td></tr>';
+								$shippinginfo .= '<tr><td>'.$order->ship_state.' - '.$order->ship_zip.'</td></tr>';
+								$shippinginfo .= '<tr><td>Email: '.$order->ship_email.'</td></tr>';
+								$shippinginfo .= '<tr><td>Mobile: '.$order->ship_mobile.'</td></tr>';
+								$shippinginfo .= '</table>';
+							}
+							$billinginfo .= '<table><tr><td>'.$order->bill_fname.' '.$order->bill_lname.'</td></tr>';
+							$billinginfo .= '<tr><td>'.$order->bill_ads1.'</td></tr>';
+							if($order->bill_ads2) $billinginfo .= '<tr><td>'.$order->bill_ads2.'</td></tr>';
+							$billinginfo .= '<tr><td>'.$order->bill_city.'</td></tr>';
+							$billinginfo .= '<tr><td>'.$order->bill_state.' - '.$order->bill_zip.'</td></tr>';
+							$billinginfo .= '<tr><td>Email: '.$order->bill_email.'</td></tr>';
+							$billinginfo .= '<tr><td>Mobile: '.$order->bill_mobile.'</td></tr>';
+							$billinginfo .= '</table>';
+								
+							$emailtemplate = EmailTemplate::where('template_type', '2')->where('status', '1')->first();
+							if($emailtemplate) {
+								$emailsubject = $emailtemplate->subject;
+								$emailcontent = $emailtemplate->content;	
+							}	
+
+							$customer = Customer::where('cust_id', $order->user_id)->first();
+							if($customer) {
+								$customername = $customer->cust_firstname.' '.$customer->cust_lastname;
+								$customeremail = $customer->cust_email;
+							}
+							
+							$emailsubject = str_replace('{companyname}', $companyname, $emailsubject);
+							$emailsubject = str_replace('{status}', 'Confirmed', $emailsubject);
+							$emailcontent = str_replace('{companyname}', $companyname, $emailcontent);
+							$emailcontent = str_replace('{customername}', $customername, $emailcontent);
+							$emailcontent = str_replace('{logo}', $logo, $emailcontent);
+							$emailcontent = str_replace('{email}', $adminemail, $emailcontent);
+							$emailcontent = str_replace('{orderid}', $orderid, $emailcontent);
+							$emailcontent = str_replace('{companyaddress}', $companydetails, $emailcontent);
+							$emailcontent = str_replace('{statusdetails}', $statusdetails, $emailcontent);				
+							$emailcontent = str_replace('{billinginfo}', $billinginfo, $emailcontent);
+							$emailcontent = str_replace('{shippinginfo}', $shippinginfo, $emailcontent);
+							$emailcontent = str_replace('{paymentmethod}', $order->pay_method, $emailcontent);				
+							$emailcontent = str_replace('{orderdetails}', $itemdetails, $emailcontent);
+												
+							$headers = 'From: '.$companyname.' '.$adminemail.'' . "\r\n" ;
+							$headers .='Reply-To: '. $adminemail . "\r\n" ;
+							$headers .='X-Mailer: PHP/' . phpversion();
+							$headers .= "MIME-Version: 1.0\r\n";
+							$headers .= "Content-type: text/html; charset=iso-8859-1\r\n"; 
+									
+							Mail::send([],[], function($message) use ($adminemail, $customeremail, $emailsubject, $emailcontent) {
+								$message->to([$customeremail,$adminemail])
+										->subject($emailsubject)
+										->from(env('MAIL_USERNAME'), env('APP_NAME'))
+										->setBody($emailcontent, 'text/html');
+							});
+						}
+					}
+    			}
+			}
+		}
 	}
 	
 	public function grabpaywebhook() {
