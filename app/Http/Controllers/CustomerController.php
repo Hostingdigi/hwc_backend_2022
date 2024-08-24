@@ -18,6 +18,7 @@ use App\Models\PaymentSettings;
 use App\Models\Product;
 use App\Models\ProductOptions;
 use App\Models\Settings;
+use App\Models\UserLoggedDevices;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -257,6 +258,12 @@ class CustomerController extends Controller
 
                 $prodoption = '';
 
+                //create entry in log device table
+                UserLoggedDevices::firstOrCreate([
+                    'user_id' => $customer->cust_id,
+                    'session_id' => $request->session()->getId(),
+                ]);
+
                 if (count($cartdetails) > 0) {
                     foreach ($cartdetails as $orderdetail) {
                         $product = Product::where('Id', '=', $orderdetail->prod_id)->first();
@@ -333,8 +340,16 @@ class CustomerController extends Controller
         return view('public/Customer.register', compact('countries'));
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
+        //remove entry in log device table
+        if(Session::has('customer_id')){
+            UserLoggedDevices::where([
+                ['user_id', '=', Session::get('customer_id')],
+                ['session_id', '=', $request->session()->getId()],
+            ])->delete();
+        }
+
         //Session::flash();
         Session::forget('customer_id');
         Session::forget('customer_name');
@@ -387,6 +402,13 @@ class CustomerController extends Controller
             $password = Hash::check($request->old_password, $customer->cust_password);
             if ($password) {
                 Customer::where('cust_id', '=', $customerid)->update(array('cust_password' => Hash::make($request->new_password)));
+
+                //Update entry in other logged devices
+                UserLoggedDevices::where([
+                    ['user_id', '=', $customerid],
+                    ['session_id', '!=', $request->session()->getId()],
+                ])->update(['is_log_off' => 1]);
+                
                 return redirect('/customer/changepassword')->with('success', 'Password Successfully Changed!');
             } else {
                 return redirect()->back()->withInput($request->only('old_password', 'new_password', 'confirm_password'))->with('message', 'Invalid Old Password!');
