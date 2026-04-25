@@ -148,14 +148,10 @@ class OrderServices
         $ordermaster['ship_state'] = $billinginfo['ship_state'];
         $ordermaster['ship_zip'] = $billinginfo['ship_zip'];
         $ordermaster['date_entered'] = date('Y-m-d H:i:s');
-        $order = $ordermaster->save();
-
-        if (!$order) {
-            return $orderReturnData;
-        }
-
-        $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
-        $orderid = $order->order_id;
+        
+        if (!$ordermaster->save()) return $orderReturnData;
+        
+        $orderid = $ordermaster->getKey();
 
         foreach ($cartdata as $cart) {
 
@@ -164,7 +160,7 @@ class OrderServices
             $orderdetails['prod_id'] = $cart['productId'];
             $orderdetails['prod_name'] = $cart['productName'];
             $orderdetails['prod_quantity'] = $cart['qty'];
-            $orderdetails['prod_unit_price'] = $this->roundDecimal($cart['price']);
+            $orderdetails['prod_unit_price'] = $cart['price'];
             $orderdetails['prod_option'] = $cart['productoption'];
             $orderdetails['Weight'] = $cart['weight'];
             $orderdetails['prod_code'] = $cart['productcode'];
@@ -184,18 +180,7 @@ class OrderServices
 
         return $orderReturnData;
     }
-
-    public function manipulateOrderNumber($orderId,$orderDate){
-        $orderIdLength = strlen($orderId);
-        $leadZeros = [
-            1 => '000',
-            2 => '00',
-            3 => '0',
-        ];
-        $formattedOrderId = date('Ymd', strtotime($orderDate)).($leadZeros[$orderIdLength] ?? '').$orderId;
-        return $formattedOrderId;
-    }
-
+    
     public function roundDecimal($value)
     {
         $addition = 0;
@@ -211,6 +196,17 @@ class OrderServices
             }
         }
         return $addition!=0 ? ($value+($addition/100)) : $value;
+    }
+    
+    public function manipulateOrderNumber($orderId,$orderDate){
+        $orderIdLength = strlen($orderId);
+        $leadZeros = [
+            1 => '000',
+            2 => '00',
+            3 => '0',
+        ];
+        $formattedOrderId = date('Ymd', strtotime($orderDate)).($leadZeros[$orderIdLength] ?? '').$orderId;
+        return $formattedOrderId;
     }
 
 }

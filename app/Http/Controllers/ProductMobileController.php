@@ -128,21 +128,21 @@ class ProductMobileController extends Controller
                 $promoitems[$x]['categoryid'] = $promoproduct->Types;
                 $promoitems[$x]['brand'] = $promoproduct->Brand;
                 if ($promoproduct->MobileImage != '') {
-                    $promoitems[$x]['image'] = url('/uploads/product') . '/' . $promoproduct->MobileImage;
+                    $promoitems[$x]['image'] = env('IMG_URL').('/uploads/product') . '/' . $promoproduct->MobileImage;
                 } else {
                     if ($promoproduct->Image != '') {
-                        $promoitems[$x]['image'] = url('/uploads/product') . '/' . $promoproduct->Image;
+                        $promoitems[$x]['image'] = env('IMG_URL').('/uploads/product') . '/' . $promoproduct->Image;
                     } else {
-                        $promoitems[$x]['image'] = url('/images/noimage.png');
+                        $promoitems[$x]['image'] = env('IMG_URL').('/images/noimage.png');
                     }
                 }
                 if ($promoproduct->MobileLargeImage != '') {
-                    $promoitems[$x]['largeimage'] = url('/uploads/product/large') . '/' . $promoproduct->MobileLargeImage;
+                    $promoitems[$x]['largeimage'] = env('IMG_URL').('/uploads/product/large') . '/' . $promoproduct->MobileLargeImage;
                 } else {
                     if ($promoproduct->LargeImage != '') {
-                        $promoitems[$x]['largeimage'] = url('/uploads/product/large') . '/' . $promoproduct->LargeImage;
+                        $promoitems[$x]['largeimage'] = env('IMG_URL').('/uploads/product/large') . '/' . $promoproduct->LargeImage;
                     } else {
-                        $promoitems[$x]['largeimage'] = url('/images/noimage.png');
+                        $promoitems[$x]['largeimage'] = env('IMG_URL').('/images/noimage.png');
                     }
                 }
                 $promoitems[$x]['video'] = $promoproduct->Video;
@@ -439,21 +439,21 @@ class ProductMobileController extends Controller
                 $branditems[$x]['categoryid'] = $brandproduct->Types;
                 $branditems[$x]['brand'] = $brandproduct->Brand;
                 if ($brandproduct->MobileImage != '') {
-                    $branditems[$x]['image'] = url('/uploads/product') . '/' . $brandproduct->MobileImage;
+                    $branditems[$x]['image'] = env('IMG_URL').('/uploads/product') . '/' . $brandproduct->MobileImage;
                 } else {
                     if ($brandproduct->Image != '') {
-                        $branditems[$x]['image'] = url('/uploads/product') . '/' . $brandproduct->Image;
+                        $branditems[$x]['image'] = env('IMG_URL').('/uploads/product') . '/' . $brandproduct->Image;
                     } else {
-                        $branditems[$x]['image'] = url('/images/noimage.png');
+                        $branditems[$x]['image'] = env('IMG_URL').('/images/noimage.png');
                     }
                 }
                 if ($brandproduct->MobileLargeImage != '') {
-                    $branditems[$x]['largeimage'] = url('/uploads/product/large') . '/' . $brandproduct->MobileLargeImage;
+                    $branditems[$x]['largeimage'] = env('IMG_URL').('/uploads/product/large') . '/' . $brandproduct->MobileLargeImage;
                 } else {
                     if ($brandproduct->LargeImage != '') {
-                        $branditems[$x]['largeimage'] = url('/uploads/product/large') . '/' . $brandproduct->LargeImage;
+                        $branditems[$x]['largeimage'] = env('IMG_URL').('/uploads/product/large') . '/' . $brandproduct->LargeImage;
                     } else {
-                        $branditems[$x]['largeimage'] = url('/images/noimage.png');
+                        $branditems[$x]['largeimage'] = env('IMG_URL').('/images/noimage.png');
                     }
                 }
                 $branditems[$x]['video'] = $brandproduct->Video;
@@ -678,7 +678,7 @@ class ProductMobileController extends Controller
                 $itemdetails[$x]['installmentPrice'] = number_format($installmentPrice, 2, '.', '');
                 $itemdetails[$x]['gststandardprice'] = number_format($gstactualprice, 2, '.', '');
                 $itemdetails[$x]['gstprice'] = number_format($gstprice, 2, '.', '');
-
+                
                 $itemdetails[$x]['qty'] = $product->Quantity;
                 $itemdetails[$x]['cust_qty'] = $product->cust_qty_per_day;
                 $itemdetails[$x]['shippingbox'] = $product->ShippingBox;
@@ -687,32 +687,32 @@ class ProductMobileController extends Controller
                 $itemdetails[$x]['categoryid'] = $product->Types;
                 $itemdetails[$x]['brand'] = $product->Brand;
                 if ($product->MobileImage != '') {
-                    $itemdetails[$x]['image'] = url('/uploads/product') . '/' . str_replace(' ', '%20', $product->MobileImage);
+                    $itemdetails[$x]['image'] = env('IMG_URL').('/uploads/product') . '/' . str_replace(' ', '%20', $product->MobileImage);
                 } else {
                     if ($product->Image != '') {
-                        $itemdetails[$x]['image'] = url('/uploads/product') . '/' . str_replace(' ', '%20', $product->Image);
+                        $itemdetails[$x]['image'] = env('IMG_URL').('/uploads/product') . '/' . str_replace(' ', '%20', $product->Image);
                     } else {
-                        $itemdetails[$x]['image'] = url('/images/noimage.png');
+                        $itemdetails[$x]['image'] = env('IMG_URL').('/images/noimage.png');
                     }
                 }
                 if ($product->MobileLargeImage != '') {
-                    $itemdetails[$x]['largeimage'] = Storage::exists('/uploads/product/large/' . $product->MobileLargeImage) ? url('/uploads/product/large') . '/' . str_replace(' ', '%20', $product->MobileLargeImage) : $itemdetails[$x]['image'];
+                    $itemdetails[$x]['largeimage'] = Storage::exists('/uploads/product/large/' . $product->MobileLargeImage) ? env('IMG_URL').('/uploads/product/large') . '/' . str_replace(' ', '%20', $product->MobileLargeImage) : $itemdetails[$x]['image'];
                 } else {
                     if ($product->LargeImage != '') {
-                        $itemdetails[$x]['largeimage'] = Storage::exists('/uploads/product/large/' . $product->LargeImage) ? url('/uploads/product/large') . '/' . str_replace(' ', '%20', $product->LargeImage) : $itemdetails[$x]['image'];
+                        $itemdetails[$x]['largeimage'] = Storage::exists('/uploads/product/large/' . $product->LargeImage) ? env('IMG_URL').('/uploads/product/large') . '/' . str_replace(' ', '%20', $product->LargeImage) : $itemdetails[$x]['image'];
                     } else {
                         $itemdetails[$x]['largeimage'] = $itemdetails[$x]['image'];
                     }
                 }
 
                 if ($product->Tds != '') {
-                    $itemdetails[$x]['tds'] = url('/uploads/product') . '/' . $product->Tds;
+                    $itemdetails[$x]['tds'] = env('IMG_URL').('/uploads/product') . '/' . $product->Tds;
                 } else {
                     $itemdetails[$x]['tds'] = '';
                 }
 
                 if ($product->Sds != '') {
-                    $itemdetails[$x]['sds'] = url('/uploads/product') . '/' . $product->Sds;
+                    $itemdetails[$x]['sds'] = env('IMG_URL').('/uploads/product') . '/' . $product->Sds;
                 } else {
                     $itemdetails[$x]['sds'] = '';
                 }
@@ -855,7 +855,7 @@ class ProductMobileController extends Controller
                 $childcategories[$x]['category_id'] = $category->TypeId;
                 $childcategories[$x]['url_key'] = $category->UniqueKey;
                 if ($category->Image) {
-                    $childcategories[$x]['image'] = url('/') . '/uploads/category/' . $category->Image;
+                    $childcategories[$x]['image'] = env('IMG_URL') .  '/uploads/category/' . $category->Image;
                 } else {
                     $childcategories[$x]['image'] = '';
                 }
@@ -912,19 +912,19 @@ class ProductMobileController extends Controller
                         $categoryitems[$p]['categoryid'] = $categoryproduct->Types;
                         $categoryitems[$p]['brand'] = $categoryproduct->Brand;
                         if ($categoryproduct->MobileImage != '') {
-                            $categoryitems[$p]['image'] = url('/uploads/product') . '/' . $categoryproduct->MobileImage;
+                            $categoryitems[$p]['image'] = env('IMG_URL') . ('/uploads/product') . '/' . $categoryproduct->MobileImage;
                         } else {
                             if ($categoryproduct->Image != '') {
-                                $categoryitems[$p]['image'] = url('/uploads/product') . '/' . $categoryproduct->Image;
+                                $categoryitems[$p]['image'] = env('IMG_URL') . ('/uploads/product') . '/' . $categoryproduct->Image;
                             } else {
                                 $categoryitems[$p]['image'] = url('/images/noimage.png');
                             }
                         }
                         if ($categoryproduct->MobileLargeImage != '') {
-                            $categoryitems[$p]['largeimage'] = url('/uploads/product/large') . '/' . $categoryproduct->MobileLargeImage;
+                            $categoryitems[$p]['largeimage'] = env('IMG_URL') . ('/uploads/product/large') . '/' . $categoryproduct->MobileLargeImage;
                         } else {
                             if ($categoryproduct->LargeImage != '') {
-                                $categoryitems[$p]['largeimage'] = url('/uploads/product/large') . '/' . $categoryproduct->LargeImage;
+                                $categoryitems[$p]['largeimage'] = env('IMG_URL') . ('/uploads/product/large') . '/' . $categoryproduct->LargeImage;
                             } else {
                                 $categoryitems[$p]['largeimage'] = url('/images/noimage.png');
                             }

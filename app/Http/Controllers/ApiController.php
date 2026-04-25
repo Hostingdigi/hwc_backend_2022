@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
-use App\Models\Customer;
-use App\Models\Order;
-use App\Models\OrderDetails;
 use App\Models\Product;
+use App\Models\Order;
+use App\Models\Customer;
+use App\Models\OrderDetails;
 use App\Models\ProductOptions;
 use Illuminate\Http\Request;
 use Str;
@@ -15,16 +15,12 @@ class ApiController extends Controller
 {
     public function createCategory(Request $request)
     {
-        if (!$request->has('category_name') || !$request->has('status')) {
-            return response()->json(['status' => 'Failure', 'message' => 'Mandatory field(s) are required']);
-        }
+        if (!$request->has('category_name') || !$request->has('status')) return response()->json(['status' => 'Failure', 'message' => 'Mandatory field(s) are required']);
 
         $request->category_name = trim($request->category_name);
         $isExists = Category::where('EnName', $request->category_name)->count();
 
-        if ($isExists > 0) {
-            return response()->json(['status' => 'Failure', 'message' => 'Category name already exists']);
-        }
+        if ($isExists > 0) return response()->json(['status' => 'Failure', 'message' => 'Category name already exists']);
 
         $category = new Category();
         $category->EnName = $request->category_name;
@@ -38,22 +34,16 @@ class ApiController extends Controller
 
     public function createSubCategory(Request $request)
     {
-        if (!$request->has('category_name') || !$request->has('parent_category_id') || !$request->has('status')) {
-            return response()->json(['status' => 'Failure', 'message' => 'Mandatory field(s) are required']);
-        }
+        if (!$request->has('category_name') || !$request->has('parent_category_id') || !$request->has('status')) return response()->json(['status' => 'Failure', 'message' => 'Mandatory field(s) are required']);
 
         $request->category_name = trim($request->category_name);
         $isExists = Category::where('EnName', $request->category_name)->count();
 
-        if ($isExists > 0) {
-            return response()->json(['status' => 'Failure', 'message' => 'Sub category name already exists']);
-        }
+        if ($isExists > 0) return response()->json(['status' => 'Failure', 'message' => 'Sub category name already exists']);
 
         $isParentExists = Category::where('TypeId', $request->parent_category_id)->count();
 
-        if ($isParentExists == 0) {
-            return response()->json(['status' => 'Failure', 'message' => 'Parent category is not exists']);
-        }
+        if ($isParentExists == 0) return response()->json(['status' => 'Failure', 'message' => 'Parent category is not exists']);
 
         $category = new Category();
         $category->EnName = $request->category_name;
@@ -65,12 +55,12 @@ class ApiController extends Controller
         return response()->json(['status' => 'Success', 'message' => 'Sub category added successfully']);
 
     }
-
+    
     public function createProduct(Request $request)
     {
         #Category Validation
         if (!$request->has('category_name') || empty($request->category_name)) return response()->json(['status' => 'Failure', 'message' => 'category is required']);
-
+        
         $category = Category::where('EnName', trim($request->category_name))->first();
 
         if (empty($category)) return response()->json(['status' => 'Failure', 'message' => 'category is not exists']);
@@ -94,13 +84,13 @@ class ApiController extends Controller
         }
 
         $isExists = Product::where('EnName', $request->product_name)->count();
-
+        
         $barCode = '';
-        if ($request->has('barcode1')) $barCode .= trim($request->barcode1);
+        if($request->has('barcode1')) $barCode .= trim($request->barcode1);
         if ($request->has('barcode2')) $barCode .= trim($request->barcode2);
 
         if (empty($productId)) {
-
+            
             $product = new Product();
             $product->EnName = $request->product_name;
             $product->UniqueKey = Str::slug($request->product_name) . ($isExists > 0 ? '-' . $isExists : '');
@@ -109,10 +99,13 @@ class ApiController extends Controller
             $product->Price = $request->price;
             $product->Quantity = $request->quantity;
             $product->barcode = $barCode;
+            // $product->SKU = $request->barcode2;
             $product->save();
             $productId = $product->id;
 
         } else {
+            
+
             Product::where('Id', '=', $productId)->update([
                 'EnName' => $request->product_name,
                 'UniqueKey' => Str::slug($request->product_name) . ($isExists > 0 ? '-' . $isExists : ''),
@@ -127,18 +120,13 @@ class ApiController extends Controller
         return response()->json(['status' => 'Success', 'message' => 'product added or modified successfully', 'product_id' => $productId]);
 
     }
-
-    public function productStatusUpdate(Request $request)
-    {
-        if (!$request->has('sku') || empty($request->sku)) {
-            return response()->json(['status' => 'Failure', 'message' => 'sku is required']);
-        }
+    
+    public function productStatusUpdate(Request $request){
+        if (!$request->has('sku') || empty($request->sku)) return response()->json(['status' => 'Failure', 'message' => 'sku is required']);
 
         $product = Product::where('SKU', trim($request->sku))->first();
-        if (empty($product)) {
-            return response()->json(['status' => 'Failure', 'message' => 'product ' . $request->sku . ' is not exists']);
-        }
-
+        if (empty($product)) return response()->json(['status' => 'Failure', 'message' => 'product ' . $request->sku . ' is not exists']);
+       
         Product::where('Id', '=', $product->Id)->update([
             'ProdStatus' => $request->status,
         ]);
@@ -146,9 +134,10 @@ class ApiController extends Controller
         return response()->json(['status' => 'Success', 'message' => 'status updated']);
 
     }
-
+    
     public function stockUpdate(Request $request)
     {
+        
         if (!$request->has('json') || empty($request->json)) return response()->json(['status' => 'Failure', 'message' => 'json is required']);
 
         $decodedValues = json_decode($request->json);
@@ -156,21 +145,18 @@ class ApiController extends Controller
 
         foreach ($decodedValues->ProductDatas as $key => $value) {
             $isExists = Product::where('Id', trim($value->product_id))->first();
-            if (!$isExists) {
-                return response()->json(['status' => 'Failure', 'message' => [
-                    'sku' => '',
-                    'quantity' => '',
-                    'stock' => 'No product data found',
-                ]]);
-            }
-
+            if (!$isExists) return response()->json(['status' => 'Failure', 'message' => [
+                'sku' => '',
+                'quantity' => '',
+                'stock' => 'No product data found'
+            ]]);
         }
-
+        
         foreach ($decodedValues->ProductDatas as $key => $value) {
             $product = Product::where('Id', trim($value->product_id))->first();
 
             Product::where('Id', '=', $product->Id)->update([
-                'ProdStatus' => $value->operand == '+' ? ($product->Quantity + $value->quantity) : ($product->Quantity - $value->quantity),
+                'Quantity' => $value->operand == '+' ? ($product->Quantity + $value->quantity) : ($product->Quantity - $value->quantity),
             ]);
 
             $returnArray[] = [
@@ -178,16 +164,18 @@ class ApiController extends Controller
                 'quantity' => $value->quantity,
                 'operand' => $value->operand,
                 'sku' => $product->SKU,
-                'stock' => 'Updated',
+                'stock' => 'Updated'
             ];
         }
 
         return response()->json([
             'status' => 'Product Stock Updated Successfully',
-            'message' => $returnArray,
+            'message' => $returnArray
         ]);
-    }
 
+        return response()->json($decodedValues);
+    }
+    
     public function listDailyOrders(Request $request)
     {
         if (!$request->has('from_date')) {
@@ -205,19 +193,21 @@ class ApiController extends Controller
         }
 
         $allOrders = [];
+        #$orders = Order::whereDate('date_entered', date('Y-m-d', strtotime($request->from_date)))->oldest()->get();
         $orders = Order::where('date_entered', '>=', date('Y-m-d H:i:s', strtotime($request->from_date)))->oldest()->get();
 
         if (count($orders) > 0) {
             foreach ($orders as $key => $value) {
 
-                $user = Customer::where('cust_id', $value->user_id)->first();
+                $user = Customer::where('cust_id',$value->user_id)->first();
                 $allOrderItems = [];
-                $orderItems = OrderDetails::where('order_id', $value->order_id)->get();
-                $product_model = !empty($value->prod_option) ? ProductOptions::where('Id', $value->prod_option)->first() : [];
-                foreach ($orderItems as $item) {
+                $orderItems = OrderDetails::where('order_id',$value->order_id)->get();
+                
+                foreach($orderItems as $item){
                     $productDetail = Product::find($item->prod_id);
+                    $product_model = !empty($item->prod_option) ? ProductOptions::where([['Title','=',$item->prod_option],['Prod','=',$item->prod_id]])->first() : [];
                     $orderItem = [
-                        'order_product_id' => $item->detail_id,
+                        'order_product_id' => $item->prod_id,
                         'order_id' => $item->order_id,
                         'product_id' => $item->prod_id,
                         'sku' => $product_model->barcode ?? '',
@@ -225,9 +215,9 @@ class ApiController extends Controller
                         'model' => $product_model->Title ?? '',
                         'quantity' => $item->prod_quantity,
                         'price' => $item->prod_unit_price,
-                        'total' => number_format(($item->prod_unit_price * $item->prod_quantity), 2),
+                        'total' => number_format(($item->prod_unit_price * $item->prod_quantity),2),
                     ];
-                    array_push($allOrderItems, $orderItem);
+                    array_push($allOrderItems,$orderItem);
                 }
 
                 $order = [
@@ -241,7 +231,7 @@ class ApiController extends Controller
                     'order_status_id' => $value->order_status,
                     'ordered_at' => \Carbon\Carbon::parse($value->date_entered)->format('d/m/Y h:i A'),
                     'shipping' => $value,
-                    'products' => $allOrderItems,
+                    'products' => $allOrderItems
                 ];
 
                 array_push($allOrders, $order);
@@ -250,10 +240,10 @@ class ApiController extends Controller
 
         return response()->json([
             'status' => true,
-            'orderInfo' => $allOrders,
+            'orderInfo' => $allOrders
         ]);
     }
-
+    
     public function productAllUpdate(Request $request)
     {
         $statusUpdate = $stockUpdate = false;

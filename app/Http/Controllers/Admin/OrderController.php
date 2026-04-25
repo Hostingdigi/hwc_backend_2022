@@ -3,25 +3,29 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Order;
-use App\Models\OrderMaster;
-use App\Models\OrderDetails;
-use App\Models\OrderMasterBackup;
-use App\Models\OrderDetailsBackup;
-use App\Models\Settings;
-use App\Models\SelfCollectionInfo;
-use App\Models\EmailTemplate;
-use App\Models\OrderDeliveryInfo;
-use App\Models\OrderDeliveryDetails;
 use App\Models\Country;
-use DB;
-use Session;
-use App\Models\SMS;
-use App\Models\ShippingMethods;
-use App\Models\PaymentSettings;
+use App\Models\EmailTemplate;
+use App\Models\Order;
+use App\Models\OrderDeliveryDetails;
+use App\Models\OrderDeliveryInfo;
+use App\Models\OrderDetails;
+use App\Models\OrderDetailsBackup;
+use App\Models\OrderMaster;
+use App\Models\OrderMasterBackup;
 use App\Models\PaymentMethods;
+use App\Models\PaymentSettings;
+use App\Models\SelfCollectionInfo;
+use App\Models\Settings;
+use App\Models\ShippingMethods;
+use App\Models\ProductOptions;
+use App\Models\Product;
+use App\Models\SMS;
+use DB;
+use Illuminate\Http\Request;
 use Mail;
+use Session;
+use App\Models\OrderUpdateHistory;
+use App\Services\OrderServices;
 
 class OrderController extends Controller
 {
@@ -32,7 +36,7 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
-		//$sortby = 'order_id';
+        //$sortby = 'order_id';
         $sortby = 'date_entered';
         $sortorder = 'desc';
         $orderstatus = $request->order_status;
@@ -1512,6 +1516,8 @@ class OrderController extends Controller
         
         if($request->action == 'update_total'){
             
+            $order = Order::where('order_id',$request->order_id)->first();
+            
             $data = [
                 'shipping_cost' => $request->shipping,
                 'fuelcharges' => $request->fuel,
@@ -1520,7 +1526,10 @@ class OrderController extends Controller
                 'tax_collected' => $request->tax,
                 'discount_amount' => $request->discount,
                 'payable_amount' => $request->tot_price,
+                'sub_total' => $order->sub_total,
             ];
+            
+            if(!empty($request->sub_tot_price) && $request->sub_tot_price>1) $data['sub_total'] = $request->sub_tot_price;
             
             Order::where('order_id',$request->order_id)->update($data);
             $this->updateOrderNo($request->order_id);

@@ -1131,6 +1131,7 @@ class CartMobileController extends Controller
             $ordermaster['user_id'] = $userid;
             $ordermaster['ship_method'] = $orderinfo['shipmethod'];
             $ordermaster['pay_method'] = $orderinfo['paymethod'];
+            $ordermaster['mobile_platform'] = $orderinfo['mobile_platform'] ?? '';
             $ordermaster['fuelcharge_percentage'] = $shippinginfo['ship_country'] != 'SG' ? ($fuelSettings ? $fuelSettings->fuelcharge_percentage : 0) : 0;
             $ordermaster['fuelcharges'] = $fuelcharges;
             $ordermaster['handlingfee'] = $handlingfee;
@@ -2544,6 +2545,7 @@ class CartMobileController extends Controller
             $ordermaster['user_id'] = $userid;
             $ordermaster['ship_method'] = $orderinfo['shipmethod'];
             $ordermaster['pay_method'] = $orderinfo['paymethod'];
+            $ordermaster['mobile_platform'] = $orderinfo['mobile_platform'] ?? '';
             $ordermaster['shipping_cost'] = str_replace(',', '', $orderinfo['shippingcost']);
             $ordermaster['packaging_fee'] = str_replace(',', '', $orderinfo['packagingfee']);
             $ordermaster['tax_label'] = trim($taxtitle . ' (' . $taxValue . '%)');

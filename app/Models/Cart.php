@@ -304,6 +304,7 @@ class Cart extends Model
 			$disamount = ($tmptotal * $dis) / 100;
 		} elseif($distype == 2) {
 			$disamount = ((float)str_replace(',', '', $subtotal) + (float)str_replace(',', '', $tax) + (float)str_replace(',', '', $shippingcost) + (float)str_replace(',', '', $packingfee) + $fuelcharges + $handlingfee) - $dis;
+			$disamount = $dis;
 		}
 		
 		return number_format($disamount, 2);

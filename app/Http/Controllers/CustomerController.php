@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Hash;
 use Mail;
 use PDF;
 use Session;
+use Auth;
 
 class CustomerController extends Controller
 {
@@ -257,7 +258,7 @@ class CustomerController extends Controller
                 $cartcount = 1;
 
                 $prodoption = '';
-
+                
                 //create entry in log device table
                 UserLoggedDevices::firstOrCreate([
                     'user_id' => $customer->cust_id,
@@ -349,7 +350,7 @@ class CustomerController extends Controller
                 ['session_id', '=', $request->session()->getId()],
             ])->delete();
         }
-
+        
         //Session::flash();
         Session::forget('customer_id');
         Session::forget('customer_name');
@@ -401,8 +402,9 @@ class CustomerController extends Controller
         if ($customer) {
             $password = Hash::check($request->old_password, $customer->cust_password);
             if ($password) {
+                Auth::logoutOtherDevices($request->new_password);
                 Customer::where('cust_id', '=', $customerid)->update(array('cust_password' => Hash::make($request->new_password)));
-
+                
                 //Update entry in other logged devices
                 UserLoggedDevices::where([
                     ['user_id', '=', $customerid],
@@ -503,6 +505,7 @@ class CustomerController extends Controller
         $customerid = $request->id;
         $customer = Customer::where('cust_id', '=', $customerid)->first();
         if ($customer) {
+            UserLoggedDevices::where('user_id', $customerid)->delete();
             Customer::where('cust_id', '=', $customerid)->update(array('cust_password' => Hash::make($request->new_password)));
             return redirect('/login')->with('success', 'Password Successfully Changed! Please login and continue!');
         } else {

@@ -5,10 +5,10 @@ namespace App\Services;
 use App\Models\Cart;
 use App\Models\Country;
 use App\Models\Customer;
-use App\Models\InternationalShipping;
-use App\Models\LocalShipping;
 use App\Models\PaymentSettings;
 use App\Models\ShippingMethods;
+use App\Models\InternationalShipping;
+use App\Models\LocalShipping;
 use Session;
 
 class CartServices
@@ -16,14 +16,14 @@ class CartServices
     public function cartItems($countryCode = null)
     {
         $allowCust = 0;
-        if (Session::has('customer_id')) {
-            if (empty($countryCode)) {
+        if (Session::has('customer_id')){
+            if(empty($countryCode)){
                 $allowCust = 1;
-            } /*else if(!Session::has('billinginfo')){
-        $allowCust = 1;
-        }*/
+            }/*else if(!Session::has('billinginfo')){
+                $allowCust = 1;
+            }*/
         }
-
+        
         $custToken = Session::get('_token');
         $taxvals = [];
         $subTotal = 0;
@@ -42,17 +42,18 @@ class CartServices
         $settings = PaymentSettings::where('Id', '1')->select('min_package_fee')->first();
         $packingFee = $cartData['countryCode'] != 'SG' ? $settings->min_package_fee : 0;
 
+
         if (Session::has('customer_id') && $allowCust) {
             $customer = Customer::where('cust_id', Session::get('customer_id'))->first();
-
+            
             if (!empty($customer->cust_country)) {
-
+                
                 $countryCodeCheck = (int) $customer->cust_country;
                 $countryCodeConditions = $countryCodeCheck ? [['countryid', '=', $customer->cust_country]] :
                 [['countrycode', '=', $customer->cust_country]];
                 $countrydata = Country::select('countrycode')->where($countryCodeConditions)->first();
                 if ($countrydata) {
-
+                    
                     $cartData['countryCode'] = $countrydata->countrycode;
                     $cartData['countryId'] = $countrydata->countryid;
                 }
@@ -77,7 +78,7 @@ class CartServices
         $cartData['taxDetails'] = $this->getTax($subTotal, $cartData['countryCode']);
         //$subTotal = $cartData['subTotal'] = round(($subTotal - $cartData['taxDetails']['taxTotal']), 2);
         $shippingbox = '';
-        $quantity = 0;
+        $quantity= 0 ;
         foreach ($cartData['cartItems'] as $key => $val) {
 
             $totalWeight += $val['weight'];
@@ -99,8 +100,8 @@ class CartServices
         $cartData['handlingfee'] = $this->getHandlingFee($totalWeight, $cartData['countryCode']);
         $cartData['packingFees'] = $packingFee;
         $cartData['discountDetails'] = $this->getDiscount($subTotal, $cartData['taxDetails']['taxTotal'], $deliveryTotal, $packingFee);
-        $cartData['grandTotal'] = $this->getGrandTotal($subTotal, $cartData['taxDetails']['taxTotal'], $deliveryTotal, $packingFee, $cartData['discountDetails']['discountTotal'], $cartData['fuelcharges'], $cartData['handlingfee']);
-
+        $cartData['grandTotal'] = $this->getGrandTotal($subTotal, $cartData['taxDetails']['taxTotal'], $deliveryTotal, $packingFee, $cartData['discountDetails']['discountTotal'], $cartData['fuelcharges'],$cartData['handlingfee']);
+        
         return $cartData;
 
     }
@@ -135,7 +136,7 @@ class CartServices
             if ($discounttype == 1) {
                 $disamount = ($tmptotal * $disamount) / 100;
             } elseif ($discounttype == 2) {
-                $disamount = $tmptotal - $disamount;
+                $disamount = $disamount;
             }
         }
 
@@ -145,12 +146,22 @@ class CartServices
         ];
     }
 
-    public function getGrandTotal($subTotal = 0, $taxTotal = 0, $deliverycost = 0, $packingfee = 0, $discount = 0, $fuelcharges = 0, $handlingfee = 0)
+    public function getGrandTotal($subTotal = 0, $taxTotal = 0, $deliverycost = 0, $packingfee = 0, $discount = 0,$fuelcharges = 0,$handlingfee =0)
     {
-        $grandtotal = $subTotal + $taxTotal + $deliverycost + $packingfee + $fuelcharges + $handlingfee;
+        $grandtotal = $subTotal + $taxTotal + $deliverycost + $packingfee+ $fuelcharges + $handlingfee;
         $grandtotal = $grandtotal - $discount;
-
-        return round($grandtotal, 2);
+        $ordSer = new \App\Services\OrderServices(new \App\Services\CartServices());
+        
+        return $ordSer->roundDecimal($grandtotal);
+    }
+    
+    function showFixedDigits($value)
+    {
+        if (strpos($value, '.') !== false) {
+            list($whole, $decimal) = explode('.', $value);
+            if(!empty($decimal[1])) $value = strlen($decimal)>2 ? $whole.'.'.($decimal[0].''. $decimal[1]) : $value;
+        }
+        return $value;
     }
 
     public function getTax($subTotal = 0, $countryCode = '')
@@ -164,25 +175,38 @@ class CartServices
             'taxLabelOnly' => $taxLabelOnly,
             'taxLabel' => $taxLabelOnly . ' (' . $taxPercentage . '%)',
             'taxPercentage' => $taxPercentage,
-            'taxTotal' => round((($subTotal * $taxPercentage) / 100), 2),
+            //'taxTotal' => $this->showFixedDigits(($subTotal * $taxPercentage) / 100),
+            'taxTotal' => round((($subTotal * $taxPercentage) / 100),2),
         ];
     }
 
     public function getFuelCharges($shipping_charges = 0, $countrycode = '')
     {
+       
+        $subtotal_with_tax = $shipping_charges;
+
         if ($countrycode == 'SG') {
             $fuelcharges = 0;
-        } else {
-            $subtotal_with_tax = $shipping_charges;
+        }
+        else{
             $settings = PaymentSettings::where('Id', '1')->select('fuelcharge_percentage')->first();
-            $fuelcharges = ($subtotal_with_tax / 100) * $settings->fuelcharge_percentage;
+
+            $fuelcharges = ($subtotal_with_tax /100) * $settings->fuelcharge_percentage;
         }
         return $fuelcharges;
     }
 
     public function getHandlingFee($total_weight = 0, $countrycode = '')
     {
-        return ($countrycode == 'SG') ? 0 : ($total_weight * env('HANDLING_PER'));
+       
+        if ($countrycode == 'SG') {
+            $handlingfee = 0;
+        }
+        else{
+            $handlingfee = $total_weight * env('HANDLING_PER');
+        }
+        
+        return $handlingfee;
     }
 
     public function getShippingCost($countrycode = '', $deliverymethod = 0, $shippingbox = '', $quantity = 1, $subtotal = 0, $gst = 0, $totalweight = 0)
@@ -195,11 +219,12 @@ class CartServices
 
         if ($countrycode == 'SG') {
 
+
             $zones = LocalShipping::where('Status', 1)->orderBy('DisplayOrder', 'asc')->first();
             $shippingmethods = ShippingMethods::where('Id', $deliverymethod)->first();
 
             if (($freeshippingcost >= $zones->FreeShipCost || ($shippingmethods->shipping_type == 0 && strpos($shippingmethods->EnName, 'Ninja Van Delivery') === false))) {
-                //if ($freeshippingcost >= $zones->FreeShipCost || ($shippingmethods->shipping_type == 0 && strpos($shippingmethods->EnName, 'Ninja Van Delivery') === false)) {
+            //if ($freeshippingcost >= $zones->FreeShipCost || ($shippingmethods->shipping_type == 0 && strpos($shippingmethods->EnName, 'Ninja Van Delivery') === false)) {
                 $shipamt = 0;
             } else {
 

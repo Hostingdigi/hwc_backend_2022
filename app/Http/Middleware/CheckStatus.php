@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Session;
 use App\Models\UserLoggedDevices;
 
 class CheckStatus
@@ -18,10 +19,9 @@ class CheckStatus
     public function handle(Request $request, Closure $next)
     {
         if (Session::has('customer_id')) {
-            echo Session::get('customer_id') . " - ";
+            
             $sessionId = $request->session()->getId();
-            echo $sessionId;
-
+            
             //create entry in log device table
             $logDevice = UserLoggedDevices::where([
                 'user_id' => Session::get('customer_id'),
@@ -35,15 +35,15 @@ class CheckStatus
                     UserLoggedDevices::where('id', $logDevice->id)->delete();
 
                     //Session::flash();
+                    //Session::flash();
                     $sessionNames = ['customer_id', 'customer_name', 'cartdata', 'deliverymethod', 'if_unavailable', 'billinginfo',
                         'paymentmethod', 'discount', 'discounttext', 'couponcode', 'discounttype', 'old_order_id'];
                     foreach($sessionNames as $sN) Session::forget($sN);
-
+                    
                     return redirect('/login');
                 }
             }
         }
-
         return $next($request);
     }
 }

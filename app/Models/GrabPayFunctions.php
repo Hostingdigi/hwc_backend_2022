@@ -118,12 +118,30 @@ class GrabPayFunctions extends Model
         return base64_encode($url);
     }
 
-    public function base64UrlEncode($url)
-    {
-        return base64_encode($url);
+    public function base64UrlEncode(string $data): string {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 
-    public function generatePopSignature($clientSecret, $accessToken, $dateTime)
+    public function generatePOPSignature(string $clientSecret, string $accessToken, int $timestamp = null): string {
+        $timestampUnix = $timestamp ?? time();
+
+        $message = $timestampUnix . $accessToken;
+
+        // HMAC SHA256 (binary output)
+        $signature = hash_hmac('sha256', $message, $clientSecret, true);
+
+        // Base64 URL-safe encode
+        $encodedSig = $this->base64UrlEncode($signature);
+
+        $payload = [
+            'time_since_epoch' => $timestampUnix,
+            'sig' => $encodedSig,
+        ];
+
+        return $this->base64UrlEncode(json_encode($payload));
+    }
+
+    public function generatePopSignatureOLD($clientSecret, $accessToken, $dateTime)
     {
         $timestamp = strtotime($dateTime);
         $message = $timestamp . $accessToken;

@@ -69,9 +69,10 @@ class HomeController extends Controller
             if ($chkmenu) {
                 return view('public.emptypage');
             } else {
-                $staticpage = PageContent::where('UniqueKey', '=', 'page-not-found')->first();
+                abort(404);
+                /*$staticpage = PageContent::where('UniqueKey', '=', 'page-not-found')->first();
                 $bannerads = Bannerads::where('ban_status', '=', '1')->where('PageId', '=', 'page-not-found')->orderBy('display_order', 'asc')->get();
-                return view('public.staticpages', compact('staticpage', 'bannerads'));
+                return view('public.staticpages', compact('staticpage', 'bannerads'));*/
             }
         }
 
