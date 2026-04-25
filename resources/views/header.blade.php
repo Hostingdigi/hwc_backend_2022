@@ -59,7 +59,22 @@
 	<meta name="description" content="{{ $metadesc }}">
 	<meta name="keywords" content="{{ $metakey }}">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="robots" content="noindex">
 	<!-- <meta name="google-site-verification" content="1FHXAhBf4KOaY7Dxw4WhWi5r3z8atGo7_QA-CDufOaQ" /> -->
+	
+	<!-- In your Blade layout <head> -->
+	@if(!empty($productdetail) && Str::contains(request()->path(), 'prod/'))
+    <meta property="og:title" content="{{ $productdetail->EnName }}" />
+    @if(trim($productdetail->EnInfo)!='')
+    <meta property="og:description" content="{!! $productdetail->EnInfo !!}" />
+    @else
+    <meta property="og:description" content="{{$productdetail->EnName}}" />
+    @endif
+    <meta property="og:image" content="{{trim($productdetail->LargeImage)!='' ? url('/uploads/product/'.$productdetail->LargeImage) : url('images/noimage.png')}}" />
+    <meta property="og:url" content="{{ url()->current() }}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    @endif
+
 	<!-- Favicon -->
 	<link href="{{ url('images/favicon.ico') }}" rel="shortcut icon"/>
 

@@ -11,7 +11,7 @@
 		<div class="row">
 			<div class="col-md-8">
 				<div class="cart-table table-responsive">	
-					<form action="{{ url('/updatecart') }}" method="post" name="updatecartfrm" id="updatecartfrm">
+					<form action="{{ env('IMG_URL').('/updatecart') }}" method="post" name="updatecartfrm" id="updatecartfrm">
 					@csrf
 					<table class="table">
 						<thead>
@@ -26,6 +26,7 @@
 						<tbody>
 							@php 
 								$productqty = $productid = '';
+								//print_r($cartdata);
 							@endphp
 							@foreach($cartdata as $cartkey => $cart)
 								@php
@@ -42,7 +43,7 @@
 										<div class="t-img">
 											<a href="{{ url('/prod/'.$product->UniqueKey) }}">
 												@if($cart['image'] != '')															
-													<img src="{{ url('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100" title="{{ $cart['productName'] }}">
+													<img src="{{ env('IMG_URL').('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100" title="{{ $cart['productName'] }}">
 												@else
 													<img src="{{ url('/images/noimage.png') }}" alt="{{ $cart['productName'] }}" title="{{ $cart['productName'] }}" width="100">
 												@endif

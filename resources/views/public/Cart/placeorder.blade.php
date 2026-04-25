@@ -38,14 +38,10 @@
 									<label for="paymethod{{ $paymentmethod->Id }}"><span><i class="fa fa-circle"></i></span><img style="height:22px; margin:5px 0px 10px;" src="{{ url('/uploads/images/'.$paymentmethod->payment_logo) }}" /></label>
 								</li>
 									@endif
-								@if($paymentmethod->Id!=5)
-								    
 								<li>
 									<input type="radio" id="paymethod{{ $paymentmethod->Id }}" name="paymentmethod" value="{{ $paymentmethod->Id }}" >
 									<label for="paymethod{{ $paymentmethod->Id }}"><span><i class="fa fa-circle"></i></span><img style="height:22px; margin:5px 0px 10px;" src="{{ url('/uploads/images/'.$paymentmethod->payment_logo) }}" /></label>
 								</li>
-								@endif
-								
 								@endforeach
 							@endif
 						</ul>

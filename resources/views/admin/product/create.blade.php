@@ -14,31 +14,44 @@
     <!-- BEGIN: Header-->
 
     <div class="app-content content" style="background-color:#fff;">
-	
-		     <div class="content-overlay"></div>
+
+        <div class="content-overlay"></div>
 
         <div class="header-navbar-shadow"></div>
 
-        <div class="content-wrapper" style="width:80%; margin:0 auto;"> 
-       <div class="content-header row">
+        <div class="content-wrapper">
 
-                <div class="content-header-left col-md-12 col-12 mb-2">
+            <div class="content-header row">
+
+                <div class="content-header-left col-md-9 col-12 mb-2">
 
                     <div class="row breadcrumbs-top">
 
-                        <div class="col-8">
+                        <div class="col-12">
 
-                            <h2 class="content-header-title float-left mb-0">Manage Products</h2>                            
+                            <h2 class="content-header-title float-left mb-0">ADD PRODUCT</h2>
+
+                            <div class="breadcrumb-wrapper col-12">
+
+                                <ol class="breadcrumb">
+
+                                    <li class="breadcrumb-item"><a href="#">HOME</a>
+
+                                    </li>
+
+                                    <li class="breadcrumb-item"><a href="#">PRODUCT</a>
+
+                                    </li>
+
+                                    <li class="breadcrumb-item active">ADD
+
+                                    </li>
+
+                                </ol>
+
+                            </div>
 
                         </div>
-
-						<div class="col-4" style="float:right; text-align:right;">
-
-							<div class="dt-buttons btn-group"><a href="{{ url('/admin/products') }}" class="btn " tabindex="0" aria-controls="Products">
-
-              <span><i class="feather icon-arrow-left"></i> Back</span></a> </div>
-
-						</div>
 
                     </div>
 
@@ -68,9 +81,9 @@
 
                                     <div class="card-body">
 
-                                        <form class="form form-horizontal" name="addproduct" id="addproduct" method = "post" action="{{ url('/admin/products') }}" enctype="multipart/form-data">
+                                        <form class="form form-horizontal" name="addproduct" id="addproduct" method = "post" action="{{ url('/admin/product') }}" enctype="multipart/form-data">
 
-                                            <input type="hidden" name="DisplayOrder" value="{{ $displayorder }}">
+                                            
 
                                             {{ csrf_field() }}
 
@@ -90,7 +103,7 @@
 
                                                             <div class="col-md-8">
 
-                                                                <textarea name="EnName" id="EnName" class="form-control" required></textarea>
+                                                                <input type="text" id="product_name" class="form-control" name="product_name" placeholder="Product Name" required>
 
                                                             </div>
 
@@ -110,7 +123,7 @@
 
                                                             <div class="col-md-8">
 
-                                                                <textarea name="UniqueKey" id="UniqueKey" class="form-control"></textarea>
+                                                                <input type="text" id="url" class="form-control" name="url" placeholder="URL">
 
                                                             </div>
 
@@ -124,30 +137,14 @@
 
                                                             <div class="col-md-4">
 
-                                                                <span>Code <span class="badge badge-dot badge-danger"> </span></span>
+                                                                <span>Code</span>
 
                                                             </div>
 
                                                             <div class="col-md-8">
-																<textarea name="ProdCode" class="form-control" required></textarea>			
-                                                            </div>
 
-                                                        </div>
+                                                                <input type="text" id="code" class="form-control" name="code" placeholder="Code">
 
-                                                    </div>  
-
-                                                    <div class="col-12">
-
-                                                        <div class="form-group row">
-
-                                                            <div class="col-md-4">
-
-                                                                <span>Barcode <br>(Use comma separater for multiple values)<span class="badge badge-dot badge-danger"> </span></span>
-
-                                                            </div>
-
-                                                            <div class="col-md-8">
-																<textarea name="barcode" class="form-control" ></textarea>			
                                                             </div>
 
                                                         </div>
@@ -166,43 +163,7 @@
 
                                                             <div class="col-md-8">
 
-                                                               <select name="Types" class="form-control" required>	
-																<option value="">Select Category</option>
-																@if(count($categories) > 0)						
-
-																	@foreach($categories as $cate)							
-
-																	<option value="{{ $cate->TypeId }}">{{ $cate->EnName }}</option>							
-
-																	@php								
-
-																	$subcats = [];								
-
-																	$subcats = \App\Models\Category::where('ParentLevel','=',$cate->TypeId)->orderBy('EnName', 'ASC')->get();
-																	@endphp								
-
-																	@if(count($subcats) > 0)								
-
-																	@foreach($subcats as $subcat)									
-
-																	<option value="{{ $subcat->TypeId }}">&nbsp;&nbsp >> {{ $subcat->EnName }}</option>		@php
-																				$subsubcats = [];
-																				$subsubcats = \App\Models\Category::where('ParentLevel','=',$subcat->TypeId)->orderBy('EnName', 'ASC')->get();
-																				@endphp
-																				@if(count($subsubcats) > 0)
-																					@foreach($subsubcats as $subsubcat)
-																						<option value="{{ $subsubcat->TypeId }}">&nbsp;&nbsp;&nbsp;&nbsp; >>> {{ $subsubcat->EnName }}</option>
-																					@endforeach
-																				@endif						
-
-																	@endforeach							
-
-																	@endif												
-
-																	@endforeach					
-
-																	@endif  
-															   </select>
+                                                                <input type="text" id="category" class="form-control" name="category" placeholder="Category" required>
 
                                                             </div>
 
@@ -222,39 +183,25 @@
 
                                                             <div class="col-md-8">
 
-                                                                <select name="Brand" class="form-control">	
-
-																<option value="0">No Brand</option>            		
-
-																	@if(count($brands) > 0)						
-
-																		@foreach($brands as $brand)							
-
-																			<option value="{{ $brand->BrandId }}">{{ $brand->EnName }}</option>
-
-																		@endforeach					
-
-																	@endif			    
-
-																</select>
+                                                                <input type="text" id="brand" class="form-control" name="brand" placeholder="Brand">
 
                                                             </div>
 
                                                         </div>                                              
-													</div>
+
                                                     <div class="col-12">
 
                                                         <div class="form-group row">
 
                                                             <div class="col-md-4">
 
-                                                                <span>Standard Price <span class="badge badge-dot badge-danger"> </span></span>
+                                                                <span>Standard Price</span>
 
                                                             </div>
 
                                                             <div class="col-md-8">
 
-                                                                <input type="text" id="Price" class="form-control" name="Price" placeholder="Standard Price" required>
+                                                                <input type="text" id="standard_price" class="form-control" name="standard_price" placeholder="Standard Price">
 
                                                             </div>
 
@@ -268,13 +215,13 @@
 
                                                             <div class="col-md-4">
 
-                                                                <span>Cost Price <span class="badge badge-dot badge-danger"> </span></span>
+                                                                <span>Cost Price</span>
 
                                                             </div>
 
                                                             <div class="col-md-8">
 
-                                                                <input type="text" id="StandardPrice" class="form-control" name="StandardPrice" placeholder="Cost Price" required>
+                                                                <input type="text" id="cost_price" class="form-control" name="cost_price" placeholder="Cost Price">
 
                                                             </div>
 
@@ -288,13 +235,13 @@
 
                                                             <div class="col-md-4">
 
-                                                                <span>Vendor </span>
+                                                                <span>Vendor</span>
 
                                                             </div>
 
                                                             <div class="col-md-8">
 
-                                                                <textarea name="Vendor" class="form-control"></textarea> 
+                                                                <input type="text" id="vendor" class="form-control" name="vendor" placeholder="Vendor">
 
                                                             </div>
 
@@ -314,26 +261,7 @@
 
                                                             <div class="col-md-8">
 
-                                                                <input type="text" id="Supplier" class="form-control" name="Supplier" placeholder="POC">
-
-                                                            </div>
-
-                                                        </div>
-
-                                                    </div>
-													<div class="col-12">
-
-                                                        <div class="form-group row">
-
-                                                            <div class="col-md-4">
-
-                                                                <span>Gebiz item ?</span>
-
-                                                            </div>
-
-                                                            <div class="col-md-8">
-
-																<input type="checkbox" name="gebiz_item" value="1">  
+                                                                <input type="text" id="poc" class="form-control" name="poc" placeholder="POC">
 
                                                             </div>
 
@@ -353,7 +281,7 @@
 
                                                             <div class="col-md-8">
 
-                                                                <input type="text" id="Color" class="form-control" name="Color" placeholder="Color">
+                                                                <input type="text" id="color" class="form-control" name="color" placeholder="Color">
 
                                                             </div>
 
@@ -373,7 +301,7 @@
 
                                                             <div class="col-md-8">
 
-                                                            <input type="text" id="Size" class="form-control" name="Size" placeholder="Size">
+                                                            <input type="text" id="sizes" class="form-control" name="sizes" placeholder="Sizes">
 
                                                             </div>
 
@@ -393,7 +321,7 @@
 
                                                             <div class="col-md-8">
 
-                                                                <textarea id="Specs" class="form-control editor" name="Specs" placeholder="Specs"></textarea>
+                                                                <textarea id="specs" class="form-control editor" name="specs" placeholder="Specs"></textarea>
 
                                                             </div>
 
@@ -413,7 +341,7 @@
 
                                                             <div class="col-md-8">
 
-                                                            <input type="text" id="Dimension" class="form-control" name="Dimension" placeholder="Dimension">
+                                                            <input type="text" id="dimension" class="form-control" name="dimension" placeholder="Dimension">
 
                                                             </div>
 
@@ -433,7 +361,7 @@
 
                                                             <div class="col-md-8">
 
-                                                            <input type="text" id="MOQ" class="form-control" name="MOQ" placeholder="MOQ">
+                                                            <input type="text" id="moq" class="form-control" name="moq" placeholder="MOQ">
 
                                                             </div>
 
@@ -453,7 +381,7 @@
 
                                                             <div class="col-md-8">
 
-                                                            <input type="text" id="unspsc" class="form-control" name="unspsc" placeholder="UNSPSC Code">
+                                                            <input type="text" id="UNSPSC_Code" class="form-control" name="UNSPSC_Code" placeholder="UNSPSC Code">
 
                                                             </div>
 
@@ -467,13 +395,13 @@
 
                                                             <div class="col-md-4">
 
-                                                                <span>Quantity <span class="badge badge-dot badge-danger"> </span></span>
+                                                                <span>Quantity</span>
 
                                                             </div>
 
                                                             <div class="col-md-8">
 
-                                                            <input type="text" id="Quantity" class="form-control" required name="Quantity" placeholder="Quantity">
+                                                            <input type="text" id="quantity" class="form-control" name="quantity" placeholder="Quantity">
 
                                                             </div>
 
@@ -487,60 +415,19 @@
 
                                                             <div class="col-md-4">
 
-                                                                <span>Customer daily purchase limit <span class="badge badge-dot badge-danger"> </span></span>
+                                                                <span>Customer daily purchase limit</span>
 
                                                             </div>
 
                                                             <div class="col-md-8">
 
-                                                            <input type="text" id="cust_qty_per_day" required class="form-control" name="cust_qty_per_day" placeholder="Customer daily purchase limit">
+                                                            <input type="text" id="customer_daily_purchase_unit" class="form-control" name="customer_daily_purchase_unit" placeholder="Customer daily purchase limit">
 
                                                             </div>
 
                                                         </div>
 
                                                     </div>
-													<div class="col-12">
-
-                                                        <div class="form-group row">
-
-                                                            <div class="col-md-4">
-
-                                                                <span>Shippping Box Size</span>
-
-                                                            </div>
-
-                                                            <div class="col-md-8">
-
-																<select name="ShippingBox" class="form-control">              
-
-																	   <option value="0" selected="">Select</option>					
-
-																	   <option value="XXS">XXS (L33.7cm X W18.2cm X H10cm)</option>			
-
-																		<option value="XS">XS (L33.6cm X W32cm X H5.2cm)</option>			
-
-																		<option value="S">S (L33.7cm X W32.2cm X H18cm)</option>				
-
-																		<option value="M">M (L33.7cm X W32.2cm X H34.5cm)</option>					
-
-																		<option value="L">L (L41.7cm X W35.9cm X H36.9cm)</option>				
-
-																		<option value="XL">XL (L48.1cm X W40.4cm X H38.9cm) </option>				
-
-																		<option value="XXL">XXL (L54.1cm X W44.4cm X H40.9cm)</option>				
-
-																		<option value="P">P (Pallet Size)</option>               
-
-																</select>
-
-																	
-
-                                                            </div>
-
-                                                        </div>
-
-                                                    </div>	
 
                                                     <div class="col-12">
 
@@ -554,27 +441,7 @@
 
                                                             <div class="col-md-8">
 
-                                                            <input type="text" id="Weight" class="form-control" name="Weight" placeholder="Weight">
-
-                                                            </div>
-
-                                                        </div>
-
-                                                    </div>
-													
-													<div class="col-12">
-
-                                                        <div class="form-group row">
-
-                                                            <div class="col-md-4">
-
-                                                                <span>Tags</span>
-
-                                                            </div>
-
-                                                            <div class="col-md-8">
-
-                                                            <input type="text" id="ProdTags" class="form-control" name="ProdTags" placeholder="Tags">
+                                                            <input type="text" id="weight" class="form-control" name="weight" placeholder="Weight">
 
                                                             </div>
 
@@ -588,7 +455,7 @@
 
                                                             <div class="col-md-4">
 
-                                                                <span>Picture (400px x 400px)</span>
+                                                                <span>Picture (150px x 150px Less then 1.5 MB)</span>
 
                                                             </div>
 
@@ -596,12 +463,11 @@
 
                                                             <div class="custom-file">
 
-                                                                <input type="file" class="custom-file-input imageUpload" id="Image" name="Image">
+                                                                <input type="file" class="custom-file-input" id="small_image" name="small_image">
 
-                                                                <label class="custom-file-label" for="Image">Choose Image File</label>
+                                                                <label class="custom-file-label" for="small_image">Choose Image File</label>
 
                                                             </div>
-																<div class="imageOutput"></div>
 
                                                             </div>
 
@@ -615,7 +481,7 @@
 
                                                             <div class="col-md-4">
 
-                                                                <span>Large Picture (400px x 400px)</span>
+                                                                <span>Large Picture (300px x 280px Less then 1.5 MB)</span>
 
                                                             </div>
 
@@ -623,72 +489,17 @@
 
                                                             <div class="custom-file">
 
-                                                                <input type="file" class="custom-file-input largeimageUpload" id="LargeImage" name="LargeImage">
+                                                                <input type="file" class="custom-file-input" id="large_image" name="large_image">
 
-                                                                <label class="custom-file-label" for="LargeImage">Choose Large Image File</label>
-
-                                                            </div>
-																<div class="largeimageOutput"></div>
+                                                                <label class="custom-file-label" for="large_image">Choose Large Image File</label>
 
                                                             </div>
-
-                                                        </div>
-
-                                                    </div> 
-
-													<div class="col-12">
-
-                                                        <div class="form-group row">
-
-                                                            <div class="col-md-4">
-
-                                                                <span>Mobile Picture (400px x 400px)</span>
-
-                                                            </div>
-
-                                                            <div class="col-md-8">
-
-                                                            <div class="custom-file">
-
-                                                                <input type="file" class="custom-file-input imageUpload" id="MobileImage" name="MobileImage">
-
-                                                                <label class="custom-file-label" for="Image">Choose Image File</label>
-
-                                                            </div>
-																
 
                                                             </div>
 
                                                         </div>
 
-                                                    </div>
-													
-													<div class="col-12">
-
-                                                        <div class="form-group row">
-
-                                                            <div class="col-md-4">
-
-                                                                <span>Mobile Large Picture (400px x 400px)</span>
-
-                                                            </div>
-
-                                                            <div class="col-md-8">
-
-                                                            <div class="custom-file">
-
-                                                                <input type="file" class="custom-file-input largeimageUpload" id="MobileLargeImage" name="MobileLargeImage">
-
-                                                                <label class="custom-file-label" for="LargeImage">Choose Large Image File</label>
-
-                                                            </div>
-																
-
-                                                            </div>
-
-                                                        </div>
-
-                                                    </div>
+                                                    </div>        
 
                                                     <div class="col-12">
 
@@ -704,9 +515,9 @@
 
                                                             <div class="custom-file">
 
-                                                                <input type="file" class="custom-file-input" id="Tds" name="Tds">
+                                                                <input type="file" class="custom-file-input" id="file_tds" name="file_tds">
 
-                                                                <label class="custom-file-label" for="Tds">Choose TDS PDF File</label>
+                                                                <label class="custom-file-label" for="file_tds">Choose TDS PDF File</label>
 
                                                             </div>
 
@@ -730,9 +541,9 @@
 
                                                             <div class="custom-file">
 
-                                                                <input type="file" class="custom-file-input" id="Sds" name="Sds">
+                                                                <input type="file" class="custom-file-input" id="file_sds" name="file_sds">
 
-                                                                <label class="custom-file-label" for="Sds">Choose SDS PDF File</label>
+                                                                <label class="custom-file-label" for="file_sds">Choose SDS PDF File</label>
 
                                                             </div>
 
@@ -741,25 +552,6 @@
                                                         </div>
 
                                                     </div>   
-													<div class="col-12">
-
-                                                        <div class="form-group row">
-
-                                                            <div class="col-md-4">
-
-                                                                <span>Video (embeded code only)</span>
-
-                                                            </div>
-
-                                                            <div class="col-md-8">
-
-																<textarea name="Video" class="form-control"></textarea>       
-
-                                                            </div>
-
-                                                        </div>
-
-                                                    </div>
 
                                                     <div class="col-12">
 
@@ -773,14 +565,33 @@
 
                                                             <div class="col-md-8">
 
-                                                                <input type="checkbox" id="IsFeatured" name="IsFeatured" value = "1">
+                                                                <input type="checkbox" id="is_featured_product" name="is_featured_product" value = "1">
 
                                                             </div>
 
                                                         </div>
 
                                                     </div>  
-                                                   
+
+                                                    <div class="col-12">
+
+                                                        <div class="form-group row">
+
+                                                            <div class="col-md-4">
+
+                                                                <span>Video Code</span>
+
+                                                            </div>
+
+                                                            <div class="col-md-8">
+
+                                                                <input type="text" id="video_code" class="form-control" name="video_code" placeholder="Video Code">
+
+                                                            </div>
+
+                                                        </div>
+
+                                                    </div> 
 
                                                     <div class="col-12">
 
@@ -794,7 +605,7 @@
 
                                                             <div class="col-md-8">
 
-                                                                <input type="checkbox" id="IsPromotion" name="IsPromotion" value = "1">
+                                                                <input type="checkbox" id="is_promotion" name="is_promotion" value = "1">
 
                                                             </div>
 
@@ -814,33 +625,13 @@
 
                                                             <div class="col-md-8">
 
-                                                                <input type="checkbox" id="IsOverseasShippingTrue" name="IsOverseasShippingTrue" value = "1">
+                                                                <input type="checkbox" id="is_overseas_shipping_available" name="is_overseas_shipping_available" value = "1">
 
                                                             </div>
 
                                                         </div>
 
-                                                    </div>
-
-													<div class="col-12">
-
-                                                        <div class="form-group row">
-
-                                                            <div class="col-md-4">
-
-                                                                <span>Short Description</span>
-
-                                                            </div>
-
-                                                            <div class="col-md-8">
-
-                                                            <textarea id="EnShortDesc" class="form-control" name="EnShortDesc" placeholder="Type page content ..." ></textarea>
-
-                                                            </div>
-
-                                                        </div>
-
-                                                    </div>
+                                                    </div>   
 
                                                     <div class="col-12">
 
@@ -848,13 +639,13 @@
 
                                                             <div class="col-md-4">
 
-                                                                <span>Details</span>
+                                                                <span>Content</span>
 
                                                             </div>
 
                                                             <div class="col-md-8">
 
-                                                                <textarea id="editor" class="form-control editor" name="EnInfo" placeholder="Content"></textarea>
+                                                                <textarea id="editor" class="form-control editor" name="content" placeholder="Content"></textarea>                                                               
 
                                                             </div>
 
@@ -874,7 +665,7 @@
 
                                                             <div class="col-md-8">
 
-                                                                <textarea name="MetaTitle" class="form-control"></textarea> 
+                                                                <input type="text" id="meta_title" class="form-control" name="meta_title" placeholder="Meta Title">
 
                                                             </div>
 
@@ -896,7 +687,7 @@
 
                                                             <div class="col-md-8">
 
-                                                                <textarea name="MetaKey" class="form-control"></textarea> 
+                                                                <input type="text" id="meta_keyword" class="form-control" name="meta_keyword" placeholder="Meta Keyward">
 
                                                             </div>
 
@@ -918,32 +709,13 @@
 
                                                             <div class="col-md-8">
 
-                                                                <textarea name="MetaDesc" class="form-control"></textarea>
+                                                                <input type="text" id="meta_description" class="form-control" name="meta_description" placeholder="Meta Description">
 
                                                             </div>
 
                                                         </div>
 
-                                                    </div>     
-													<div class="col-12">
-
-                                                        <div class="form-group row">
-
-                                                            <div class="col-md-4">
-
-                                                                <span>SEO Star Script</span>
-
-                                                            </div>
-
-                                                            <div class="col-md-8">
-
-                                                          <textarea name="seo_star_script" class="form-control"></textarea> 
-
-                                                            </div>
-
-                                                        </div>
-
-                                                    </div>													
+                                                    </div>                                                    
 
                                                     <div class="col-12">
 
@@ -957,13 +729,13 @@
 
                                                             <div class="col-md-8">
 
-                                                            <select name="ProdStatus" class="form-control">
+                                                            <div class="custom-control custom-switch custom-switch-warning mr-2 mb-1">
 
-																<option value="0">In-Active</option>               
+                                                            <input type="checkbox" class="custom-control-input" id="status" name = "status" checked>
 
-																<option value="1" selected>Active</option>  
-															</select>
+                                                            <label class="custom-control-label" for="customSwitch7"></label>                                                                
 
+                                                        </div>
 
                                                          </div>
 
@@ -1016,99 +788,29 @@
 @include('admin.includes.footer')
 
 
- <script src="https://cdn.ckeditor.com/4.15.1/standard/ckeditor.js"></script>
+
+<script src="https://cdn.ckeditor.com/ckeditor5/23.0.0/classic/ckeditor.js"></script>
 
 <script>
 
-	 CKEDITOR.replace( 'editor' );
-	CKEDITOR.replace( 'Specs' );
+	ClassicEditor
 
-$images = $('.imageOutput')
+		.create( document.querySelector( '#editor' ), {
 
+			// toolbar: [ 'heading', '|', 'bold', 'italic', 'link' ]
 
+		} )
 
-$(".imageUpload").change(function(event){
+		.then( editor => {
 
-    readURL(this);
+			window.editor = editor;
 
-});
+		} )
 
-$('#EnName').keyup(function() {
-	var title = $('#EnName').val();
-	title = title.replace(/[^a-z0-9\s]/gi, '').replace(/[_\s]/g, '-');
-	$('#UniqueKey').val(title.toLowerCase());
-});
+		.catch( err => {
 
+			console.error( err.stack );
 
-
-function readURL(input) {
-
-
-
-    if (input.files && input.files[0]) {
-
-        
-
-        $.each(input.files, function() {
-
-            var reader = new FileReader();
-
-            reader.onload = function (e) {           
-
-                $images.html('<img src="'+ e.target.result+'" width="300"/>')
-
-            }
-
-            reader.readAsDataURL(this);
-
-        });
-
-        
-
-    }
-
-}
-
-$largeimages = $('.largeimageOutput')
-
-
-
-$(".largeimageUpload").change(function(event){
-
-    largereadURL(this);
-
-});
-
-
-
-function largereadURL(input) {
-
-
-
-    if (input.files && input.files[0]) {
-
-        
-
-        $.each(input.files, function() {
-
-            var reader = new FileReader();
-
-            reader.onload = function (e) {           
-
-                $largeimages.html('<img src="'+ e.target.result+'" width="300"/>')
-
-            }
-
-            reader.readAsDataURL(this);
-
-        });
-
-        
-
-    }
-
-}
-
-   
+		} );
 
 </script>

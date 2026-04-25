@@ -46,7 +46,7 @@
 							<div class="tab-content">
 								<div class="tab-pane fade show active" id="sg1" role="tabpanel">
 									@if($productdetail->LargeImage)
-										<img src="{{ url('/uploads/product/'.$productdetail->LargeImage) }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
+										<img src="{{ env('IMG_URL').('/uploads/product/'.$productdetail->LargeImage) }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 									@else
 										<img src="{{ url('images/noimage.png') }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 									@endif									
@@ -56,7 +56,7 @@
 									@foreach($galleries as $gallery)
 										<div class="tab-pane" id="sg{{ $g }}" role="tabpanel">
 											@if($gallery->LargeImage)
-												<img src="{{ url('/uploads/product/'.$gallery->LargeImage) }}" alt="" class="img-fluid">
+												<img src="{{ env('IMG_URL').('/uploads/product/'.$gallery->LargeImage) }}" alt="" class="img-fluid">
 											@else
 												<img src="{{ url('images/noimage.png') }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 											@endif
@@ -67,7 +67,7 @@
 							</div>
 							<div class="nav d-flex justify-content-between">
 								@if($productdetail->Image)
-									<a class="nav-item nav-link active" data-toggle="tab" href="#sg1"><img src="{{ url('/uploads/product/'.$productdetail->Image) }}" alt="{{ $productdetail->EnName }}"></a>
+									<a class="nav-item nav-link active" data-toggle="tab" href="#sg1"><img src="{{ env('IMG_URL').('/uploads/product/'.$productdetail->Image) }}" alt="{{ $productdetail->EnName }}"></a>
 								@else
 									<a class="nav-item nav-link active" data-toggle="tab" href="#sg1"><img src="{{ url('images/noimage.png') }}" alt="{{ $productdetail->EnName }}"></a>
 								@endif
@@ -76,7 +76,7 @@
 									@foreach($galleries as $gallery)
 										<a class="nav-item nav-link" data-toggle="tab" href="#sg{{ $g }}">
 											@if($gallery->Image)
-												<img src="{{ url('/uploads/product/'.$gallery->Image) }}" alt="" class="img-fluid">
+												<img src="{{ env('IMG_URL').('/uploads/product/'.$gallery->Image) }}" alt="" class="img-fluid">
 											@else
 												<img src="{{ url('images/noimage.png') }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 											@endif
@@ -97,7 +97,28 @@
 			  
 			  
 			  <div class="col-md-8">
-			 <div class="card ">
+			      <div class="row ">
+                    <div class="col-md-12">
+                         <ul class="list-unstyled d-flex float-right">
+                            <li>
+                                <a title="Share this on Facebook" href="https://www.facebook.com/sharer/sharer.php?u={{urlencode(url()->current())}}" target="_blank"><i class="fa fa-facebook mt-2" style="font-size: 22px;"></i></a>
+                            </li>
+                            <li>
+                                <a title="Share this on X" href="https://twitter.com/intent/tweet?text={{$productdetail->EnName}}&url={{urlencode(url()->current())}}" target="_blank"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 248 204" width="20" height="20" fill="currentColor" style="color: #000;" class="mt-3">
+                                        <path d="M65.2 0h43.3l36.4 50.7L185.8 0h42.2l-58.5 70.9L248 204h-85.3l-39.5-55-42.6 55H35.7l61.2-78.9L0 0h65.2Zm14.6 25H48.6l54.6 75-77.6 104h29.9l61.4-82 58 82H200L140.2 117 206.5 25h-29.4l-57.1 77.2-49.3-77.2Z"></path>
+                                    </svg>
+                                </a>
+                            </li>
+                            <li>
+                                @php
+                                    $message = urlencode($productdetail->EnName) . urlencode(url()->current());
+                                @endphp
+                                <a title="Share this on Whatsapp" href="https://wa.me/?text={{ $message }}" target="_blank"><i class="fa fa-whatsapp mt-3 ml-3" style="font-size: 22px;"></i></a>
+                            </li>
+                        </ul>
+                        </div>
+                </div>
+			 <div class="card mt-0">
 					@php
 						$maxqty = $productdetail->Quantity;
 						if(($productdetail->cust_qty_per_day < $productdetail->Quantity) && $productdetail->cust_qty_per_day > 0) {
@@ -140,12 +161,13 @@
                        
                     </div-->  
 					
-					@php	
+					@php
 					    $roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
 						$displayprice = $productdetail->Price;
 						$price = new \App\Models\Price();
 						$actualprice = $roundObj->roundDecimal($price->getGroupPrice($productdetail->Id));
 						$displayprice = $roundObj->roundDecimal($price->getDiscountPrice($productdetail->Id));
+						//echo 'A = '.$price->getGroupPrice($productdetail->Id).' - D '.$price->getDiscountPrice($productdetail->Id);
 						$gstprice = $price->getGSTPrice($displayprice, 'SG');
 						$actualgstprice = $price->getGSTPrice($actualprice, 'SG');
 						//$displayprice = $price->getPrice($productdetail->Id);
@@ -315,10 +337,10 @@
                             </div>
 							<div class="tab-pane" id="tabs-3" role="tabpanel">
 								@if($productdetail->Tds != '' && file_exists(public_path('/uploads/product/'.$productdetail->Tds)))
-									<img src="{{ url('/img/icon-pdf.jpg') }}"> TDS : <a href="{{ url('/uploads/product/'.$productdetail->Tds) }}" download>{{ $productdetail->EnName }}</a><br><br>
+									<img src="{{ url('/img/icon-pdf.jpg') }}"> TDS : <a href="{{ env('IMG_URL').('/uploads/product/'.$productdetail->Tds) }}" download>{{ $productdetail->EnName }}</a><br><br>
 								@endif	
 								@if($productdetail->Sds != '' && file_exists(public_path('/uploads/product/'.$productdetail->Sds)))
-									<img src="{{ url('/img/icon-pdf.jpg') }}"> SDS : <a href="{{ urldecode(url('/uploads/product/'.$productdetail->Sds)) }}" download>{{ $productdetail->EnName }}</a>
+									<img src="{{ url('/img/icon-pdf.jpg') }}"> SDS : <a href="{{ urldecode(env('IMG_URL').('/uploads/product/'.$productdetail->Sds)) }}" download>{{ $productdetail->EnName }}</a>
 								@endif	
                             </div>
 							<div class="tab-pane" id="tabs-4" role="tabpanel">
@@ -474,7 +496,7 @@
 							<div class="box-Added-product" id="success{{ $relatedproduct->Id }}" style="display:none;"><span class="boxAdjest">Item has been Added into Your Cart</span></div>
 							<a href="{{ url('/prod/'.$relatedproduct->UniqueKey) }}">
 							@if($relatedproduct->Image)
-								<img src="{{ url('/uploads/product/'.$relatedproduct->Image) }}" class="card-img-top" alt="{{ $relatedproduct->EnName }}">
+								<img src="{{ env('IMG_URL').('/uploads/product/'.$relatedproduct->Image) }}" class="card-img-top" alt="{{ $relatedproduct->EnName }}">
 							@else
 								<img src="{{ url('images/noimage.png') }}" class="card-img-top" alt="{{ $relatedproduct->EnName }}">
 							@endif

@@ -19,7 +19,7 @@
 								}
 						@endphp
 						
-						<div class="carousel-item @if($x == 1) active @endif" style="background-image: url({{ url('/uploads/promotionsbanner/'.str_replace(' ', '%20', $promotion->EnBanimage)) }})">
+						<div class="carousel-item @if($x == 1) active @endif" style="background-image: url({{ env('IMG_URL').('/uploads/promotionsbanner/'.str_replace(' ', '%20', $promotion->EnBanimage)) }})">
 							<a href="{{$link}}" target="{{$target}}">
 								<div class="carousel-container">
 									<!--<div class="container">

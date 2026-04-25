@@ -9,7 +9,7 @@
   </div>
 </section>
 @php 
-	$currenturl = \Request::url(); 	
+	$currenturl = \Request::url();
 	$roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
 @endphp
 
@@ -90,7 +90,7 @@
 									@if($adbanner->Video != '')
 										{!! $adbanner->Video !!}
 									@else
-										<a href="{{ $adbanner->ban_link }}"><img src="{{ url('/uploads/bannerads/'.$adbanner->	EnBanimage)}}" alt="{{ $adbanner->ban_name }}" class="img-fluid"></a>
+										<a href="{{ $adbanner->ban_link }}"><img src="{{ env('IMG_URL').('/uploads/bannerads/'.$adbanner->	EnBanimage)}}" alt="{{ $adbanner->ban_name }}" class="img-fluid"></a>
 									@endif
 								</div>
 								@php
@@ -164,8 +164,8 @@
 															<div class="img-box">
 															<a href="{{ url('/prod/'.$product->UniqueKey) }}">
 															@if($product->Image != '')
-																<img class="main-img img-fluid" src="{{ url('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
-																<img class="sec-img img-fluid" src="{{ url('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
+																<img class="main-img img-fluid" src="{{ env('IMG_URL').('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
+																<img class="sec-img img-fluid" src="{{ env('IMG_URL').('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
 															@else
 																<img class="main-img img-fluid" src="{{ url('/images/noimage.png') }}" style="height:286px; width:100%;" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
 															@endif
@@ -188,7 +188,7 @@
 															<div class="wid_full">
 																@if($product->Price >0)
 																	<ul class="list-unstyled list-inline price">
-																		@php	
+																		@php
 																			$displayprice = $product->Price;
 																			$price = new \App\Models\Price();
 																			//$displayprice = $price->getPrice($product->Id);

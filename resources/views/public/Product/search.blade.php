@@ -10,6 +10,7 @@
 </section>
 @php 
 	$currenturl = \Request::url(); 	
+	$roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
 @endphp
 
 
@@ -142,8 +143,8 @@
 															<div class="img-box">
 															<a href="{{ url('/prod/'.$product->UniqueKey) }}">
 															@if($product->Image != '')
-																<img class="main-img img-fluid" src="{{ url('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
-																<img class="sec-img img-fluid" src="{{ url('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
+																<img class="main-img img-fluid" src="{{ env('IMG_URL').('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
+																<img class="sec-img img-fluid" src="{{ env('IMG_URL').('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
 															@else
 																<img class="main-img img-fluid" src="{{ url('/images/noimage.png') }}"  alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
 															@endif
@@ -172,9 +173,9 @@
 																			$displayprice = $price->getDiscountPrice($product->Id);
 																			$installmentPrice = $price->getInstallmentPrice($displayprice);
 																			
-																			$actualprice = $price->getGSTPrice($actualprice, 'SG');
-																			$displayprice = $price->getGSTPrice($displayprice, 'SG');
-																			$installmentPrice = $price->getInstallmentPrice($displayprice);
+																			$actualprice = $roundObj->roundDecimal($price->getGSTPrice($actualprice, 'SG'));
+																			$displayprice = $roundObj->roundDecimal($price->getGSTPrice($displayprice, 'SG'));
+																			$installmentPrice = $roundObj->roundDecimal($price->getInstallmentPrice($displayprice));
 																		@endphp
 																		
 																		@if($displayprice < $actualprice)

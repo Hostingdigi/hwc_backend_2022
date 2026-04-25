@@ -6,6 +6,7 @@
 <!-- BEGIN: Body-->
 @include('admin.includes.mainmenu')
     <!-- BEGIN: Header-->
+
 <div class="app-content content" style="background-color:#fff;">
         <div class="content-overlay"></div>
         <div class="header-navbar-shadow"></div>
@@ -261,8 +262,15 @@
 									</tr>
 									<tr><td colspan="4">&nbsp;</td></tr>
 									<tr>
+									    @php
+									        $subTotal = number_format(($orders->payable_amount + $orders->discount_amount) - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected + $orders->fuelcharges + $orders->handlingfee), 2);
+									    @endphp
 										<td colspan="2"></td><td colspan="2">Sub Total</td>
-										<td style="text-align:right">S${{ number_format(($orders->payable_amount + $orders->discount_amount) - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected + $orders->fuelcharges + $orders->handlingfee), 2) }}
+										<td style="text-align:right">
+										    <span class="ed_trow_{{ $orderdetail->order_id }}">S${{ ($orders->sub_total!=0 ? $orders->sub_total : $subTotal) }}</span>
+										<input id="sub_total_{{ $orderdetail->order_id }}" data-allow-zero="0" type="number" class="form-control sh_trow_{{ $orderdetail->order_id }} w-100 float-right tv_{{ $orderdetail->order_id }} validNum" 
+										    value="{{ ($orders->sub_total!=0 ? $orders->sub_total : $subTotal) }}" min="1" style="display:none;" />
+										</td>
 										</td>
 									</tr>
 									<tr>
@@ -448,7 +456,8 @@
 					handling : handlingAmt,
 					fuel : fuelAmt,
 					tot_price : $('#payable_amount_total_'+rowId).val(),
-					_token : '{{ csrf_token() }}'
+					_token : '{{ csrf_token() }}',
+					sub_tot_price : $('#sub_total_'+rowId).val(),
 				},
 				success: function(r){
 				    alert(r.message);

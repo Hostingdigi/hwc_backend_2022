@@ -37,6 +37,7 @@
     <!-- BEGIN: Custom CSS-->
     <link rel="stylesheet" type="text/css" href="{{asset('assets/css/style.css')}}">
 	<link rel="stylesheet" type="text/css" href="{{asset('assets/css/paginate.css')}}">
+	<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <!-- END: Custom CSS-->
 	<style>
 		.dataTables_filter
@@ -49,12 +50,14 @@
 			float:right;
 			position:relative;
 		}
-        @media print {
-            .print-hide {
-                display: none !important;
-            }
-        }
 	</style>
+	<style>
+    @media print {
+      .print-hide {
+        display: none !important;
+      }
+    }
+</style>
 
 </head>
 

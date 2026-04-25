@@ -6,6 +6,7 @@
      @csrf
 	 <input type="hidden" name="orderincid" class="orderincid" value="{{ $orderincid }}">
 	<div class="container">
+	    
 		<div class="row">
 			<div class="col-md-6">
 				<div class="pay-meth">

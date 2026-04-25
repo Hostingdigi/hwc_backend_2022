@@ -142,7 +142,9 @@
 	<script type="text/javascript">
     $(document).ready(function(){  
 		$('#js-news').ticker();
+		@if(!Request::is('stripe'))
 		$('.alert').delay(3000).fadeOut('fast');
+		@endif
 		//$('.box-Added-product').delay(1000).fadeOut('fast');
 		$('#subscribe_email').focus(function() {
 			$('#subscribe_email').css('border', '1px solid #ced4da');

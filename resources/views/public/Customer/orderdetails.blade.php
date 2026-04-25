@@ -321,7 +321,7 @@
                   <li class="list-group-item d-flex">
                     <span>Subtotal
                     </span>
-                    <span class="ml-auto">S${{ number_format(($orders->payable_amount + $orders->discount_amount) - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected + $orders->fuelcharges + $orders->handlingfee), 2) }}</span>
+                    <span class="ml-auto">S${{ !empty($orders->sub_total) && $orders->sub_total!=0 ? $orders->sub_total : number_format(($orders->payable_amount + $orders->discount_amount) - ($orders->shipping_cost + $orders->packaging_fee + $orders->tax_collected + $orders->fuelcharges + $orders->handlingfee), 2) }}</span>
                   </li>
                   <li class="list-group-item d-flex">
                     <span>{{($orders->tax_label !='')?$orders->tax_label:'Tax'}}</span>

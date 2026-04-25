@@ -10,9 +10,7 @@
         </ol>
       </div>
     </section>
-	@php
-		$roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
-	@endphp
+	
 <!-- Checkout -->
 	
 	<section class="checkout">
@@ -173,14 +171,14 @@
 													<div class="row">
 													<div class="col-md-3">
 														@if($cart['image'] != '')															
-															<img src="{{ url('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100%">
+															<img src="{{ env('IMG_URL').('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100%">
 														@else
 															<img src="{{ url('/images/noimage.png') }}" alt="{{ $cart['productName'] }}" width="100%">
 														@endif
 													</div>
 													<div class="col-md-9 no-pm">
 														<p>{{ $cart['productName'] }}</p>
-														<p class="hint">{{ $cart['qty'] }} X S${{ number_format($roundObj->roundDecimal($cart['price']),2) }}</p>
+														<p class="hint">{{ $cart['qty'] }} X S${{ number_format($cart['price'],2) }}</p>
 														@if($cart['productoption'])
 															<p class="hint">Option: {{ $cart['productoption'] }}</p>
 														@endif
@@ -189,7 +187,7 @@
 												</div>
 												</div>
 												<div class="prc">
-													<p>S${{ number_format($roundObj->roundDecimal($cart['total']),2) }}</p>
+													<p>S${{ number_format($cart['total'],2) }}</p>
 												</div>
 											</li>
 											@endforeach
