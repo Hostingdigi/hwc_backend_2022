@@ -185,10 +185,10 @@ class CustomerController extends Controller
                 $countries = Country::where('country_status', '=', '1')->where('phonecode', '>', '0')->orderBy('countryname', 'ASC')->get();
                 return view('public/Customer.address', compact('customer', 'id', 'countries'));
             } else if ($id == 'myorders') {
-                $orders = OrderMaster::where('user_id', '=', $customerid)->where('order_status', '>', '0')->orderBy('order_id', 'desc')->paginate(10);
+                $orders = OrderMaster::where(['user_id' => $customerid, 'order_type' => 1, 'is_fulfilled' => 1])->where('order_status', '>', '0')->orderByDesc('order_id')->paginate(10);
                 return view('public/Customer.myorders', compact('id', 'orders'));
             } else if ($id == 'pendingorders') {
-                $orders = OrderMaster::where('user_id', '=', $customerid)->where('order_status', '=', '0')->orderBy('order_id', 'desc')->paginate(10);
+                $orders = OrderMaster::where(['user_id' => $customerid, 'order_type' => 1, 'is_fulfilled' => 1])->where('order_status', '=', '0')->orderByDesc('order_id')->paginate(10);
                 return view('public/Customer.pendingorders', compact('id', 'orders'));
             } else if ($id == 'quotations') {
                 $groupcustomers[] = $customerid;

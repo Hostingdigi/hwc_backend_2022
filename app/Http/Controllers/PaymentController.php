@@ -27,6 +27,7 @@ use Session;
 use Stripe;
 use Log;
 use Exception;
+use App\Models\OrderPayment;
 
 class PaymentController extends Controller
 {
@@ -450,6 +451,35 @@ class PaymentController extends Controller
         return view('public/Payment.stripe', compact('cartdata', 'sesid', 'subtotal', 'gst', 'grandtotal', 'taxtitle', 'stripekey', 'billinginfo', 'deliverycost', 'deliverytype', 'packingfee', 'discounttext', 'discount', 'orderincid'));
     }
 
+    public function paymentLogUpdate($orderId, $status, $errorMessage = null)
+    {
+        $lastPayment = OrderPayment::where('order_id', $orderId)->latest()->first();
+        if($lastPayment) $lastPayment->update([
+                'payment_status' => $status,
+                'error_reason' => $errorMessage,
+            ]);
+    }
+
+    private function handleStripeError($orderid, $e)
+    {
+        $defaultErrorMessage = 'Payment failed. Please try again.';
+
+        // Stripe-specific error
+        if (method_exists($e, 'getError') && $e->getError()) {
+            $errorMessage = $e->getError()->message ?? $defaultErrorMessage;
+        } else {
+            $errorMessage = $e->getMessage() ?? $defaultErrorMessage;
+        }
+
+        \Log::error("Order id {$orderid} is failed.");
+        \Log::error("Error :: " . $errorMessage);
+
+        // update payment log
+        $this->paymentLogUpdate($orderid, 2, $errorMessage);
+
+        return redirect("cancelpayment?orderid=$orderid");
+    }
+
     public function stripePaymentProcess(Request $request)
     {
         if (!Session::has('billinginfo')) {
@@ -509,7 +539,7 @@ class PaymentController extends Controller
         }
 
         $userid = $orderCreate['userId'];
-        DB::table('cart_details')->where('user_id', '=', $userid)->delete();
+        // DB::table('cart_details')->where('user_id', '=', $userid)->delete();
 
         $paysettings = PaymentSettings::where('id', 1)->select('currency_type')->first();
         $currency = $paysettings ? $paysettings->currency_type : 'SGD';
@@ -577,74 +607,39 @@ class PaymentController extends Controller
                         'address' => $shippingAddress,
                     ],
                 ]);
+
+                \Log::info("STRIPE RESPONSE :: " . json_encode($response));
     
                 if ($response) {
                     $transid = $response['id'];
-                    OrderMaster::where('order_id', $orderCreate['orderId'])->update(['trans_id' => $transid, 'order_status' => '1']);
+                    OrderMaster::where('order_id', $orderCreate['orderId'])->update(['trans_id' => $transid, 'order_status' => '1', 'is_fulfilled' => 1]);
+
+                    // payment succeeded, update payment log status
+                    $this->paymentLogUpdate($orderid, 1);
     
                     if (!empty($discounttext) && !empty($discount)) CouponCodeUsage::insert(['coupon_id' => $couponid, 'customer_id' => $userid, 'order_id' => $orderCreate['orderId']]);
                 }
-    
-                
-
-                //Clear sessions
-                $sessionsValues = ['cartdata', 'deliverymethod', 'if_unavailable', 'billinginfo', 'paymentmethod', 'discount', 'discounttext',
-                    'couponcode', 'discounttype', 'old_order_id'];
-                foreach ($sessionsValues as $session) Session::forget($session);
                 
             } catch (\Stripe\Exception\CardException $e) {
-				// Since it's a decline, \Stripe\Exception\CardException will be caught
-				// return redirect()->back()->with('pay_error', $e->getError()->message ?? $defaultErrorMessage);
-				\Log::error("Order id $orderid is failed.");
-                \Log::error("Error :: ". $e->getError()->message ?? $defaultErrorMessage);
-                return redirect("cancelpayment?orderid=$orderid");
-                
+                return $this->handleStripeError($orderid, $e);
 			} catch (\Stripe\Exception\RateLimitException $e) {
-				// Too many requests made to the API too quickly
-				// return redirect()->back()->with('pay_error', $e->getError()->message ?? $defaultErrorMessage);
-				\Log::error("Order id $orderid is failed.");
-                \Log::error("Error :: ". $e->getError()->message ?? $defaultErrorMessage);
-                return redirect("cancelpayment?orderid=$orderid");
+				return $this->handleStripeError($orderid, $e);
 			} catch (\Stripe\Exception\InvalidRequestException $e) {
-				// Invalid parameters were supplied to Stripe's API
-				// return redirect()->back()->with('pay_error', $e->getError()->message ?? $defaultErrorMessage);
-				\Log::error("Order id $orderid is failed.");
-                \Log::error("Error :: ". $e->getError()->message ?? $defaultErrorMessage);
-                return redirect("cancelpayment?orderid=$orderid");
+				return $this->handleStripeError($orderid, $e);
 			} catch (\Stripe\Exception\AuthenticationException $e) {
-				// Authentication with Stripe's API failed
-				// (maybe you changed API keys recently)
-				// return redirect()->back()->with('pay_error', $e->getError()->message ?? $defaultErrorMessage);
-				\Log::error("Order id $orderid is failed.");
-                \Log::error("Error :: ". $e->getError()->message ?? $defaultErrorMessage);
-                return redirect("cancelpayment?orderid=$orderid");
+				return $this->handleStripeError($orderid, $e);
 			} catch (\Stripe\Exception\ApiConnectionException $e) {
-				// Network communication with Stripe failed
-				// return redirect()->back()->with('pay_error', $e->getError()->message ?? $defaultErrorMessage);
-				\Log::error("Order id $orderid is failed.");
-                \Log::error("Error :: ". $e->getError()->message ?? $defaultErrorMessage);
-                return redirect("cancelpayment?orderid=$orderid");
+				return $this->handleStripeError($orderid, $e);
 			} catch (\Stripe\Exception\ApiErrorException $e) {
-				// Display a very generic error to the user, and maybe send
-				// yourself an email
-				// return redirect()->back()->with('pay_error', $e->getError()->message ?? $defaultErrorMessage);
-				\Log::error("Order id $orderid is failed.");
-                \Log::error("Error :: ". $e->getError()->message ?? $defaultErrorMessage);
-                return redirect("cancelpayment?orderid=$orderid");
-			} catch (\Exception $e) {
-				// return redirect()->back()->with('pay_error', $e->getMessage() ?? $defaultErrorMessage);
-				\Log::error("Order id $orderid is failed.");
-                \Log::error("Error :: ". $e->getError()->message ?? $defaultErrorMessage);
-                return redirect("cancelpayment?orderid=$orderid");
-				// Something else happened, completely unrelated to Stripe
+				return $this->handleStripeError($orderid, $e);
+			} catch (\Throwable $e) {
+                return $this->handleStripeError($orderid, $e);
 			}
 
             return redirect('success?orderid=' . $orderCreate['orderId']);
-
         }
 
-        return redirect('cancelpayment');
-
+        return redirect("cancelpayment?orderid=$orderid");
     }
 
     public function stripePaymentProcess2(Request $request)
@@ -2201,11 +2196,17 @@ class PaymentController extends Controller
         // print_r($completeGrabpayPayment);
     }
 
+    public function clearAllSession()
+    {
+        // Clear sessions
+        session()->forget(['cartdata', 'deliverymethod', 'if_unavailable','billinginfo','paymentmethod','discount','discounttext','couponcode',
+            'discounttype','old_order_id']);
+    }
+
     public function success(Request $request)
     {
         // Clear sessions
-        Session::forget(['cartdata', 'deliverymethod', 'if_unavailable','billinginfo','paymentmethod','discount','discounttext','couponcode',
-            'discounttype','old_order_id']);
+        $this->clearAllSession();
             
         $orderid = $request->orderid;
 
@@ -2222,7 +2223,10 @@ class PaymentController extends Controller
                 'oauth_token' => $request->code
             ]);
     
-            if ($request->has('error')) return redirect("cancelpayment?orderid=$orderid");
+            if ($request->has('error')){ 
+                $this->paymentLogUpdate($orderid, 2);
+                return redirect("cancelpayment?orderid=$orderid");
+            }
             
             if($request->has('code') && isset($_COOKIE['code_verifier'])) 
             {
@@ -2235,6 +2239,7 @@ class PaymentController extends Controller
                     
                     if(empty($paymentmethod)){
                         Log::alert('ORDER ID : ' . $orderid . ' grabpay payment gateway is not available.');
+                        $this->paymentLogUpdate($orderid, 2, 'Grabpay payment gateway is not available.');
                         return redirect("cancelpayment?orderid=$orderid");
                     }
                     
@@ -2255,6 +2260,7 @@ class PaymentController extends Controller
     
                     if ($oAuthTokenResult['status_code'] != 200) {
                         Log::alert('ORDER ID : ' . $orderid . ' grabpay oauth token api curl error. RESPONSE = '.serialize($oAuthTokenResult));
+                        $this->paymentLogUpdate($orderid, 2, 'Grabpay oauth token api curl error.');
                         return redirect("cancelpayment?orderid=$orderid");
                     }
                     
@@ -2287,28 +2293,35 @@ class PaymentController extends Controller
                         
                         if ($completeGrabpayPayment['status_code'] != 200) {
                             Log::alert('ORDER ID : ' . $orderid . ' grabpay complete api curl error. RESPONSE = '.serialize($completeGrabpayPayment));
+                            $this->paymentLogUpdate($orderid, 2, 'Grabpay complete api curl error. RESPONSE = '.serialize($completeGrabpayPayment));
                             return redirect("cancelpayment?orderid=$orderid");
                         }
 
                     } else {
                         Log::alert('ORDER ID : ' . $orderid . ' grabpay oauth token api not return access_token key.');
+                        $this->paymentLogUpdate($orderid, 2, 'Grabpay oauth token api not return access_token key.');
                         return redirect("cancelpayment?orderid=$orderid");
                     }
     
                 } catch (Exception $th) {
                     Log::alert('ORDER ID : ' . $orderid . ' grabpay trycatch hit. so payment is not completed. ERROR = '.serialize($th->getMessage()));
+                    $this->paymentLogUpdate($orderid, 2, $th->getMessage());
                     return redirect("cancelpayment?orderid=$orderid");
                 }
                 
             }else{
                 Log::alert('ORDER ID : ' . $orderid . ' Cookie verifier missing :'.(isset($_COOKIE['code_verifier'])?$_COOKIE['code_verifier']:''));
                 Log::alert('ORDER ID : ' . $orderid . ' Code missing :'.($request->has('code')?$request->code:''));
+                $this->paymentLogUpdate($orderid, 2, 'Missing code or cookie verifier in grabpay callback. '.($request->has('code')?$request->code:''));
                 return redirect("cancelpayment?orderid=$orderid");
             }
     
         }
         // Grabpay Ends
         
+        // Payment success, update order fulfillment status and payment details
+        $this->paymentLogUpdate($orderid, 1);
+
         OrderMaster::where('order_id', '=', $orderid)->update(array('order_status' => '1'));
         $order = OrderMaster::where('order_id', '=', $orderid)->select('order_type')->first();
         if ($order) {
@@ -2654,17 +2667,13 @@ class PaymentController extends Controller
 
     public function cancelpayment(Request $request)
     {
-        Session::forget('cartdata');
-        Session::forget('deliverymethod');
-        Session::forget('if_unavailable');
-        Session::forget('billinginfo');
-        Session::forget('paymentmethod');
-        Session::forget('discount');
-        Session::forget('discounttext');
-        Session::forget('couponcode');
-        Session::forget('discounttype');
-        Session::forget('old_order_id');
+        // Clear sessions
+        $this->clearAllSession();
+
         $orderid = $request->orderid;
+
+        // Payment failed, update order fulfillment status and payment details
+        $this->paymentLogUpdate($orderid, 2);
 
         $order = OrderMaster::where('order_id', '=', $orderid)->first();
         if ($order) {
