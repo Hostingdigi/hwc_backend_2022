@@ -455,6 +455,8 @@ class PaymentController extends Controller
 
     public function paymentLogUpdate($orderId, $status, $errorMessage = null)
     {
+        OrderMaster::where('order_id', $orderId)->update(['is_fulfilled' => 1]);
+
         $lastPayment = OrderPayment::where('order_id', $orderId)->latest()->first();
         if($lastPayment){
             $paymentData = [
@@ -1403,9 +1405,13 @@ class PaymentController extends Controller
 
         $paymentmethod = 6; // for paypal payment method
         $cartItems = $this->cartServices->cartItems($billinginfo['ship_country'] ?? null);
-        $cartdata2 = $cartItems['cartItems'];
+        $cartdata = $cartItems['cartItems'];
+
+        if(empty($cartdata)) return redirect('/cart')->with('error', 'Your cart is empty. Please add items to cart before proceeding to payment.');
+
         $subtotal = $cartItems['subTotal'];
         $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
+        $taxPercentage = $cartItems['taxDetails']['taxPercentage'] ?? 0;
         //$fuelcharges = isset($cartItems['fuelcharges']) ? $cartItems['fuelcharges'] : 0.00;
         //$handlingfee = isset($cartItems['handlingfee']) ? $cartItems['handlingfee'] : 0.00;
         /*$grandtotal = $cartItems['grandTotal'];
@@ -1524,64 +1530,74 @@ class PaymentController extends Controller
             $grandtotal = $this->orderServices->roundDecimal($grandtotal);
 
             $fuelSettings = PaymentSettings::where('Id', '1')->select('fuelcharge_percentage')->first();
-            $ordermaster = new OrderMaster;
-            $ordermaster['user_id'] = $userid;
-            $ordermaster['ship_method'] = $deliverymethod;
-            $ordermaster['pay_method'] = $paymethodname;
-            $ordermaster['shipping_cost'] = $deliverycost;
-            $ordermaster['packaging_fee'] = $packingfee;
-            $ordermaster['fuelcharge_percentage'] = $billinginfo['ship_country'] != 'SG' ? ($fuelSettings ? $fuelSettings->fuelcharge_percentage : 0) : 0;
-            $ordermaster['fuelcharges'] = $fuelcharges;
-            $ordermaster['handlingfee'] = $handlingfee;
 
-            $ordermaster['tax_label'] = isset($cartItems['taxDetails']['taxLabel']) ? $cartItems['taxDetails']['taxLabel'] : '';
-            $ordermaster['tax_percentage'] = isset($cartItems['taxDetails']['taxPercentage']) ? $cartItems['taxDetails']['taxPercentage'] : '';
-            $ordermaster['tax_collected'] = $gst;
-            $ordermaster['payable_amount'] = $grandtotal;
-            $ordermaster['discount_amount'] = $discount;
-            $ordermaster['discount_id'] = $couponid;
-            $ordermaster['order_status'] = '0';
-            $ordermaster['if_items_unavailabel'] = $if_items_unavailabel;
-            $ordermaster['delivery_instructions'] = $delivery_instructions;
-            $ordermaster['bill_fname'] = $billinginfo['bill_fname'];
-            $ordermaster['bill_lname'] = $billinginfo['bill_lname'];
-            $ordermaster['bill_email'] = $billinginfo['bill_email'];
-            $ordermaster['bill_mobile'] = $billinginfo['bill_mobile'];
-            $ordermaster['bill_compname'] = $billinginfo['bill_compname'];
-            $ordermaster['bill_ads1'] = $billinginfo['bill_ads1'];
-            $ordermaster['bill_ads2'] = $billinginfo['bill_ads2'];
-            $ordermaster['bill_city'] = $billinginfo['bill_city'];
-            $ordermaster['bill_state'] = $billinginfo['bill_state'];
-            $ordermaster['bill_zip'] = $billinginfo['bill_zip'];
-            $ordermaster['bill_country'] = $billinginfo['bill_country'];
-            $ordermaster['ship_fname'] = $billinginfo['ship_fname'];
-            $ordermaster['ship_lname'] = $billinginfo['ship_lname'];
-            $ordermaster['ship_email'] = $billinginfo['ship_email'];
-            $ordermaster['ship_mobile'] = $billinginfo['ship_mobile'];
-            $ordermaster['ship_ads1'] = $billinginfo['ship_ads1'];
-            $ordermaster['ship_ads2'] = $billinginfo['ship_ads2'];
-            $ordermaster['ship_country'] = $billinginfo['ship_country'];
-            $ordermaster['ship_city'] = $billinginfo['ship_city'];
-            $ordermaster['ship_state'] = $billinginfo['ship_state'];
-            $ordermaster['ship_zip'] = $billinginfo['ship_zip'];
+            $isUnFulfilledOrderExist = OrderMaster::where(['user_id' => $userid,'is_fulfilled' => 0])->latest()->first();
 
-            if (Session::has('old_order_id')) {
-                if (Session::get('old_order_id') > 0) {
-                    $orderid = Session::get('old_order_id');
-                    $orderincid = Session::get('old_order_id');
-                    //OrderMaster::where('order_id', '=', $orderincid)->update(array('pay_method' => $paymethodname));
-                    $today = date('Y-m-d H:i:s');
-                    OrderMaster::where('order_id', '=', $orderincid)->update(array('pay_method' => $paymethodname, 'date_entered' => $today));
-                }
-            } else {
-                $ordermaster->save();
+            $orderData = [
+                'shipping_cost' => $deliverycost,
+                'fuelcharge_percentage' => $billinginfo['ship_country'] != 'SG' ? ($fuelSettings ? $fuelSettings->fuelcharge_percentage : 0) : 0,
+                'fuelcharges' => $fuelcharges,
+                'handlingfee' => $handlingfee,
+                'packaging_fee' => $packingfee,
+                'ship_method' => $deliverymethod,
+                'tax_label' => $taxLabelOnly,
+                'tax_percentage' => $taxPercentage,
+                'tax_collected' => $gst,
+                'payable_amount' => $grandtotal,
+                'discount_amount' => $discount,
+                'discount_id' => $couponid,
+                'pay_method' => $paymethodname,
+                'ship_fname' => $billinginfo['ship_fname'],
+                'ship_lname' => $billinginfo['ship_lname'],
+                'ship_email' => $billinginfo['ship_email'],
+                'ship_mobile' => $billinginfo['ship_mobile'],
+                'ship_ads1' => $billinginfo['ship_ads1'],
+                'ship_ads2' => $billinginfo['ship_ads2'],
+                'ship_country' => $billinginfo['ship_country'],
+                'ship_city' => $billinginfo['ship_city'],
+                'ship_state' => $billinginfo['ship_state'],
+                'ship_zip' => $billinginfo['ship_zip'],
+                'bill_compname' => $billinginfo['bill_compname'],
+                'bill_fname' => $billinginfo['bill_fname'],
+                'bill_lname' => $billinginfo['bill_lname'],
+                'bill_email' => $billinginfo['bill_email'],
+                'bill_mobile' => $billinginfo['bill_mobile'],
+                'bill_ads1' => $billinginfo['bill_ads1'],
+                'bill_ads2' => $billinginfo['bill_ads2'],
+                'bill_city' => $billinginfo['bill_city'],
+                'bill_state' => $billinginfo['bill_state'],
+                'bill_zip' => $billinginfo['bill_zip'],
+                'bill_country' => $billinginfo['bill_country'],
+                'if_items_unavailabel' => $if_items_unavailabel,
+                'delivery_instructions' => $delivery_instructions,
+            ];
 
-                $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
-                if ($order) {
-                    $orderid = $order->order_id;
-                    $orderincid = $order->order_id;
-                }
+            if ($isUnFulfilledOrderExist) {
+                $orderid = $orderincid = $isUnFulfilledOrderExist->order_id;
+                $ordermaster = OrderMaster::where('order_id', $orderid)->update($orderData + [
+                    'is_fulfilled' => 0,
+                    'user_id' => $userid,
+                    'order_status' => 0,
+                    'date_entered' => now()
+                ]);
+                if (!$ordermaster) return redirect('cart')->with('error', 'Unable to process your order. Please try again.');
+            }else{
+
+                $ordermaster = OrderMaster::create($orderData + [
+                    'is_fulfilled' => 0,
+                    'user_id' => $userid,
+                    'order_status' => 0,
+                    'date_entered' => now()
+                ]);
+                if (!$ordermaster) return redirect('cart')->with('error', 'Unable to process your order. Please try again.');
+                $orderid = $orderincid = $ordermaster->id;
             }
+
+            //payment log
+            OrderPayment::create($orderData + [
+                'order_id' => $orderid,
+                'payment_status' => 0
+            ]);
 
             foreach ($cartdata[$sesid] as $cart) {
                 $orderdetails = new OrderDetails;
@@ -1640,7 +1656,7 @@ class PaymentController extends Controller
                 $ccemail = $setting->cc_email;
             }
 
-            DB::table('cart_details')->where('user_id', '=', $userid)->delete();
+            // DB::table('cart_details')->where('user_id', '=', $userid)->delete();
 
             $currency = 'SGD';
             $paysettings = PaymentSettings::where('id', '=', '1')->select('currency_type')->first();
@@ -1668,8 +1684,8 @@ class PaymentController extends Controller
             }
             
             // Clear sessions
-            Session::forget(['cartdata', 'deliverymethod', 'if_unavailable','billinginfo','paymentmethod','discount','discounttext','couponcode',
-                'discounttype','old_order_id']);
+            // Session::forget(['cartdata', 'deliverymethod', 'if_unavailable','billinginfo','paymentmethod','discount','discounttext','couponcode',
+            //     'discounttype','old_order_id']);
 
             return view('public/Payment.paypal', compact('cartdata', 'sesid', 'subtotal', 'gst', 'grandtotal', 'taxtitle', 'apikey', 'apisignature', 'paymenturl', 'billinginfo', 'deliverycost', 'deliverytype', 'packingfee', 'discounttext', 'discount', 'currency', 'payenv', 'orderincid', 'taxLabelOnly', 'handlingfee', 'fuelcharges'));
         }
@@ -2942,9 +2958,9 @@ class PaymentController extends Controller
             $output = curl_exec($cURLConnection);
 
             //Clear session variables
-            Session::forget(['cartdata', 'deliverymethod', 'if_unavailable', 'billinginfo',
-                'paymentmethod', 'discount', 'discounttext', 'couponcode', 'discounttype'
-            ]);
+            // Session::forget(['cartdata', 'deliverymethod', 'if_unavailable', 'billinginfo',
+            //     'paymentmethod', 'discount', 'discounttext', 'couponcode', 'discounttype'
+            // ]);
             // , 'old_order_id',
 
             if ($output === false) {

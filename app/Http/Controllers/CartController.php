@@ -275,19 +275,10 @@ class CartController extends Controller
 
     public function clearcart()
     {
-        Session::forget('cartdata');
-        Session::forget('discount');
-        Session::forget('discounttext');
-        Session::forget('couponcode');
-        Session::forget('discounttype');
-        Session::forget('old_order_id');
+        // Clear sessions
+        session()->forget(['cartdata', 'discount','discounttext','couponcode', 'discounttype','old_order_id']);
         $sesid = Session::get('_token');
-        if (Session::has('customer_id')) {
-            DB::table('cart_details')->where('user_id', '=', Session::get('customer_id'))->delete();
-        } else {
-            DB::table('cart_details')->where('user_token', '=', $sesid)->delete();
-        }
-
+        DB::table('cart_details')->where(Session::has('customer_id') ? ['user_id' => Session::get('customer_id')] : ['user_token' => $sesid])->delete();
         return redirect('/');
     }
 
