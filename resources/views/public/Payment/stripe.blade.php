@@ -180,7 +180,7 @@ $(function() {
 	
 	$('#ordbtn').click(function() {
 	    if($.trim($("iinput[name='cardnumber']").val())!='' && $.trim($("iinput[name='cvc']").val())!=''){
-		    $(this).hide();
+		    $('#ordbtn').hide();
 		    $('#loading').show();
 	    }
 	});
@@ -228,6 +228,8 @@ $(function() {
   
     if (!$form.data('cc-on-file')) {
       e.preventDefault();
+	  $('#ordbtn').hide();
+	  $('#loading').show();
       Stripe.setPublishableKey($form.data('stripe-publishable-key'));
       Stripe.createToken({
         number: $('.card-number').val(),

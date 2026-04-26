@@ -21,10 +21,13 @@
             <h2 class="mb-5">Your transaction has been cancelled!</h2>
 
             <!-- Text -->
-            <p class="mb-7 text-gray-500">
+            <p class="{{ ($order && !empty($order->error_reason)) ? 'mb-2' : 'mb-7' }} text-gray-500">
               Your order details are shown for your personal account.
             </p>
 
+            @if($order && !empty($order->error_reason))
+            <p class="mb-7 text-gray-500" style="color: red !important;">Payment Gateway Error :: {{ $order->error_reason }}</p>
+            @endif
 
           </div>
         </div>

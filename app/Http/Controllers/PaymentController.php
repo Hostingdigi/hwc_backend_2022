@@ -90,6 +90,8 @@ class PaymentController extends Controller
         $cartdata = $cartItems['cartItems'];
         $subtotal = $cartItems['subTotal'];
 
+        if (empty($cartdata)) return redirect('cart');
+
         $grandtotal = $subtotal + $gst + $deliverycost + $packingfee + $fuelcharges + $handlingfee;
         $grandtotal = $grandtotal - $discount;
         $grandtotal = $this->orderServices->roundDecimal($grandtotal);
@@ -454,10 +456,13 @@ class PaymentController extends Controller
     public function paymentLogUpdate($orderId, $status, $errorMessage = null)
     {
         $lastPayment = OrderPayment::where('order_id', $orderId)->latest()->first();
-        if($lastPayment) $lastPayment->update([
+        if($lastPayment){
+            $paymentData = [
                 'payment_status' => $status,
-                'error_reason' => $errorMessage,
-            ]);
+            ];
+            if($errorMessage) $paymentData += ['error_reason' => $errorMessage];
+            $lastPayment->update($paymentData);
+        }
     }
 
     private function handleStripeError($orderid, $e)
@@ -471,8 +476,7 @@ class PaymentController extends Controller
             $errorMessage = $e->getMessage() ?? $defaultErrorMessage;
         }
 
-        \Log::error("Order id {$orderid} is failed.");
-        \Log::error("Error :: " . $errorMessage);
+        OrderMaster::where('order_id', $orderid)->update(['is_fulfilled' => 1, 'error_reason' => $errorMessage]);
 
         // update payment log
         $this->paymentLogUpdate($orderid, 2, $errorMessage);
@@ -2837,7 +2841,7 @@ class PaymentController extends Controller
             }
         }
 
-        return view('public/Payment.cancelpayment');
+        return view('public/Payment.cancelpayment', compact('order'));
     }
 
     public function atomecallback()
