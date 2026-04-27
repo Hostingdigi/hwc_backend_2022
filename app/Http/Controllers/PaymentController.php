@@ -1843,63 +1843,75 @@ class PaymentController extends Controller
                 }
             }
             $fuelSettings = PaymentSettings::where('Id', '1')->select('fuelcharge_percentage')->first();
-            $ordermaster = new OrderMaster;
-            $ordermaster['user_id'] = $userid;
-            $ordermaster['ship_method'] = $deliverymethod;
-            $ordermaster['pay_method'] = $paymethodname;
-            $ordermaster['shipping_cost'] = $deliverycost;
-            $ordermaster['packaging_fee'] = $packingfee;
-            $ordermaster['fuelcharge_percentage'] = $billinginfo['ship_country'] != 'SG' ? ($fuelSettings ? $fuelSettings->fuelcharge_percentage : 0) : 0;
-            $ordermaster['fuelcharges'] = $fuelcharges;
-            $ordermaster['handlingfee'] = $handlingfee;
 
-            $ordermaster['tax_label'] = $taxLabelOnly;
-            $ordermaster['tax_percentage'] = $taxPercentage;
-            $ordermaster['tax_collected'] = $gst;
-            $ordermaster['payable_amount'] = $this->orderServices->roundDecimal($grandtotal);
-            $ordermaster['discount_amount'] = $discount;
-            $ordermaster['discount_id'] = $couponid;
-            $ordermaster['order_status'] = '0';
-            $ordermaster['if_items_unavailabel'] = $if_items_unavailabel;
-            $ordermaster['delivery_instructions'] = $delivery_instructions;
-            $ordermaster['bill_fname'] = $billinginfo['bill_fname'];
-            $ordermaster['bill_lname'] = $billinginfo['bill_lname'];
-            $ordermaster['bill_email'] = $billinginfo['bill_email'];
-            $ordermaster['bill_mobile'] = $billinginfo['bill_mobile'];
-            $ordermaster['bill_compname'] = $billinginfo['bill_compname'];
-            $ordermaster['bill_ads1'] = $billinginfo['bill_ads1'];
-            $ordermaster['bill_ads2'] = $billinginfo['bill_ads2'];
-            $ordermaster['bill_city'] = $billinginfo['bill_city'];
-            $ordermaster['bill_state'] = $billinginfo['bill_state'];
-            $ordermaster['bill_zip'] = $billinginfo['bill_zip'];
-            $ordermaster['bill_country'] = $billinginfo['bill_country'];
-            $ordermaster['ship_fname'] = $billinginfo['ship_fname'];
-            $ordermaster['ship_lname'] = $billinginfo['ship_lname'];
-            $ordermaster['ship_email'] = $billinginfo['ship_email'];
-            $ordermaster['ship_mobile'] = $billinginfo['ship_mobile'];
-            $ordermaster['ship_ads1'] = $billinginfo['ship_ads1'];
-            $ordermaster['ship_ads2'] = $billinginfo['ship_ads2'];
-            $ordermaster['ship_country'] = $billinginfo['ship_country'];
-            $ordermaster['ship_city'] = $billinginfo['ship_city'];
-            $ordermaster['ship_state'] = $billinginfo['ship_state'];
-            $ordermaster['ship_zip'] = $billinginfo['ship_zip'];
+            $isUnFulfilledOrderExist = OrderMaster::where(['user_id' => $userid,'is_fulfilled' => 0])->latest()->first();
 
-            if (Session::has('old_order_id')) {
-                if (Session::get('old_order_id') > 0) {
-                    $orderid = Session::get('old_order_id');
-                    $orderincid = Session::get('old_order_id');
-                    //OrderMaster::where('order_id', '=', $orderincid)->update(array('pay_method' => $paymethodname));
-                    OrderMaster::where('order_id', '=', $orderincid)->update(array('pay_method' => $paymethodname, 'date_entered' => date('Y-m-d H:i:s')));
-                }
-            } else {
-                $ordermaster->save();
+            $orderData = [
+                'shipping_cost' => $deliverycost,
+                'fuelcharge_percentage' => $billinginfo['ship_country'] != 'SG' ? ($fuelSettings ? $fuelSettings->fuelcharge_percentage : 0) : 0,
+                'fuelcharges' => $fuelcharges,
+                'handlingfee' => $handlingfee,
+                'packaging_fee' => $packingfee,
+                'ship_method' => $deliverymethod,
+                'tax_label' => $taxLabelOnly,
+                'tax_percentage' => $taxPercentage,
+                'tax_collected' => $gst,
+                'payable_amount' => $this->orderServices->roundDecimal($grandtotal),
+                'discount_amount' => $discount,
+                'discount_id' => $couponid,
+                'pay_method' => $paymethodname,
+                'ship_fname' => $billinginfo['ship_fname'],
+                'ship_lname' => $billinginfo['ship_lname'],
+                'ship_email' => $billinginfo['ship_email'],
+                'ship_mobile' => $billinginfo['ship_mobile'],
+                'ship_ads1' => $billinginfo['ship_ads1'],
+                'ship_ads2' => $billinginfo['ship_ads2'],
+                'ship_country' => $billinginfo['ship_country'],
+                'ship_city' => $billinginfo['ship_city'],
+                'ship_state' => $billinginfo['ship_state'],
+                'ship_zip' => $billinginfo['ship_zip'],
+                'bill_compname' => $billinginfo['bill_compname'],
+                'bill_fname' => $billinginfo['bill_fname'],
+                'bill_lname' => $billinginfo['bill_lname'],
+                'bill_email' => $billinginfo['bill_email'],
+                'bill_mobile' => $billinginfo['bill_mobile'],
+                'bill_ads1' => $billinginfo['bill_ads1'],
+                'bill_ads2' => $billinginfo['bill_ads2'],
+                'bill_city' => $billinginfo['bill_city'],
+                'bill_state' => $billinginfo['bill_state'],
+                'bill_zip' => $billinginfo['bill_zip'],
+                'bill_country' => $billinginfo['bill_country'],
+                'if_items_unavailabel' => $if_items_unavailabel,
+                'delivery_instructions' => $delivery_instructions,
+            ];
 
-                $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
-                if ($order) {
-                    $orderid = $order->order_id;
-                    $orderincid = $order->order_id;
-                }
+            if ($isUnFulfilledOrderExist) {
+                $orderid = $orderincid = $isUnFulfilledOrderExist->order_id;
+                $ordermaster = OrderMaster::where('order_id', $orderid)->update($orderData + [
+                    'is_fulfilled' => 0,
+                    'user_id' => $userid,
+                    'order_status' => 0,
+                    'date_entered' => now()
+                ]);
+                if (!$ordermaster) return redirect('cart')->with('error', 'Unable to process your order. Please try again.');
+            }else{
+
+                $ordermaster = OrderMaster::create($orderData + [
+                    'is_fulfilled' => 0,
+                    'user_id' => $userid,
+                    'order_status' => 0,
+                    'date_entered' => now()
+                ]);
+                if (!$ordermaster) return redirect('cart')->with('error', 'Unable to process your order. Please try again.');
+                $orderid = $orderincid = $ordermaster->id;
             }
+
+            //payment log
+            OrderPayment::create($orderData + [
+                'order_id' => $orderid,
+                'payment_status' => 0
+            ]);
+
             $atomeitems = [];
 
             foreach ($cartdata[$sesid] as $cart) {
@@ -1958,7 +1970,7 @@ class PaymentController extends Controller
 
             Customer::where('cust_id', '=', $userid)->update(array('cust_firstname' => $billinginfo['bill_fname'], 'cust_lastname' => $billinginfo['bill_lname'], 'cust_address1' => $billinginfo['bill_ads1'], 'cust_address2' => $billinginfo['bill_ads2'], 'cust_city' => $billinginfo['bill_city'], 'cust_state' => $billinginfo['bill_state'], 'cust_country' => $countryid, 'cust_zip' => $billinginfo['bill_zip'], 'cust_phone' => $billinginfo['bill_mobile']));
 
-            DB::table('cart_details')->where('user_id', '=', $userid)->delete();
+            // DB::table('cart_details')->where('user_id', '=', $userid)->delete();
 
             $currency = 'SGD';
             $paysettings = PaymentSettings::where('id', '=', '1')->select('currency_type')->first();
@@ -1997,21 +2009,19 @@ class PaymentController extends Controller
             $result = curl_exec($ch);
             curl_close($ch);
             
-            Session::forget('cartdata');
-            Session::forget('deliverymethod');
-            Session::forget('if_unavailable');
-            Session::forget('billinginfo');
-            Session::forget('paymentmethod');
-            Session::forget('discount');
-            Session::forget('discounttext');
-            Session::forget('couponcode');
-            Session::forget('discounttype');
-            Session::forget('old_order_id');
+            // Session::forget('cartdata');
+            // Session::forget('deliverymethod');
+            // Session::forget('if_unavailable');
+            // Session::forget('billinginfo');
+            // Session::forget('paymentmethod');
+            // Session::forget('discount');
+            // Session::forget('discounttext');
+            // Session::forget('couponcode');
+            // Session::forget('discounttype');
+            // Session::forget('old_order_id');
 
             if ($result) {
                 $response = json_decode($result);
-
-                print_r($response);
 
                 $authtoken = $response->code;
 
@@ -2093,27 +2103,19 @@ class PaymentController extends Controller
 
                     if ($result) {
                         $response = json_decode($result);
-                        print_r($response);
 
                         $apiPaymentUrl = $response->appPaymentUrl;
 
                         if ($apiPaymentUrl) {
-                            //OrderMaster::where('order_id', '=', $orderincid)->update(array('trans_id' => $orderContentToken));
-
                             if ($discounttext != '' && $discount != 0) {
                                 CouponCodeUsage::insert(array('coupon_id' => $couponid, 'customer_id' => $userid, 'order_id' => $orderincid));
                             }
                             return redirect()->away($apiPaymentUrl);
-                            // header('location:' . $apiPaymentUrl);
-                            // exit;
                         }
                     }
                 }
             }
-
-            
         }
-
     }
 
     public function commonCurl($data)
