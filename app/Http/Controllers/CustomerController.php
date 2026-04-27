@@ -188,7 +188,7 @@ class CustomerController extends Controller
                 $orders = OrderMaster::where(['user_id' => $customerid, 'order_type' => 1, 'is_fulfilled' => 1])->where('order_status', '>', '0')->orderByDesc('order_id')->paginate(10);
                 return view('public/Customer.myorders', compact('id', 'orders'));
             } else if ($id == 'pendingorders') {
-                $orders = OrderMaster::where(['user_id' => $customerid, 'order_type' => 1, 'is_fulfilled' => 1])->where('order_status', '=', '0')->orderByDesc('order_id')->paginate(10);
+                $orders = OrderMaster::where(['user_id' => $customerid, 'order_type' => 1, 'is_fulfilled' => 1, 'order_status' => 0])->orderByDesc('order_id')->paginate(10);
                 return view('public/Customer.pendingorders', compact('id', 'orders'));
             } else if ($id == 'quotations') {
                 $groupcustomers[] = $customerid;
