@@ -1,8 +1,8 @@
 @php		
 	$seo = \App\Models\PageContent::where('UniqueKey', '=', 'home')->select('meta_title', 'meta_keywords', 'meta_description')->first();
 	use Illuminate\Support\Facades\Route;
-	$actionname = Route::getCurrentRoute()->getActionName();
-	$routename = Request::route()->getName();
+	$actionname = \Route::currentRouteAction();
+	$routeName = \Route::currentRouteName();
 	$currenturl = Request::url();
 	$urlarray = [];
 	$seourl = $metatitle = $metakey = $metadesc = '';
