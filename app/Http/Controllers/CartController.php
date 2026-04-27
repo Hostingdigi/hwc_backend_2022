@@ -1155,13 +1155,17 @@ class CartController extends Controller
             $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
             #@mail($custemail, $emailsubject, $emailcontent, $headers);
-            Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                $message->to($custemail)
-                    ->subject($emailsubject)
-                    ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->setBody($emailcontent, 'text/html');
-            });
-
+            try {
+                Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
+                    $message->to($custemail)
+                        ->subject($emailsubject)
+                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
+                        ->setBody($emailcontent, 'text/html');
+                });
+                //code...
+            } catch (\Throwable $th) {
+                \Log::error('Error sending quotation '.$quotationid.' email: ' . $th->getMessage());
+            }
             //@mail($setting->admin_email, $emailsubject, $emailcontent, $headers);
         }
 
