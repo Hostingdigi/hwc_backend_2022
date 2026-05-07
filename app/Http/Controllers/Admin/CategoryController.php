@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\CategoryShippingCharge;
 use Illuminate\Http\Request;
 use Session;
 
@@ -215,5 +216,51 @@ class CategoryController extends Controller
         }
 
         return redirect('/admin/category')->with('success', 'Category Successfully Updated!');
+    }
+
+    public function shippingCharges(Request $request)
+    {
+        $moduleaccess = Session::get('accessrights',[]);
+        $adminrole = Session::get('priority',0);
+        $groups = CategoryShippingCharge::where('status',1)->paginate(50);
+        return view('admin.Category.shipping_charges')->with(compact('groups','adminrole','moduleaccess'));
+    }
+
+    public function shippingChargesCreate(Request $request)
+    {
+        $previousGroups = CategoryShippingCharge::where('status',1)->get();
+        $availableCategories = [];
+        foreach($previousGroups as $g) $availableCategories = array_merge($availableCategories,explode(',',$g->category_ids));
+        $categories = Category::where(['ParentLevel' => 0,'TypeStatus' => 1])->get();
+        return view('admin/Category.shipping_charges_create', compact('categories','availableCategories'));
+    }
+
+    public function shippingChargesSave(Request $request)
+    {
+        foreach($request->categories as $category)
+        {
+            $previousGroups = CategoryShippingCharge::where('status',1)->whereRaw('FIND_IN_SET(?, category_ids)', [$category])->first();
+            if($previousGroups){
+                $categoryName = Category::where('TypeId',$category)?->value('EnName');
+                return redirect()->back()->with('message', "<b>'".$categoryName."'</b> category is already available in another group.");
+            }
+        }
+
+        $name = trim(strtolower(str_replace(' ','',$request->gname)));
+
+        $previousGroups = CategoryShippingCharge::where('status',1)->whereRaw("TRIM(LOWER(REPLACE(name,' ',''))) = ?",[$name])->first();
+
+        if($previousGroups){
+            echo "name found";
+            die();
+        }
+
+        CategoryShippingCharge::create([
+            'name' => trim($request->gname),
+            'category_ids' => implode(',',$request->categories),
+            'amount' => $request->amount
+        ]);
+
+        return redirect('admin/category/shipping-charges')->with('success', 'Successfully category shipping charge is created.');
     }
 }

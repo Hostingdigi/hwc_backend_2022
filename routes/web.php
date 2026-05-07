@@ -199,7 +199,10 @@ Route::prefix('/admin')->group(function () {
     Route::resource('/country', 'App\Http\Controllers\Admin\CountryController');
     Route::get('/country/{id}/destroy', 'App\Http\Controllers\Admin\CountryController@destroy');
     Route::get('/country/{id}/{status}/updatestatus', 'App\Http\Controllers\Admin\CountryController@updatestatus');
-
+    
+    Route::get('category/shipping-charges', 'App\Http\Controllers\Admin\CategoryController@shippingCharges');
+    Route::get('category/shipping-charges/create', 'App\Http\Controllers\Admin\CategoryController@shippingChargesCreate');
+    Route::post('category/shipping-charges/save', 'App\Http\Controllers\Admin\CategoryController@shippingChargesSave');
     Route::resource('/category', 'App\Http\Controllers\Admin\CategoryController');
     Route::get('/category/{id}/destroy', 'App\Http\Controllers\Admin\CategoryController@destroy');
     Route::get('/category/{id}/{status}/updatestatus', 'App\Http\Controllers\Admin\CategoryController@updatestatus');

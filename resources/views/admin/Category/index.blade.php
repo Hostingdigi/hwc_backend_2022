@@ -19,8 +19,16 @@
 					</div>
 					@if(in_array('18_Add', $moduleaccess) || $adminrole == 0)
 					<div class="col-4" style="float:right; text-align:right;">
-						<div class="dt-buttons btn-group"><a href="{{ url('/admin/category/create') }}" class="btn btn-outline-primary" tabindex="0" aria-controls="categories"><span>
-						<i class="feather icon-plus"></i> Add New</span></a> </div>
+						<div class="dt-buttons btn-group">
+							<a href="{{ url('/admin/category/create') }}" class="btn btn-outline-primary" tabindex="0" aria-controls="categories"><span>
+								<i class="feather icon-plus"></i> Add New</span>
+							</a>
+						</div>
+						<div class="dt-buttons btn-group">
+							<a href="{{ url('admin/category/shipping-charges?from=category') }}" class="btn btn-outline-primary" tabindex="0" aria-controls="categories"><span>
+								<i class="feather icon-settings"></i> Shipping Charges</span>
+							</a> 
+						</div>
 					</div>
 					@endif
 				</div>

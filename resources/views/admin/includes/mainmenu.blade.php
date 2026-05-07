@@ -121,6 +121,10 @@
 							<ul class="dropdown-menu">
 								<li data-menu="">
 								<a class="dropdown-item" href="{{ url('/admin/subadmin_settings') }}" data-toggle="dropdown" data-i18n="Groups">
+								<i class="fa fa-sitemap" aria-hidden="true"></i>Category Shipping Charges</a>
+								</li>
+								<li data-menu="">
+								<a class="dropdown-item" href="{{ url('/admin/subadmin_settings') }}" data-toggle="dropdown" data-i18n="Groups">
 								<i class="fa fa-sitemap" aria-hidden="true"></i>Site Configuration</a>
 								</li>
 								<li data-menu="">
@@ -337,6 +341,11 @@
 								</li>
 								@endif
 								@if(in_array('29', $accessrights))
+								<li data-menu="">
+									<a class="dropdown-item" href="{{ url('/admin/category/shipping-charges') }}" data-toggle="dropdown" data-i18n="Groups">
+										<i class="fa fa-certificate" aria-hidden="true"></i>Category Shipping Charges
+									</a>
+								</li>
 								<li data-menu="">
 								<a class="dropdown-item" href="{{ url('/admin/country') }}" data-toggle="dropdown" data-i18n="Customer">
 								<i class="fa fa-medium" aria-hidden="true"></i>Shipping Countries</a>
