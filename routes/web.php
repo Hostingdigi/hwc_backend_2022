@@ -2,7 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\CheckStatus;
+use App\Http\Controllers\Admin\CategoryController;
 use  Illuminate\Http\Request;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -200,15 +202,14 @@ Route::prefix('/admin')->group(function () {
     Route::get('/country/{id}/destroy', 'App\Http\Controllers\Admin\CountryController@destroy');
     Route::get('/country/{id}/{status}/updatestatus', 'App\Http\Controllers\Admin\CountryController@updatestatus');
     
-    Route::prefix('category/shipping-charges')
-        ->controller(App\Http\Controllers\Admin\CategoryController::class)    
+    Route::prefix('category/shipping-charges')  
         ->group(function(){
-            Route::get('/', 'shippingCharges');
-            Route::get('create', 'shippingChargesCreate');
-            Route::post('save', 'shippingChargesSave');
-            Route::get('edit/{id}', 'shippingChargesEdit');
-            Route::post('update', 'shippingChargesUpdate');
-            Route::get('delete/{id}', 'shippingChargesDelete');
+            Route::get('/', [CategoryController::class,'shippingCharges']);
+            Route::get('create', [CategoryController::class,'shippingChargesCreate']);
+            Route::post('save', [CategoryController::class,'shippingChargesSave']);
+            Route::get('edit/{id}', [CategoryController::class,'shippingChargesEdit']);
+            Route::post('update', [CategoryController::class,'shippingChargesUpdate']);
+            Route::get('delete/{id}', [CategoryController::class,'shippingChargesDelete']);
     });
 
     Route::resource('/category', 'App\Http\Controllers\Admin\CategoryController');

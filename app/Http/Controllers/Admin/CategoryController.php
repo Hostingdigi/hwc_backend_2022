@@ -253,7 +253,8 @@ class CategoryController extends Controller
         {
             $previousGroups = CategoryShippingCharge::where('status',1)->whereRaw('FIND_IN_SET(?, category_ids)', [$category])->first();
             if($previousGroups){
-                $categoryName = Category::where('TypeId',$category)?->value('EnName');
+                $isCategoryExists = Category::where('TypeId',$category)->first();
+                $categoryName = $isCategoryExists ? $isCategoryExists->EnName : '-';
                 return redirect()->back()->with('message', "<b>'".$categoryName."'</b> category is already available in another group.");
             }
         }
@@ -263,8 +264,7 @@ class CategoryController extends Controller
         $previousGroups = CategoryShippingCharge::where('status',1)->whereRaw("TRIM(LOWER(REPLACE(name,' ',''))) = ?",[$name])->first();
 
         if($previousGroups){
-            echo "name found";
-            die();
+            return redirect()->back()->with('message', "category name <b>'".($request->gname)."'</b> is already available in another group.");
         }
 
         CategoryShippingCharge::create([
@@ -282,7 +282,8 @@ class CategoryController extends Controller
         {
             $previousGroups = CategoryShippingCharge::where([['status','=',1],['id','!=',$request->group_id]])->whereRaw('FIND_IN_SET(?, category_ids)', [$category])->first();
             if($previousGroups){
-                $categoryName = Category::where('TypeId',$category)?->value('EnName');
+                $isCategoryExists = Category::where('TypeId',$category)->first();
+                $categoryName = $isCategoryExists ? $isCategoryExists->EnName : '-';
                 return redirect()->back()->with('message', "<b>'".$categoryName."'</b> category is already available in another group.");
             }
         }
