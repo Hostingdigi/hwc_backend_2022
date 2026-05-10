@@ -71,11 +71,11 @@
 											@endphp
 											{{ !empty($names) ? implode(',',$names) : '' }}
 										</td>
-										<td>S${{number_format($g->amount,2)}}</td>
+										<td>S${{$g->amount}}</td>
 										<td>
 										
 										@if(in_array('18_Edit', $moduleaccess) || $adminrole == 0)
-										<a href="{{ url('/admin/category/'.$g->id.'/edit') }}"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></a>&nbsp;&nbsp;|&nbsp;&nbsp;
+										<a href="{{ url('/admin/category/shipping-charges/edit/'.$g->id) }}"><i class="fa fa-pencil fa-lg" aria-hidden="true"></i></a>&nbsp;&nbsp;|&nbsp;&nbsp;
 										@endif
 										
 										@if(in_array('18_Delete', $moduleaccess) || $adminrole == 0)
@@ -149,7 +149,7 @@
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this category?');
 	if(chk) {
-		window.location = "{{ url('/admin/category') }}/"+id+"/destroy";
+		window.location = "{{ url('/admin/category/shipping-charges/delete') }}/"+id;
 	}
 }
 function chkupdatestatus(id, status) {

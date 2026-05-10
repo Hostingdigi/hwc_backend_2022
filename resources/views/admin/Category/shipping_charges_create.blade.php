@@ -99,7 +99,7 @@
                                                     </div>
                                                     <div class="col-md-8 offset-md-4">
                                                         <button type="submit" class="btn btn-primary mr-1 mb-1" name="submit_action">Add</button>
-                                                        <button type="reset" class="btn btn-outline-warning mr-1 mb-1">Reset</button>
+                                                        <a href="{{url('admin/category/shipping-charges')}}" class="btn btn-outline-warning mr-1 mb-1">Cancel</a>
                                                     </div>
                                                   </div>
                                                   </div>

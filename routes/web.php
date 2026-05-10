@@ -200,9 +200,17 @@ Route::prefix('/admin')->group(function () {
     Route::get('/country/{id}/destroy', 'App\Http\Controllers\Admin\CountryController@destroy');
     Route::get('/country/{id}/{status}/updatestatus', 'App\Http\Controllers\Admin\CountryController@updatestatus');
     
-    Route::get('category/shipping-charges', 'App\Http\Controllers\Admin\CategoryController@shippingCharges');
-    Route::get('category/shipping-charges/create', 'App\Http\Controllers\Admin\CategoryController@shippingChargesCreate');
-    Route::post('category/shipping-charges/save', 'App\Http\Controllers\Admin\CategoryController@shippingChargesSave');
+    Route::prefix('category/shipping-charges')
+        ->controller(App\Http\Controllers\Admin\CategoryController::class)    
+        ->group(function(){
+            Route::get('/', 'shippingCharges');
+            Route::get('create', 'shippingChargesCreate');
+            Route::post('save', 'shippingChargesSave');
+            Route::get('edit/{id}', 'shippingChargesEdit');
+            Route::post('update', 'shippingChargesUpdate');
+            Route::get('delete/{id}', 'shippingChargesDelete');
+    });
+
     Route::resource('/category', 'App\Http\Controllers\Admin\CategoryController');
     Route::get('/category/{id}/destroy', 'App\Http\Controllers\Admin\CategoryController@destroy');
     Route::get('/category/{id}/{status}/updatestatus', 'App\Http\Controllers\Admin\CategoryController@updatestatus');
