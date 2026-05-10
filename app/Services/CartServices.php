@@ -9,6 +9,9 @@ use App\Models\PaymentSettings;
 use App\Models\ShippingMethods;
 use App\Models\InternationalShipping;
 use App\Models\LocalShipping;
+use App\Models\CategoryShippingCharge;
+use App\Models\Product;
+use App\Models\Category;
 use Session;
 
 class CartServices
@@ -42,7 +45,6 @@ class CartServices
         $settings = PaymentSettings::where('Id', '1')->select('min_package_fee')->first();
         $packingFee = $cartData['countryCode'] != 'SG' ? $settings->min_package_fee : 0;
 
-
         if (Session::has('customer_id') && $allowCust) {
             $customer = Customer::where('cust_id', Session::get('customer_id'))->first();
             
@@ -67,6 +69,23 @@ class CartServices
 
         foreach ($cartData['cartItems'] as $key => $val) {
             $subTotal += $val['total'];
+        }
+
+        //Apply default shipping charges by category
+        $defaultDeliveryCharges = [];
+        $defaultDeliveryCharge = 0;
+        foreach ($cartData['cartItems'] as $key => $val) {
+            $product = Product::where('Id',$val['productId'])->first();
+            if($product){
+                $category = Category::where('TypeId',$product->Types)->first();
+                if($category){
+                    $existsCategoryShippingCharge = CategoryShippingCharge::where('status',1)
+                        ->whereRaw('FIND_IN_SET(?, category_ids)', [$product->Types])
+                        ->first();
+                    if($existsCategoryShippingCharge && !in_array($existsCategoryShippingCharge->id,$defaultDeliveryCharges)) 
+                        $defaultDeliveryCharges[] = $existsCategoryShippingCharge->id;
+                }
+            }
         }
 
         //Exclude default tax amount
@@ -94,6 +113,9 @@ class CartServices
         }
         $packingFee += $boxFees;
         $packingFee = round($packingFee, 2);
+
+        if(!empty($defaultDeliveryCharges)) $deliveryTotal = CategoryShippingCharge::where('status',1)
+            ->whereIn('id',$defaultDeliveryCharges)->sum('amount');
 
         $cartData['deliveryDetails']['deliveryTotal'] = $deliveryTotal;
         $cartData['fuelcharges'] = $this->getFuelCharges($deliveryTotal, $cartData['countryCode']);
