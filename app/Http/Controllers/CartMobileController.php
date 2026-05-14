@@ -23,6 +23,8 @@ use Illuminate\Http\Request;
 use Mail;
 use Session;
 use Stripe;
+use App\Models\CategoryShippingCharge;
+use App\Models\Category;
 
 class CartMobileController extends Controller
 {
@@ -1126,6 +1128,26 @@ class CartMobileController extends Controller
                 $changedShippingCost = $orderinfo['shippingcost'];
             }
             //calculate fuelcharges - End
+
+            // Calculate default category shipping cost
+            $defaultDeliveryCharges = [];
+            foreach ($orderinfo['products'] as $val) {
+                $product = Product::where('Id',$val['id'])->first();
+                if($product){
+                    $category = Category::where('TypeId',$product->Types)->first();
+                    if($category){
+                        $existsCategoryShippingCharge = CategoryShippingCharge::where('status',1)
+                            ->whereRaw('FIND_IN_SET(?, category_ids)', [$product->Types])
+                            ->first();
+                        if($existsCategoryShippingCharge && !in_array($existsCategoryShippingCharge->id,$defaultDeliveryCharges)) 
+                            $defaultDeliveryCharges[] = $existsCategoryShippingCharge->id;
+                    }
+                }
+            }
+
+            if(!empty($defaultDeliveryCharges)) $changedShippingCost = CategoryShippingCharge::where('status',1)
+            ->whereIn('id',$defaultDeliveryCharges)->sum('amount');
+            //End
 
             $ordermaster = new OrderMaster;
             $ordermaster['user_id'] = $userid;
@@ -2251,6 +2273,27 @@ class CartMobileController extends Controller
 
             //$deliverycost = $deliverycosttotalitem + $totaldeliverycost;
             $deliverycost = $totaldeliverycost;
+
+            // Calculate default category shipping cost
+            $defaultDeliveryCharges = [];
+            foreach ($cartdetails as $val) {
+                $product = Product::where('Id',$val->prod_id)->first();
+                if($product){
+                    $category = Category::where('TypeId',$product->Types)->first();
+                    if($category){
+                        $existsCategoryShippingCharge = CategoryShippingCharge::where('status',1)
+                            ->whereRaw('FIND_IN_SET(?, category_ids)', [$product->Types])
+                            ->first();
+                        if($existsCategoryShippingCharge && !in_array($existsCategoryShippingCharge->id,$defaultDeliveryCharges)) 
+                            $defaultDeliveryCharges[] = $existsCategoryShippingCharge->id;
+                    }
+                }
+            }
+
+            if(!empty($defaultDeliveryCharges)) $deliverycost = $totaldeliverycost = CategoryShippingCharge::where('status',1)
+            ->whereIn('id',$defaultDeliveryCharges)->sum('amount');
+            //End
+
             $packingfee = number_format(($packingfee + $boxfees), 2);
 
             #$deliverycost = $cart->shippingCost($country, $deliverymethod, $shippingbox, $quantity, $subtotal, $gst);
@@ -2315,6 +2358,26 @@ class CartMobileController extends Controller
                 $deliverycost += $cart->shippingCost($country, $deliverymethod, $shippingbox, $quantity, $subtotal, $gst);
                 $boxfees = $cart->getPackagingFee($country, $totalweight, $subtotal, $gst, $deliverymethod, $shippingbox, $quantity);
             }
+
+            // Calculate default category shipping cost
+            $defaultDeliveryCharges = [];
+            foreach ($cartitems as $val) {
+                $product = Product::where('Id',$val['id'])->first();
+                if($product){
+                    $category = Category::where('TypeId',$product->Types)->first();
+                    if($category){
+                        $existsCategoryShippingCharge = CategoryShippingCharge::where('status',1)
+                            ->whereRaw('FIND_IN_SET(?, category_ids)', [$product->Types])
+                            ->first();
+                        if($existsCategoryShippingCharge && !in_array($existsCategoryShippingCharge->id,$defaultDeliveryCharges)) 
+                            $defaultDeliveryCharges[] = $existsCategoryShippingCharge->id;
+                    }
+                }
+            }
+
+            if(!empty($defaultDeliveryCharges)) $deliverycost = CategoryShippingCharge::where('status',1)
+            ->whereIn('id',$defaultDeliveryCharges)->sum('amount');
+            //End
 
             $packingfee = number_format(($packingfee + $boxfees), 2);
 

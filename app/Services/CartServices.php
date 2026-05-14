@@ -73,7 +73,6 @@ class CartServices
 
         //Apply default shipping charges by category
         $defaultDeliveryCharges = [];
-        $defaultDeliveryCharge = 0;
         foreach ($cartData['cartItems'] as $key => $val) {
             $product = Product::where('Id',$val['productId'])->first();
             if($product){
