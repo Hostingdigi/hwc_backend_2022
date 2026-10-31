@@ -53,13 +53,13 @@ class PromotionsController extends Controller
 		$filename = $mobilefilename = '';
         if($request->hasFile('EnBanimage')) {
 			$image = $request->file('EnBanimage');			
-			$filename = time().'_'.$image->getClientOriginalName();
+			$filename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/promotionsbanner');
 			$image->move($destinationPath, $filename);                                
 		}	
 		if($request->hasFile('EnBanMobileimage')) {
 			$image = $request->file('EnBanMobileimage');			
-			$mobilefilename = time().'_'.$image->getClientOriginalName();
+			$mobilefilename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/promotionsbanner');
 			$image->move($destinationPath, $mobilefilename);                                
 		}	
@@ -108,13 +108,13 @@ class PromotionsController extends Controller
 		$mobilefilename = $request->ExistEnBanMobileimage;        
 		if($request->hasFile('EnBanimage')) {
 			$image = $request->file('EnBanimage');
-			$filename = time().'_'.$image->getClientOriginalName();
+			$filename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/promotionsbanner');
 			$image->move($destinationPath, $filename);
 		}
 		if($request->hasFile('EnBanMobileimage')) {
 			$image = $request->file('EnBanMobileimage');
-			$mobilefilename = time().'_'.$image->getClientOriginalName();
+			$mobilefilename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/promotionsbanner');
 			$image->move($destinationPath, $mobilefilename);
 		}

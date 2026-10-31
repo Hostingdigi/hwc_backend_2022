@@ -217,7 +217,7 @@ class Cart extends Model
 		} else {
 			
 			
-			$zones = InternationalShipping::where('Status', '=', '1')->whereRaw("concat(',',CountriesList,',') LIKE '%,".$countryid."%,'")->first();
+			$zones = InternationalShipping::where('Status', '=', '1')->whereRaw("concat(',',CountriesList,',') LIKE ?", ['%,' . $countryid . '%,'])->first();
 			
 			if($zones) {				
 				if($weight > 300) {

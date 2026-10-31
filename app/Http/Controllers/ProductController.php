@@ -91,7 +91,7 @@ class ProductController extends Controller
             $join = '';
 
             if (isset($request->bid)) {
-                $bid = $request->bid;
+                $bid = $this->sqlIdList($request->bid);
                 if ($join != '') {
                     $join .= ' AND Brand IN (' . $bid . ')';
                 } else {
@@ -346,7 +346,7 @@ class ProductController extends Controller
         }
 
         if (isset($request->cid)) {
-            $catid = $request->cid;
+            $catid = $this->sqlIdList($request->cid);
             if ($catid > 0) {
                 if ($join != '') {
                     $join .= ' AND Types IN (' . $catid . ')';
@@ -550,7 +550,7 @@ class ProductController extends Controller
         $producttags = [];
 
         /*if(isset($request->cid)) {
-        $catid = $request->cid;
+        $catid = $this->sqlIdList($request->cid);
         $join .= 'Types = '.$catid;
 
         $pcategory = Category::where('TypeId', '=', $catid)->select('TypeId','ParentLevel')->first();
@@ -570,7 +570,7 @@ class ProductController extends Controller
         }*/
 
         if (isset($request->cid)) {
-            $catid = $request->cid;
+            $catid = $this->sqlIdList($request->cid);
             if ($join != '') {
                 $join .= ' AND Types IN (' . $catid . ')';
             } else {
@@ -579,7 +579,7 @@ class ProductController extends Controller
         }
 
         if (isset($request->bid)) {
-            $bid = $request->bid;
+            $bid = $this->sqlIdList($request->bid);
             if ($join != '') {
                 $join .= ' AND Brand IN (' . $bid . ')';
             } else {
@@ -664,7 +664,7 @@ class ProductController extends Controller
         $producttags = [];
 
         if (isset($request->cid)) {
-            $catid = $request->cid;
+            $catid = $this->sqlIdList($request->cid);
             if ($join != '') {
                 $join .= ' AND Types IN (' . $catid . ')';
             } else {
@@ -673,7 +673,7 @@ class ProductController extends Controller
         }
 
         if (isset($request->bid)) {
-            $bid = $request->bid;
+            $bid = $this->sqlIdList($request->bid);
             if ($join != '') {
                 $join .= ' AND Brand IN (' . $bid . ')';
             } else {
@@ -722,7 +722,7 @@ class ProductController extends Controller
 
         $isPromotion = 0;
         if (isset($request->IsPromotion)) {
-            $isPromotion = $request->IsPromotion;
+            $isPromotion = (int) $request->IsPromotion;
             if ($isPromotion == 1) {
                 if ($join != '') {
                     $join .= ' AND IsPromotion = ' . $isPromotion;
@@ -732,7 +732,7 @@ class ProductController extends Controller
             }
         }
         if (isset($request->cid)) {
-            $catid = $request->cid;
+            $catid = $this->sqlIdList($request->cid);
             if ($join != '') {
                 $join .= ' AND Types IN (' . $catid . ')';
             } else {
@@ -745,15 +745,15 @@ class ProductController extends Controller
             $searchkey = $request->searchkey;
             if ($searchkey != '') {
                 if ($join != '') {
-                    $join .= ' AND EnName LIKE "%' . $searchkey . '%"';
+                    $join .= ' AND EnName LIKE ' . $this->sqlLike($searchkey);
                 } else {
-                    $join .= 'EnName LIKE "%' . $searchkey . '%"';
+                    $join .= 'EnName LIKE ' . $this->sqlLike($searchkey);
                 }
             }
         }
 
         if (isset($request->bid)) {
-            $bid = $request->bid;
+            $bid = $this->sqlIdList($request->bid);
             if ($join != '') {
                 $join .= ' AND Brand IN (' . $bid . ')';
             } else {
@@ -948,7 +948,7 @@ class ProductController extends Controller
             $search = '';
             if ($searchkey) {
 
-                $search = '(EnName LIKE "%' . addslashes($searchkey) . '%" OR ProdCode LIKE "%' . addslashes($searchkey) . '%")';
+                $search = '(EnName LIKE ' . $this->sqlLike($searchkey) . ' OR ProdCode LIKE ' . $this->sqlLike($searchkey) . ')';
 
             }
 
@@ -970,7 +970,7 @@ class ProductController extends Controller
             $join = $parentcategory = '';
 
             if (isset($request->cid)) {
-                $catid = $request->cid;
+                $catid = $this->sqlIdList($request->cid);
                 if ($join != '') {
                     $join .= ' AND Types IN (' . $catid . ')';
                 } else {
@@ -979,7 +979,7 @@ class ProductController extends Controller
             }
 
             if (isset($request->bid)) {
-                $bid = $request->bid;
+                $bid = $this->sqlIdList($request->bid);
                 if ($join != '') {
                     $join .= ' AND Brand IN (' . $bid . ')';
                 } else {
@@ -1132,17 +1132,6 @@ class ProductController extends Controller
             });
         }
         echo 'Success';
-    }
-
-    public function updateLatestProducts($tablename)
-    {
-        $tabledata = DB::select('SELECT * FROM ' . $tablename);
-        if ($tabledata) {
-            foreach ($tabledata as $data) {
-                Product::where('Id', '=', $data->Id)->update(array('ProdType' => $data->ProdType, 'UniqueKey' => $data->UniqueKey, 'EnName' => $data->EnName, 'SKU' => $data->SKU, 'Code' => $data->Code, 'Size' => $data->Size, 'EnShortDesc' => $data->EnShortDesc, 'Color' => $data->Color, 'Specs' => $data->Specs, 'StandardPrice' => $data->StandardPrice, 'Price' => $data->Price, 'Vendor' => $data->Vendor, 'Supplier' => $data->Supplier, 'Quantity' => $data->Quantity, 'cust_qty_per_day' => $data->cust_qty_per_day, 'ShippingBox' => $data->ShippingBox, 'Weight' => $data->Weight, 'Dimension' => $data->Dimension, 'MOQ' => $data->MOQ, 'unspsc' => $data->unspsc, 'gebiz_item' => $data->gebiz_item, 'ProdStatus' => $data->ProdStatus, 'Types' => $data->Types, 'Brand' => $data->Brand, 'Image' => $data->Image, 'LargeImage' => $data->LargeImage, 'MobileImage' => $data->MobileImage, 'MobileLargeImage' => $data->MobileLargeImage, 'Tds' => $data->Tds, 'Sds' => $data->Sds, 'IsFeatured' => $data->IsFeatured, 'IsPromotion' => $data->IsPromotion, 'IsOverseasShippingTrue' => $data->IsOverseasShippingTrue, 'Video' => $data->Video, 'Created' => $data->Created, 'Modified' => $data->Modified, 'DisplayOrder' => $data->DisplayOrder, 'EnLongDesc' => $data->EnLongDesc, 'EnInfo' => $data->EnInfo, 'MetaTitle' => $data->MetaTitle, 'MetaKey' => $data->MetaKey, 'MetaDesc' => $data->MetaDesc, 'ProdCode' => $data->ProdCode, 'ProdTags' => $data->ProdTags));
-                echo $data->Id . ' updated<br>';
-            }
-        }
     }
 
 }

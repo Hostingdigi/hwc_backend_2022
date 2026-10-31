@@ -219,7 +219,7 @@ class CustomerMobileController extends Controller
     {
         $data = $customerdata = [];
         $username = $request->username;
-        $customer = Customer::whereRaw("(cust_username = '" . $username . "' OR cust_email = '" . $username . "')")
+        $customer = Customer::whereRaw('(cust_username = ? OR cust_email = ?)', [$username, $username])
             ->where('cust_status', 1)->first();
         if ($customer) {
             $password = Hash::check($request->password, $customer->cust_password);

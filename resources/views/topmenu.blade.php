@@ -48,7 +48,7 @@
                             
 							<div class="topicons">
                                 @if(Session::has('customer_id') && Session::has('customer_name'))
-									<a href="{{ url('/customer/myorders') }}" class="text-sm text-gray-700 underline">
+									<a href="{{ url(!session()->has('punchout') ? '/customer/myorders' : '/customer/personalinfo') }}" class="text-sm text-gray-700 underline">
 								@else
 									<a href="{{ url('/login') }}" class="text-sm text-gray-700 underline">
 								@endif

@@ -20,6 +20,7 @@ use App\Models\Settings;
 use App\Models\ShippingMethods;
 use App\Services\CartServices;
 use App\Services\OrderServices;
+use App\Services\PaymentVerifier;
 use DB;
 use Illuminate\Http\Request;
 use Mail;
@@ -2340,7 +2341,16 @@ class PaymentController extends Controller
     
         }
         // Grabpay Ends
-        
+
+        // Non-GrabPay returns (PayPal, Atome, Hoolah, Stripe) must be confirmed with the gateway
+        if (!$request->has('code')) {
+            $paymentVerifier = app(PaymentVerifier::class);
+            $verification = $paymentVerifier->verify(OrderMaster::where('order_id', '=', $orderid)->first(), $request->all());
+            if (!$paymentVerifier->allowsMarkingPaid($verification, $orderid)) {
+                return view('public/Payment.pendingverification', compact('orderid'));
+            }
+        }
+
         // Payment success, update order fulfillment status and payment details
         $this->paymentLogUpdate($orderid, 1);
 

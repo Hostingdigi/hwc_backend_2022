@@ -251,7 +251,7 @@ class CommonMobileController extends Controller
         if ($filter == '0-9') {
             $brands = Brand::where('BrandStatus', '=', '1')->where('EnName', 'LIKE', '0%')->orWhere('EnName', 'LIKE', '1%')->orWhere('EnName', 'LIKE', '2%')->orWhere('EnName', 'LIKE', '3%')->orWhere('EnName', 'LIKE', '4%')->orWhere('EnName', 'LIKE', '5%')->orWhere('EnName', 'LIKE', '6%')->orWhere('EnName', 'LIKE', '7%')->orWhere('EnName', 'LIKE', '8%')->orWhere('EnName', 'LIKE', '9%')->orderBy('EnName', 'ASC')->get();
         } else {
-            $brands = Brand::where('BrandStatus', '=', '1')->whereRaw('EnName LIKE "' . $filter . '%"')->orderBy('DisplayOrder', 'asc')->get();
+            $brands = Brand::where('BrandStatus', '=', '1')->where('EnName', 'LIKE', $filter . '%')->orderBy('DisplayOrder', 'asc')->get();
         }
         if ($brands) {
             $x = 0;

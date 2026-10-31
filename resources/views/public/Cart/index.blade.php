@@ -11,7 +11,7 @@
 		<div class="row">
 			<div class="col-md-8">
 				<div class="cart-table table-responsive">	
-					<form action="{{ env('IMG_URL').('/updatecart') }}" method="post" name="updatecartfrm" id="updatecartfrm">
+					<form action="{{ url('/updatecart') }}" method="post" name="updatecartfrm" id="updatecartfrm">
 					@csrf
 					<table class="table">
 						<thead>
@@ -26,7 +26,6 @@
 						<tbody>
 							@php 
 								$productqty = $productid = '';
-								//print_r($cartdata);
 							@endphp
 							@foreach($cartdata as $cartkey => $cart)
 								@php
@@ -43,7 +42,7 @@
 										<div class="t-img">
 											<a href="{{ url('/prod/'.$product->UniqueKey) }}">
 												@if($cart['image'] != '')															
-													<img src="{{ env('IMG_URL').('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100" title="{{ $cart['productName'] }}">
+													<img src="{{ url('/uploads/product/'.$cart['image']) }}" alt="{{ $cart['productName'] }}" width="100" title="{{ $cart['productName'] }}">
 												@else
 													<img src="{{ url('/images/noimage.png') }}" alt="{{ $cart['productName'] }}" title="{{ $cart['productName'] }}" width="100">
 												@endif
@@ -58,7 +57,9 @@
 											
 										</div>
 									</td>
-									<td class="t-price" style="width:15%;">S${{ number_format($cart['price'], 2) }}</td>
+									<td class="t-price" style="width:15%;">
+									    S${{ number_format((session()->has('punchout') ? \App\Services\CartServices::excludeItemPriceGst($cart['price'],$gstTax) : $cart['price']), 2) }}
+									</td>
 									<td class="t-qty" style="width:14%;">
 										<div class="qty-box">
 											<div class="quantity buttons_added">
@@ -69,7 +70,9 @@
 											</div>
 										</div>
 									</td>
-									<td class="t-total" style="width:15%;" id="t-total{{ $cart['productId'] }}_{{ $cart['option_id'] }}">S${{ number_format($cart['total'], 2) }}</td>
+									<td class="t-total" style="width:15%;" id="t-total{{ $cart['productId'] }}_{{ $cart['option_id'] }}">
+									    S${{ number_format((session()->has('punchout') ? \App\Services\CartServices::excludeItemPriceGst($cart['total'],$gstTax) : $cart['total']), 2) }}
+									</td>
 									<td class="t-rem" style="width:5%;"><a href="{{ url('/removecartitem/'.$cartkey.'/'.$cart['productId']) }}"><i class="fa fa-trash-o"></i></a></td>
 								</tr>
 									
@@ -148,6 +151,7 @@
 @include('footer')
 <script type="text/javascript">
 $(document).ready(function() {
+    
 	$('#clearcart').click(function() {
 		window.location = "{{ url('/clearcart') }}";
 	});
@@ -157,8 +161,9 @@ $(document).ready(function() {
 	});
 	
 	$('.chq-out').click(function() {
-		window.location = "{{ url('/checkout') }}";
+	    window.location = "{{ session()->has('punchout') ? url('/punchout/checkout') : url('/checkout') }}";
 	});
+	
 	
 	$('#applycoupon').click(function() {
 		var couponcode = $('#couponcode').val();
@@ -256,11 +261,11 @@ $(document).ready(function() {
 									if(result.length > 0) {
 										$('#notlogin').html('');
 										$('#notlogin').hide();
-										$('#subtotal').html('$'+result[1]);
-										$('#gst').html('$'+result[2]);
-										$('#dis').html('Discount ('+result[4]+') <span id="discountamt">$'+result[0]+'</span>');
+										$('#subtotal').html('S$'+result[1]);
+										$('#gst').html('S$'+result[2]);
+										$('#dis').html('Discount ('+result[4]+') <span id="discountamt">S$'+result[0]+'</span>');
 										$('#dis').show();
-										$('#grandtotal').html('$'+result[3]);
+										$('#grandtotal').html('S$'+result[3]);
 										$('#cancelcoupon').show();
 									}
 								}

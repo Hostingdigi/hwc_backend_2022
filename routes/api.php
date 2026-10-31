@@ -106,19 +106,22 @@ Route::get('faq', 'App\Http\Controllers\CommonMobileController@listFaqs');
 Route::get('new-arrivals', 'App\Http\Controllers\ProductMobileController@newArrivals');
 Route::post('new-arrivals-names', 'App\Http\Controllers\ProductMobileController@newArrivalsNames');
 Route::post('privacy-policy', 'App\Http\Controllers\CommonMobileController@listPrivacyPolicy');
-// Test email
-Route::post('send-test-email', 'App\Http\Controllers\CommonMobileController@sendTestEmail');
+// Test email (sends to any address, so it is key-protected below)
 
 Route::post('request-account-deactivate', 'App\Http\Controllers\CustomerMobileController@requestAccountDeactivate');
 Route::post('verify-account-deactivate', 'App\Http\Controllers\CustomerMobileController@verifyAccountDeactivate');
 
-Route::post('create_category', 'App\Http\Controllers\ApiController@createCategory');
-Route::post('create_sub_category', 'App\Http\Controllers\ApiController@createSubCategory');
+Route::middleware('integration.key')->group(function () {
+    Route::post('send-test-email', 'App\Http\Controllers\CommonMobileController@sendTestEmail');
 
-Route::post('create_product', 'App\Http\Controllers\ApiController@createProduct');
-Route::post('productStatusUpdate', 'App\Http\Controllers\ApiController@productStatusUpdate');
-Route::post('stock_update', 'App\Http\Controllers\ApiController@stockUpdate');
-Route::post('product_all_update', 'App\Http\Controllers\ApiController@productAllUpdate');
+    Route::post('create_category', 'App\Http\Controllers\ApiController@createCategory');
+    Route::post('create_sub_category', 'App\Http\Controllers\ApiController@createSubCategory');
 
-Route::get('dailyorders', 'App\Http\Controllers\ApiController@listDailyOrders');
+    Route::post('create_product', 'App\Http\Controllers\ApiController@createProduct');
+    Route::post('productStatusUpdate', 'App\Http\Controllers\ApiController@productStatusUpdate');
+    Route::post('stock_update', 'App\Http\Controllers\ApiController@stockUpdate');
+    Route::post('product_all_update', 'App\Http\Controllers\ApiController@productAllUpdate');
+
+    Route::get('dailyorders', 'App\Http\Controllers\ApiController@listDailyOrders');
+});
 /* Mobile App - End */

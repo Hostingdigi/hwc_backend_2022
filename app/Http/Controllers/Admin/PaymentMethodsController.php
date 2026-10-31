@@ -56,7 +56,7 @@ class PaymentMethodsController extends Controller
         if ($request->hasFile('payment_logo')) {
             $image = $request->file('payment_logo');
             //$image_name = time().'.'.$image->getClientOriginalExtension();
-            $filename = time() . '_' . $image->getClientOriginalName();
+            $filename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/images');
             $image->move($destinationPath, $filename);
         }
@@ -80,7 +80,7 @@ class PaymentMethodsController extends Controller
         if ($request->hasFile('payment_logo')) {
             $image = $request->file('payment_logo');
             //$image_name = time().'.'.$image->getClientOriginalExtension();
-            $filename = time() . '_' . $image->getClientOriginalName();
+            $filename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/images');
             $image->move($destinationPath, $filename);
         }

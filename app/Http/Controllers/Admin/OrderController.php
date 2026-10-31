@@ -1579,7 +1579,7 @@ class OrderController extends Controller
     }
     
     public function searchProd(Request $request){
-        $allProducts = ($request->has('term') && $request->term!='') ? Product::selectRaw("id, EnName as text")->whereRaw("LOWER(EnName) LIKE '%".strtolower($request->term)."%'")->where('ProdStatus',1)->orderBy('EnName')->get() : [];
+        $allProducts = ($request->has('term') && $request->term!='') ? Product::selectRaw("id, EnName as text")->whereRaw('LOWER(EnName) LIKE ?', ['%' . strtolower($request->term) . '%'])->where('ProdStatus',1)->orderBy('EnName')->get() : [];
         return response()->json(['results' => $allProducts]);
     }
 

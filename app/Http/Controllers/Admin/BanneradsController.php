@@ -58,7 +58,7 @@ class BanneradsController extends Controller
         $bannerads->ban_link = $request->ban_link;	
         if($request->hasFile('EnBanimage')) {
 			$image = $request->file('EnBanimage');			
-			$filename = time().'_'.$image->getClientOriginalName();
+			$filename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/bannerads');
 			$image->move($destinationPath, $filename); 
 			$bannerads->EnBanimage = $filename;			
@@ -114,7 +114,7 @@ class BanneradsController extends Controller
 		$filename = $request->ExistEnBanimage;        
 		if($request->hasFile('EnBanimage')) {
 			$image = $request->file('EnBanimage');						
-		$filename = time().'_'.$image->getClientOriginalName();			
+		$filename = $this->safeUploadName($image);			
 		$destinationPath = public_path('uploads/bannerads');			
 		$image->move($destinationPath, $filename);                                		
 		}	

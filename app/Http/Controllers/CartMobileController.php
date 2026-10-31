@@ -19,6 +19,7 @@ use App\Models\Settings;
 use App\Models\ShippingMethods;
 use App\Services\CartServices;
 use DB;
+use App\Services\PaymentVerifier;
 use Illuminate\Http\Request;
 use Mail;
 use Session;
@@ -1088,7 +1089,7 @@ class CartMobileController extends Controller
 
             $couponId = 0;
             if (isset($orderinfo['couponid']) && !empty($orderinfo['couponid'])) {
-                $coupondata = Couponcode::whereRaw("LOWER(coupon_code) = '" . trim(strtolower($orderinfo['couponid'])) . "'")->where('status', '=', '1')->first();
+                $coupondata = Couponcode::whereRaw('LOWER(coupon_code) = ?', [trim(strtolower($orderinfo['couponid']))])->where('status', '=', '1')->first();
                 if ($coupondata) {
                     $couponId = $coupondata->id;
                 }
@@ -1131,16 +1132,19 @@ class CartMobileController extends Controller
 
             // Calculate default category shipping cost
             $defaultDeliveryCharges = [];
-            foreach ($orderinfo['products'] as $val) {
-                $product = Product::where('Id',$val['id'])->first();
-                if($product){
-                    $category = Category::where('TypeId',$product->Types)->first();
-                    if($category){
-                        $existsCategoryShippingCharge = CategoryShippingCharge::where('status',1)
-                            ->whereRaw('FIND_IN_SET(?, category_ids)', [$product->Types])
-                            ->first();
-                        if($existsCategoryShippingCharge && !in_array($existsCategoryShippingCharge->id,$defaultDeliveryCharges)) 
-                            $defaultDeliveryCharges[] = $existsCategoryShippingCharge->id;
+            if(!in_array($orderinfo['shipmethod'],[1,3,10]))
+            {
+                foreach ($orderinfo['products'] as $val) {
+                    $product = Product::where('Id',$val['id'])->first();
+                    if($product){
+                        $category = Category::where('TypeId',$product->Types)->first();
+                        if($category){
+                            $existsCategoryShippingCharge = CategoryShippingCharge::where('status',1)
+                                ->whereRaw('FIND_IN_SET(?, category_ids)', [$product->Types])
+                                ->first();
+                            if($existsCategoryShippingCharge && !in_array($existsCategoryShippingCharge->id,$defaultDeliveryCharges)) 
+                                $defaultDeliveryCharges[] = $existsCategoryShippingCharge->id;
+                        }
                     }
                 }
             }
@@ -1818,7 +1822,9 @@ class CartMobileController extends Controller
     {
         $data = [];
         $orderid = $request->orderid;
-        OrderMaster::where('order_id', '=', $orderid)->update(array('order_status' => '1'));
+        if (!$this->paymentConfirmed($request, $orderid)) {
+            return view('public/Payment.pendingverification', compact('orderid'));
+        }
         return view('public/Payment.hoolahsuccess');
         //$data = response()->json(['response' => 'success', 'message' => 'Your order has been completed', 'orderid' => $orderid]);
         //return $data;
@@ -1828,10 +1834,37 @@ class CartMobileController extends Controller
     {
         $data = [];
         $orderid = $request->orderid;
-        $transactionid = $request->transactionid;
-        OrderMaster::where('order_id', '=', $orderid)->update(array('trans_id' => $transactionid, 'order_status' => '1'));
+        if (!$this->paymentConfirmed($request, $orderid)) {
+            return $this->paymentPendingResponse($orderid);
+        }
         $data = response()->json(['response' => 'success', 'message' => 'Your order has been completed', 'orderid' => $orderid]);
         return $data;
+    }
+
+    /**
+     * Confirms the payment with the gateway (App\Services\PaymentVerifier) and, if it
+     * checks out, marks the order paid. Returns false when the order must stay pending.
+     */
+    private function paymentConfirmed(Request $request, $orderid)
+    {
+        $order = OrderMaster::where('order_id', '=', $orderid)->first();
+        $paymentVerifier = app(PaymentVerifier::class);
+        $verification = $paymentVerifier->verify($order, $request->all());
+
+        if (!$paymentVerifier->allowsMarkingPaid($verification, $orderid)) {
+            return false;
+        }
+
+        if ($order && (string) $order->order_status !== '1') {
+            $transactionid = $verification['transaction_id'] ?: $request->transactionid;
+            OrderMaster::where('order_id', '=', $orderid)->update(array('trans_id' => $transactionid, 'order_status' => '1'));
+        }
+        return true;
+    }
+
+    private function paymentPendingResponse($orderid)
+    {
+        return response()->json(['response' => 'failed', 'message' => 'Payment could not be verified yet. Your order is pending confirmation.', 'orderid' => $orderid]);
     }
 
     public function successorder(Request $request)
@@ -1839,7 +1872,9 @@ class CartMobileController extends Controller
         $data = [];
         $orderid = $request->orderid;
         $transactionid = $request->transactionid;
-        OrderMaster::where('order_id', '=', $orderid)->update(array('trans_id' => $transactionid, 'order_status' => '1'));
+        if (!$this->paymentConfirmed($request, $orderid)) {
+            return $this->paymentPendingResponse($orderid);
+        }
 
         $order = OrderMaster::where('order_id', '=', $orderid)->first();
         if ($order) {
@@ -2276,16 +2311,19 @@ class CartMobileController extends Controller
 
             // Calculate default category shipping cost
             $defaultDeliveryCharges = [];
-            foreach ($cartdetails as $val) {
-                $product = Product::where('Id',$val->prod_id)->first();
-                if($product){
-                    $category = Category::where('TypeId',$product->Types)->first();
-                    if($category){
-                        $existsCategoryShippingCharge = CategoryShippingCharge::where('status',1)
-                            ->whereRaw('FIND_IN_SET(?, category_ids)', [$product->Types])
-                            ->first();
-                        if($existsCategoryShippingCharge && !in_array($existsCategoryShippingCharge->id,$defaultDeliveryCharges)) 
-                            $defaultDeliveryCharges[] = $existsCategoryShippingCharge->id;
+            if(!in_array($deliverymethod,[1,3,10]))
+            {
+                foreach ($cartdetails as $val) {
+                    $product = Product::where('Id',$val->prod_id)->first();
+                    if($product){
+                        $category = Category::where('TypeId',$product->Types)->first();
+                        if($category){
+                            $existsCategoryShippingCharge = CategoryShippingCharge::where('status',1)
+                                ->whereRaw('FIND_IN_SET(?, category_ids)', [$product->Types])
+                                ->first();
+                            if($existsCategoryShippingCharge && !in_array($existsCategoryShippingCharge->id,$defaultDeliveryCharges)) 
+                                $defaultDeliveryCharges[] = $existsCategoryShippingCharge->id;
+                        }
                     }
                 }
             }
@@ -2361,16 +2399,19 @@ class CartMobileController extends Controller
 
             // Calculate default category shipping cost
             $defaultDeliveryCharges = [];
-            foreach ($cartitems as $val) {
-                $product = Product::where('Id',$val['id'])->first();
-                if($product){
-                    $category = Category::where('TypeId',$product->Types)->first();
-                    if($category){
-                        $existsCategoryShippingCharge = CategoryShippingCharge::where('status',1)
-                            ->whereRaw('FIND_IN_SET(?, category_ids)', [$product->Types])
-                            ->first();
-                        if($existsCategoryShippingCharge && !in_array($existsCategoryShippingCharge->id,$defaultDeliveryCharges)) 
-                            $defaultDeliveryCharges[] = $existsCategoryShippingCharge->id;
+            if(!in_array($deliverymethod,[1,3,10]))
+            {
+                foreach ($cartitems as $val) {
+                    $product = Product::where('Id',$val['id'])->first();
+                    if($product){
+                        $category = Category::where('TypeId',$product->Types)->first();
+                        if($category){
+                            $existsCategoryShippingCharge = CategoryShippingCharge::where('status',1)
+                                ->whereRaw('FIND_IN_SET(?, category_ids)', [$product->Types])
+                                ->first();
+                            if($existsCategoryShippingCharge && !in_array($existsCategoryShippingCharge->id,$defaultDeliveryCharges)) 
+                                $defaultDeliveryCharges[] = $existsCategoryShippingCharge->id;
+                        }
                     }
                 }
             }

@@ -352,6 +352,7 @@ class CustomerController extends Controller
         }
         
         //Session::flash();
+        Session::forget(['punchout','punchout_id','buyer_cookie']);
         Session::forget('customer_id');
         Session::forget('customer_name');
         Session::forget('cartdata');
@@ -631,8 +632,8 @@ class CustomerController extends Controller
 
     public function downloadquotation($orderid)
     {
-        $id = 'quotations';
-        return PDF::loadFile(public_path() . '/customsql.php')->save('/my_stored_file.pdf')->stream('download.pdf');
+        // Previously rendered public/customsql.php (a DB script, now removed). No quotation PDF exists yet.
+        abort(404);
     }
 
     public function trackorder($orderid, $trackingno)

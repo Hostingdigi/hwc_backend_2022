@@ -43,7 +43,7 @@ class PageContentController extends Controller
 		$filename = "";
         if($request->hasFile('banner_image')) {
 			$image = $request->file('banner_image');			
-			$filename = time().'_'.$image->getClientOriginalName();
+			$filename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/pagecontent');
 			$image->move($destinationPath, $filename);                                
 		}
@@ -70,7 +70,7 @@ class PageContentController extends Controller
 		$filename = $request->exist_banner_image;
         if($request->hasFile('banner_image')) {
 			$image = $request->file('banner_image');			
-			$filename = time().'_'.$image->getClientOriginalName();
+			$filename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/pagecontent');
 			$image->move($destinationPath, $filename);                                
 		}

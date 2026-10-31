@@ -227,8 +227,8 @@ class ProductMobileController extends Controller
         $items = Product::where($whereCondition)->orderBy($sortby, $orderby)->skip($skip)->take($take)->get();
 
         if (!empty($searchkey)) {
-            $items = Product::where($whereCondition)->whereRaw("LOWER(EnName) LIKE '%" . $searchkey . "%'")->orderBy($sortby, $orderby)->skip($skip)->take($take)->orderBy($sortby, $orderby)->get();
-            $productsCount = Product::where($whereCondition)->whereRaw("LOWER(EnName) LIKE '%" . $searchkey . "%'")->count();
+            $items = Product::where($whereCondition)->whereRaw('LOWER(EnName) LIKE ?', ['%' . $searchkey . '%'])->orderBy($sortby, $orderby)->skip($skip)->take($take)->orderBy($sortby, $orderby)->get();
+            $productsCount = Product::where($whereCondition)->whereRaw('LOWER(EnName) LIKE ?', ['%' . $searchkey . '%'])->count();
         }
 
         $islastpage = ($page == (ceil($productsCount / 20))) ? 1 : 0;
@@ -362,7 +362,7 @@ class ProductMobileController extends Controller
         }
 
         if (!is_numeric($brand)) {
-            $brandDetails = Brand::whereRaw("LOWER(EnName) = '" . trim(strtolower($brand)) . "'")->first();
+            $brandDetails = Brand::whereRaw('LOWER(EnName) = ?', [trim(strtolower($brand))])->first();
             $brand = $brandDetails->BrandId;
         }
 

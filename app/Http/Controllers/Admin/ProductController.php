@@ -136,7 +136,7 @@ class ProductController extends Controller
         }
 
         if ($barcode != '') {
-            $prodoptions = ProductOptions::whereRaw("barcode LIKE '%" . $barcode . "%'")->get();
+            $prodoptions = ProductOptions::where('barcode', 'LIKE', '%' . $barcode . '%')->get();
             if (isset($prodoptions)) {
                 $prod_array = array();
                 foreach ($prodoptions as $option) {
@@ -371,14 +371,14 @@ class ProductController extends Controller
         if ($request->hasFile('Image')) {
             $smallimage = $request->file('Image');
             $small_image = time() . '.' . $smallimage->getClientOriginalExtension();
-            $filename = time() . '_' . $smallimage->getClientOriginalName();
+            $filename = $this->safeUploadName($smallimage);
             $destinationPath = public_path('uploads/product');
             $smallimage->move($destinationPath, $filename);
         }
         if ($request->hasFile('LargeImage')) {
             $largeimage = $request->file('LargeImage');
             $large_image = time() . '.' . $largeimage->getClientOriginalExtension();
-            $largefilename = time() . '_' . $largeimage->getClientOriginalName();
+            $largefilename = $this->safeUploadName($largeimage);
             $destinationPath = public_path('uploads/product');
             $largeimage->move($destinationPath, $largefilename);
         }
@@ -386,14 +386,14 @@ class ProductController extends Controller
         if ($request->hasFile('MobileImage')) {
             $smallimage = $request->file('MobileImage');
             $small_image = time() . '.' . $smallimage->getClientOriginalExtension();
-            $mobilefilename = time() . '_' . $smallimage->getClientOriginalName();
+            $mobilefilename = $this->safeUploadName($smallimage);
             $destinationPath = public_path('uploads/product');
             $smallimage->move($destinationPath, $mobilefilename);
         }
         if ($request->hasFile('MobileLargeImage')) {
             $largeimage = $request->file('MobileLargeImage');
             $large_image = time() . '.' . $largeimage->getClientOriginalExtension();
-            $mobilelargefilename = time() . '_' . $largeimage->getClientOriginalName();
+            $mobilelargefilename = $this->safeUploadName($largeimage);
             $destinationPath = public_path('uploads/product');
             $largeimage->move($destinationPath, $mobilelargefilename);
         }
@@ -401,14 +401,14 @@ class ProductController extends Controller
         if ($request->hasFile('Tds')) {
             $filetds = $request->file('Tds');
             $file_tds = time() . '.' . $filetds->getClientOriginalExtension();
-            $tdsfilename = time() . '_' . $filetds->getClientOriginalName();
+            $tdsfilename = $this->safeUploadName($filetds);
             $destinationPath = public_path('uploads/product');
             $filetds->move($destinationPath, $tdsfilename);
         }
         if ($request->hasFile('Sds')) {
             $filesds = $request->file('Sds');
             $file_sds = time() . '.' . $filesds->getClientOriginalExtension();
-            $sdsfilename = time() . '_' . $filesds->getClientOriginalName();
+            $sdsfilename = $this->safeUploadName($filesds);
             $destinationPath = public_path('uploads/product');
             $filesds->move($destinationPath, $sdsfilename);
         }
@@ -455,7 +455,7 @@ class ProductController extends Controller
             if ($request->hasFile('Image')) {
                 $smallimage = $request->file('Image');
                 $small_image = time() . '.' . $smallimage->getClientOriginalExtension();
-                $filename = time() . '_' . $smallimage->getClientOriginalName();
+                $filename = $this->safeUploadName($smallimage);
                 $destinationPath = public_path('uploads/product');
                 $smallimage->move($destinationPath, $filename);
             } else {
@@ -464,7 +464,7 @@ class ProductController extends Controller
             if ($request->hasFile('LargeImage')) {
                 $largeimage = $request->file('LargeImage');
                 $large_image = time() . '.' . $largeimage->getClientOriginalExtension();
-                $largefilename = time() . '_' . $largeimage->getClientOriginalName();
+                $largefilename = $this->safeUploadName($largeimage);
                 $destinationPath = public_path('uploads/product');
                 $largeimage->move($destinationPath, $largefilename);
             } else {
@@ -474,7 +474,7 @@ class ProductController extends Controller
             if ($request->hasFile('MobileImage')) {
                 $smallimage = $request->file('MobileImage');
                 $small_image = time() . '.' . $smallimage->getClientOriginalExtension();
-                $mobilefilename = time() . '_' . $smallimage->getClientOriginalName();
+                $mobilefilename = $this->safeUploadName($smallimage);
                 $destinationPath = public_path('uploads/product');
                 $smallimage->move($destinationPath, $mobilefilename);
             } else {
@@ -483,7 +483,7 @@ class ProductController extends Controller
             if ($request->hasFile('MobileLargeImage')) {
                 $largeimage = $request->file('MobileLargeImage');
                 $large_image = time() . '.' . $largeimage->getClientOriginalExtension();
-                $mobilelargefilename = time() . '_' . $largeimage->getClientOriginalName();
+                $mobilelargefilename = $this->safeUploadName($largeimage);
                 $destinationPath = public_path('uploads/product');
                 $largeimage->move($destinationPath, $mobilelargefilename);
             } else {
@@ -493,7 +493,7 @@ class ProductController extends Controller
             if ($request->hasFile('Tds')) {
                 $filetds = $request->file('Tds');
                 $file_tds = time() . '.' . $filetds->getClientOriginalExtension();
-                $tdsfilename = time() . '_' . $filetds->getClientOriginalName();
+                $tdsfilename = $this->safeUploadName($filetds);
                 $destinationPath = public_path('uploads/product');
                 $filetds->move($destinationPath, $tdsfilename);
             } else {
@@ -502,7 +502,7 @@ class ProductController extends Controller
             if ($request->hasFile('Sds')) {
                 $filesds = $request->file('Sds');
                 $file_sds = time() . '.' . $filesds->getClientOriginalExtension();
-                $sdsfilename = time() . '_' . $filesds->getClientOriginalName();
+                $sdsfilename = $this->safeUploadName($filesds);
                 $destinationPath = public_path('uploads/product');
                 $filesds->move($destinationPath, $sdsfilename);
             } else {
@@ -592,14 +592,14 @@ class ProductController extends Controller
         if ($request->hasFile('Image')) {
             $smallimage = $request->file('Image');
             $small_image = time() . '.' . $smallimage->getClientOriginalExtension();
-            $filename = time() . '_' . $smallimage->getClientOriginalName();
+            $filename = $this->safeUploadName($smallimage);
             $destinationPath = public_path('uploads/product');
             $smallimage->move($destinationPath, $filename);
         }
         if ($request->hasFile('LargeImage')) {
             $largeimage = $request->file('LargeImage');
             $large_image = time() . '.' . $largeimage->getClientOriginalExtension();
-            $largefilename = time() . '_' . $largeimage->getClientOriginalName();
+            $largefilename = $this->safeUploadName($largeimage);
             $destinationPath = public_path('uploads/product');
             $largeimage->move($destinationPath, $largefilename);
         }

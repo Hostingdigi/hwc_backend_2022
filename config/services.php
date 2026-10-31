@@ -30,4 +30,14 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Shared key for the catalogue/order sync endpoints in routes/api.php (ApiController)
+    'integration' => [
+        'key' => env('INTEGRATION_API_KEY'),
+    ],
+
+    // App\Services\PaymentVerifier: "enforce" keeps unverified orders pending, "log" only logs
+    'payment_verification' => [
+        'mode' => env('PAYMENT_VERIFICATION_MODE', 'enforce'),
+    ],
+
 ];

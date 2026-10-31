@@ -244,7 +244,7 @@ class Cart extends Model
 			
 			$weight = $totalweight;
 			
-			$zones = InternationalShipping::where('Status', '=', '1')->whereRaw("concat(',',CountriesList,',') LIKE '%,".$countryid."%,'")->first();
+			$zones = InternationalShipping::where('Status', '=', '1')->whereRaw("concat(',',CountriesList,',') LIKE ?", ['%,' . $countryid . '%,'])->first();
 			
 			if($zones) {	
 				$freeshipcost = $zones->FreeShippingCost;

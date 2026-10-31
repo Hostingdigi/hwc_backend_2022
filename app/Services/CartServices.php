@@ -12,7 +12,7 @@ use App\Models\LocalShipping;
 use App\Models\CategoryShippingCharge;
 use App\Models\Product;
 use App\Models\Category;
-use Session;
+use Illuminate\Support\Facades\Session;
 
 class CartServices
 {
@@ -73,16 +73,20 @@ class CartServices
 
         //Apply default shipping charges by category
         $defaultDeliveryCharges = [];
-        foreach ($cartData['cartItems'] as $key => $val) {
-            $product = Product::where('Id',$val['productId'])->first();
-            if($product){
-                $category = Category::where('TypeId',$product->Types)->first();
-                if($category){
-                    $existsCategoryShippingCharge = CategoryShippingCharge::where('status',1)
-                        ->whereRaw('FIND_IN_SET(?, category_ids)', [$product->Types])
-                        ->first();
-                    if($existsCategoryShippingCharge && !in_array($existsCategoryShippingCharge->id,$defaultDeliveryCharges)) 
-                        $defaultDeliveryCharges[] = $existsCategoryShippingCharge->id;
+        $tempDeliveryMethodID = $cartData['deliveryDetails']['deliverymethod'];
+        if(!in_array($tempDeliveryMethodID,[1,3,10]))
+        {
+            foreach ($cartData['cartItems'] as $key => $val) {
+                $product = Product::where('Id',$val['productId'])->first();
+                if($product){
+                    $category = Category::where('TypeId',$product->Types)->first();
+                    if($category){
+                        $existsCategoryShippingCharge = CategoryShippingCharge::where('status',1)
+                            ->whereRaw('FIND_IN_SET(?, category_ids)', [$product->Types])
+                            ->first();
+                        if($existsCategoryShippingCharge && !in_array($existsCategoryShippingCharge->id,$defaultDeliveryCharges)) 
+                            $defaultDeliveryCharges[] = $existsCategoryShippingCharge->id;
+                    }
                 }
             }
         }
@@ -157,6 +161,7 @@ class CartServices
             if ($discounttype == 1) {
                 $disamount = ($tmptotal * $disamount) / 100;
             } elseif ($discounttype == 2) {
+                //$disamount = $tmptotal - $disamount;
                 $disamount = $disamount;
             }
         }
@@ -171,33 +176,22 @@ class CartServices
     {
         $grandtotal = $subTotal + $taxTotal + $deliverycost + $packingfee+ $fuelcharges + $handlingfee;
         $grandtotal = $grandtotal - $discount;
-        $ordSer = new \App\Services\OrderServices(new \App\Services\CartServices());
-        
-        return $ordSer->roundDecimal($grandtotal);
-    }
-    
-    function showFixedDigits($value)
-    {
-        if (strpos($value, '.') !== false) {
-            list($whole, $decimal) = explode('.', $value);
-            if(!empty($decimal[1])) $value = strlen($decimal)>2 ? $whole.'.'.($decimal[0].''. $decimal[1]) : $value;
-        }
-        return $value;
+
+        return round($grandtotal, 2);
     }
 
     public function getTax($subTotal = 0, $countryCode = '')
     {
 
         $countryDetails = Country::where('countrycode', $countryCode)->first();
-        $taxPercentage = $countryDetails->taxpercentage;
+        $taxPercentage = Session::has('punchout') ? 0 : $countryDetails->taxpercentage;
         $taxLabelOnly = !empty($countryDetails->taxtitle) ? $countryDetails->taxtitle : 'Tax';
 
         return [
             'taxLabelOnly' => $taxLabelOnly,
             'taxLabel' => $taxLabelOnly . ' (' . $taxPercentage . '%)',
             'taxPercentage' => $taxPercentage,
-            //'taxTotal' => $this->showFixedDigits(($subTotal * $taxPercentage) / 100),
-            'taxTotal' => round((($subTotal * $taxPercentage) / 100),2),
+            'taxTotal' => round((($subTotal * $taxPercentage) / 100), 2),
         ];
     }
 
@@ -262,7 +256,7 @@ class CartServices
         } else {
 
             $weight = $totalweight;
-            $zones = InternationalShipping::where('Status', 1)->whereRaw("concat(',',CountriesList,',') LIKE '%," . $countryid . "%,'")->first();
+            $zones = InternationalShipping::where('Status', 1)->whereRaw("concat(',',CountriesList,',') LIKE ?", ['%,' . $countryid . '%,'])->first();
 
             if ($zones) {
                 $freeshipcost = $zones->FreeShippingCost;
@@ -313,5 +307,10 @@ class CartServices
         }
 
         return $shipamt;
+    }
+
+    public static function excludeItemPriceGst($itemPrice, $gstPercent)
+    {
+        return round(($itemPrice - (($itemPrice * $gstPercent) / (100 + $gstPercent))), 2);
     }
 }

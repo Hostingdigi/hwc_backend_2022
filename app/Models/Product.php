@@ -17,9 +17,9 @@ class Product extends Model
 		
 		if($searchkey != '') {
 			
-			$search = "(EnName LIKE '%".addslashes($searchkey)."%' OR ProdCode LIKE '%".addslashes($searchkey)."%')";
-			
-			$typeproducts = DB::table('products')->select('Types')->whereRaw($search)->where('ProdStatus', '=', '1')->groupBy('Types');
+			$like = '%' . $searchkey . '%';
+
+			$typeproducts = DB::table('products')->select('Types')->whereRaw('(EnName LIKE ? OR ProdCode LIKE ?)', [$like, $like])->where('ProdStatus', '=', '1')->groupBy('Types');
 
 			$typecategories = DB::table('types')			
 				->joinSub($typeproducts, 'products', function ($join) {

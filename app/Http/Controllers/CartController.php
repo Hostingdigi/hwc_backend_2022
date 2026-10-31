@@ -2,30 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Bannerads;
+use Illuminate\Http\Request;
+use App\Models\Category;
+use App\Models\Brand;
+use App\Models\Promotions;
+use App\Models\Menu;
+use App\Models\Product;
 use App\Models\Cart;
+use App\Models\Price;
+use App\Models\ProductOptions;
+use App\Models\Customer;
+use App\Models\ShippingMethods;
+use App\Models\PaymentMethods;
 use App\Models\Country;
+use App\Models\OrderMaster;
+use App\Models\OrderDetails;
+use App\Models\PaymentSettings;
+use App\Models\Settings;
+use App\Models\EmailTemplate;
 use App\Models\Couponcode;
 use App\Models\CouponCodeUsage;
-use App\Models\Customer;
-use App\Models\EmailTemplate;
+use App\Models\Bannerads;
 use App\Models\InternationalShipping;
-use App\Models\OrderDetails;
-use App\Models\OrderMaster;
-use App\Models\PageContent;
-use App\Models\PaymentMethods;
-use App\Models\PaymentSettings;
-use App\Models\Price;
-use App\Models\Product;
-use App\Models\ProductOptions;
 use App\Models\SessionCart;
-use App\Models\Settings;
-use App\Models\ShippingMethods;
-use App\Services\CartServices;
-use DB;
-use Illuminate\Http\Request;
-use Mail;
+
 use Session;
+use DB;
+use App\Models\PageContent;
+use Mail;
+use Auth;
+use App\Services\CartServices;
 use App\Services\OrderServices;
 
 class CartController extends Controller
@@ -50,7 +56,6 @@ class CartController extends Controller
      */
     public function index()
     {
-        Session::forget('old_order_id');
         $billinginfo = Session::has('billinginfo') ? Session::get('billinginfo') : [];
         $cartItems = $this->cartServices->cartItems($billinginfo['ship_country'] ?? null);
         $cartdata = $cartItems['cartItems'];
@@ -60,8 +65,10 @@ class CartController extends Controller
         $gst = $cartItems['taxDetails']['taxTotal'];
         $taxtitle = $cartItems['taxDetails']['taxLabel'];
         $taxLabelOnly = $cartItems['taxDetails']['taxLabelOnly'];
+        $countryDetails = Country::select('taxpercentage')->where('countrycode', $cartItems['countryCode'])->first();
+        $gstTax = $countryDetails->taxpercentage ?? 1;
 
-        return view('public/Cart.index', compact('cartdata', 'subtotal', 'gst', 'grandtotal', 'taxtitle', 'couponcode', 'taxLabelOnly'));
+        return view('public/Cart.index', compact('cartdata', 'subtotal', 'gst', 'grandtotal', 'taxtitle', 'couponcode', 'taxLabelOnly', 'gstTax'));
     }
 
     public function old_index()
@@ -109,7 +116,6 @@ class CartController extends Controller
 
     public function addtocart(Request $request)
     {
-        Session::forget('old_order_id');
         $roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
         $productid = $request->prodid;
         $optionid = $request->optionid;
@@ -166,7 +172,6 @@ class CartController extends Controller
                                     } else {
                                         DB::table('cart_details')->where('user_token', '=', $sesid)->where('row_key', '=', $datakey)->where('prod_id', '=', $productid)->update(array('prod_quantity' => $qty));
                                     }
-
                                 }
                             }
                         }
@@ -179,7 +184,7 @@ class CartController extends Controller
                 $ses_qty = $qty;
                 $price = new \App\Models\Price();
                 //$productprice = $price->getPrice($productid);
-                $productprice = $price->getDiscountPrice($productid);
+                $productprice =  $price->getDiscountPrice($productid);
                 if ($optionid > 0) {
                     $options = ProductOptions::where('Id', '=', $optionid)->first();
                     $optionprice = $options->Price;
@@ -276,7 +281,7 @@ class CartController extends Controller
     public function clearcart()
     {
         // Clear sessions
-        session()->forget(['cartdata', 'discount','discounttext','couponcode', 'discounttype','old_order_id']);
+        session()->forget(['cartdata', 'discount', 'discounttext', 'couponcode', 'discounttype', 'old_order_id']);
         $sesid = Session::get('_token');
         DB::table('cart_details')->where(Session::has('customer_id') ? ['user_id' => Session::get('customer_id')] : ['user_token' => $sesid])->delete();
         return redirect('/');
@@ -373,9 +378,7 @@ class CartController extends Controller
                                     } else {
                                         DB::table('cart_details')->where('user_token', '=', $sesid)->where('prod_id', '=', $prodid)->update(array('prod_quantity' => $itemqty));
                                     }
-
                                 }
-
                             }
                             ++$ci;
                         }
@@ -413,18 +416,26 @@ class CartController extends Controller
             $disamount = Session::get('discount');
         }
 
-        $discount = $cart->getDiscount($subtotal, $gst, 0, 0, $discounttype, $disamount);
+        if (session()->has('punchout')) $gst = 0;
 
+        $discount = $cart->getDiscount($subtotal, $gst, 0, 0, $discounttype, $disamount);
         $grandtotal = $cart->getGrandTotal($subtotal, $gst, 0, 0, $discount);
 
-        //$grandtotal = $cart->getGrandTotal($subtotal, $gst);
+        if (session()->has('punchout')) {
+            $countryTax = Country::select('taxpercentage')->where('countrycode', 'SG')->first();
+            $taxPercentage = $countryTax->taxpercentage ?? 0;
+            $itemtotal = CartServices::excludeItemPriceGst($itemtotal, $taxPercentage);
+            $subtotal = CartServices::excludeItemPriceGst($subtotal, $taxPercentage);
+            $discount = CartServices::excludeItemPriceGst($discount, $taxPercentage);
+            $grandtotal = CartServices::excludeItemPriceGst($grandtotal, $taxPercentage);
+        }
+
         echo $itemtotal . '|' . $subtotal . '|' . $gst . '|' . $grandtotal . '|' . $discount;
     }
 
     public function checkout()
     {
 
-        Session::forget('old_order_id');
         if (!Session::has('customer_id')) {
             Session::put('returnurl', 'checkout');
             return redirect('/login');
@@ -447,6 +458,8 @@ class CartController extends Controller
         $discount = $cartItems['discountDetails']['discountTotal'];
         $discounttext = $cartItems['discountDetails']['title'];
         $customer = Session::has('customer_id') ? Customer::where('cust_id', Session::get('customer_id'))->first() : [];
+
+
 
         $freeshippingamount = $remaining = 0;
         $showfreedeliverymsg = $localfreedeliverymsg = $internationalfreedeliverymsg = '';
@@ -497,7 +510,6 @@ class CartController extends Controller
         $countries = Country::where('country_status', '=', '1')->orderBy('countryname', 'ASC')->get();
 
         return view('public/Cart.checkout', compact('customer', 'cartdata', 'countryCode', 'subtotal', 'gst', 'grandtotal', 'deliverymethods', 'countries', 'taxLabelOnly', 'taxtitle', 'country', 'discounttext', 'discount', 'showfreedeliverymsg'));
-
     }
 
     public function placeorder(Request $request)
@@ -506,6 +518,7 @@ class CartController extends Controller
         if (!Session::has('cartdata')) {
             return redirect('/cart');
         }
+
 
         $deliverymethod = $request->deliverymethod;
         $billinginfo = $shippinginfo = [];
@@ -619,6 +632,8 @@ class CartController extends Controller
             }
         }
 
+
+
         $grandtotal = $this->orderServices->roundDecimal($cartItems['grandTotal']);
 
         $country = $cartItems['countryCode'];
@@ -638,7 +653,6 @@ class CartController extends Controller
         $sesid = Session::has('customer_id') ? Session::get('customer_id') : '';
 
         return view('public/Cart.placeorder', compact('cartdata', 'sesid', 'subtotal', 'gst', 'grandtotal', 'paymentmethods', 'taxtitle', 'deliverycost', 'deliverytype', 'packingfee', 'discounttext', 'discount', 'ordertype', 'taxLabelOnly', 'fuelcharges', 'handlingfee'));
-
     }
 
     public function paymentform(Request $request)
@@ -661,7 +675,6 @@ class CartController extends Controller
             Session::put('deliverymethod', $request->deliverymethod);
             Session::put('if_unavailable', $request->if_unavailable);
             Session::put('delivery_instructions', $request->delivery_instructions);
-
         }
 
         if ($cartdata) {
@@ -694,6 +707,8 @@ class CartController extends Controller
             return redirect('/cart');
         }
     }
+
+
 
     public function submitpayment(Request $request)
     {
@@ -774,11 +789,8 @@ class CartController extends Controller
             Session::forget('cartdata');
 
             if (stripos($paymethodname, 'paypal') !== false) {
-
             } elseif (stripos($paymethodname, 'stripe') !== false) {
-
             } elseif (stripos($paymethodname, 'hoolah') !== false) {
-
             } else {
                 return redirect('/success');
             }
@@ -845,11 +857,12 @@ class CartController extends Controller
             }
         }
 
+
         /*if($countrycode == 'SG') {
-        $deliverytypes = ShippingMethods::where('shipping_type', '=', '0')->where('Status', '=', '1')->orderBy('EnName', 'desc')->get();
-        } else {
-        $deliverytypes = ShippingMethods::where('shipping_type', '=', '1')->where('Status', '=', '1')->get();
-        }*/
+			$deliverytypes = ShippingMethods::where('shipping_type', '=', '0')->where('Status', '=', '1')->orderBy('EnName', 'desc')->get();
+		} else {
+			$deliverytypes = ShippingMethods::where('shipping_type', '=', '1')->where('Status', '=', '1')->get();
+		}*/
         if ($deliverytypes) {
             foreach ($deliverytypes as $deliverytype) {
                 $deliverymethodarr[] = $deliverytype->Id . '||' . $deliverytype->EnName;
@@ -879,7 +892,6 @@ class CartController extends Controller
             Session::put('deliverymethod', $orders->ship_method);
             Session::put('if_unavailable', $orders->if_items_unavailabel);
             Session::put('delivery_instructions', $orders->delivery_instructions);
-
         }
 
         if ($orderdetails) {
@@ -905,27 +917,27 @@ class CartController extends Controller
                     //echo $orders->order_type;
                     //exit;
                     /*if($orders->order_type == 1) {
-
-                    $price = new \App\Models\Price();
-                    $productprice =  $price->getDiscountPrice($productid);
-                    if($optionid > 0) {
-                    $options = ProductOptions::where('Id', '=', $optionid)->first();
-                    $optionprice = $options->Price;
-                    $optionprice = $price->getOptionPrice($productid, $optionid);
-                    $prodoption = $options->Title;
-                    }
-
-                    $productprice = $productprice + $optionprice;
-
-                    } else {
-                    $productprice = $orderdetail->prod_unit_price;
-                    }*/
+					
+						$price = new \App\Models\Price();					
+						$productprice =  $price->getDiscountPrice($productid);
+						if($optionid > 0) {
+							$options = ProductOptions::where('Id', '=', $optionid)->first();
+							$optionprice = $options->Price;
+							$optionprice = $price->getOptionPrice($productid, $optionid);
+							$prodoption = $options->Title;
+						}
+						
+						$productprice = $productprice + $optionprice;
+						
+					} else {
+						$productprice = $orderdetail->prod_unit_price;
+					}*/
 
                     /*if($optionid > 0) {
-                    $options = ProductOptions::where('Id', '=', $optionid)->first();
-                    $optionprice = $options->Price;
-                    $prodoption = $options->Title;
-                    }*/
+						$options = ProductOptions::where('Id', '=', $optionid)->first();
+						$optionprice = $options->Price;
+						$prodoption = $options->Title;
+					}*/
 
                     //$productprice = $productprice + $optionprice;
 
@@ -985,6 +997,7 @@ class CartController extends Controller
         $packingfee = $cartItems['packingFees'];
         $deliverycost = $cartItems['deliveryDetails']['deliveryTotal'];
         $paymentmethods = PaymentMethods::where('status', '1')->get();
+
 
         $orderid = $quotationid = 0;
         $deliverymethod = Session::get('deliverymethod');
@@ -1089,7 +1102,10 @@ class CartController extends Controller
 
         $itemdetails .= '</table>';
 
+
         Customer::where('cust_id', '=', $userid)->update(array('cust_firstname' => $billinginfo['bill_fname'], 'cust_lastname' => $billinginfo['bill_lname'], 'cust_address1' => $billinginfo['bill_ads1'], 'cust_address2' => $billinginfo['bill_ads2'], 'cust_city' => $billinginfo['bill_city'], 'cust_state' => $billinginfo['bill_state'], 'cust_country' => $billinginfo['bill_country'], 'cust_zip' => $billinginfo['bill_zip'], 'cust_phone' => $billinginfo['bill_mobile']));
+
+
 
         $setting = Settings::where('id', '=', '1')->first();
         if ($setting) {
@@ -1097,6 +1113,7 @@ class CartController extends Controller
             $adminemail = $setting->admin_email;
             $ccemail = $setting->cc_email;
         }
+
 
         $billing = '';
         $billing .= '<p style="margin:0;">' . $billinginfo['bill_fname'] . ' ' . $billinginfo['bill_lname'] . '</p>';
@@ -1116,6 +1133,7 @@ class CartController extends Controller
 
         $emailtemplate = EmailTemplate::where('template_type', '=', '10')->where('status', '=', '1')->first();
         if ($emailtemplate) {
+
 
             if (strlen($orderid) == 3) {
                 $orderid = '0' . $orderid;
@@ -1155,17 +1173,13 @@ class CartController extends Controller
             $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
             #@mail($custemail, $emailsubject, $emailcontent, $headers);
-            try {
-                Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                    $message->to($custemail)
-                        ->subject($emailsubject)
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->setBody($emailcontent, 'text/html');
-                });
-                //code...
-            } catch (\Throwable $th) {
-                \Log::error('Error sending quotation '.$quotationid.' email: ' . $th->getMessage());
-            }
+            Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
+                $message->to($custemail)
+                    ->subject($emailsubject)
+                    ->from(env('MAIL_USERNAME'), env('APP_NAME'))
+                    ->setBody($emailcontent, 'text/html');
+            });
+
             //@mail($setting->admin_email, $emailsubject, $emailcontent, $headers);
         }
 
@@ -1188,7 +1202,6 @@ class CartController extends Controller
         Session::forget('discounttype');
 
         return redirect('/invoice/' . $quotationid)->with('success', 'Quotation Successfully Created!');
-
     }
 
     public function old_quotation(Request $request)
@@ -1213,6 +1226,7 @@ class CartController extends Controller
 
             $country = $billinginfo['ship_country'];
 
+
             $totalweight = 0;
 
             $taxes = $cart->getGST($subtotal, $country);
@@ -1231,18 +1245,18 @@ class CartController extends Controller
             }
             $boxfees = 0;
 
-            /*foreach($cartdata as $key => $val) {
-            if(is_array($val)) {
-            $x = 0;
-            foreach($val as $datakey => $dataval) {
-            $totalweight = $totalweight + $dataval['weight'];
-            $shippingbox = $dataval['shippingbox'];
-            $quantity = $dataval['qty'];
-            $deliverycost += $cart->shippingCost($country, $deliverymethod, $shippingbox, $quantity, $subtotal, $gst);
-            $boxfees = $cart->getPackagingFee($country, $totalweight, $subtotal, $gst, $deliverymethod, $shippingbox, $quantity);
-            }
-            }
-            }*/
+            /*foreach($cartdata as $key => $val) {						
+				if(is_array($val)) {
+					$x = 0;
+					foreach($val as $datakey => $dataval) {
+						$totalweight = $totalweight + $dataval['weight'];
+						$shippingbox = $dataval['shippingbox'];	
+						$quantity = $dataval['qty'];
+						$deliverycost += $cart->shippingCost($country, $deliverymethod, $shippingbox, $quantity, $subtotal, $gst);
+						$boxfees = $cart->getPackagingFee($country, $totalweight, $subtotal, $gst, $deliverymethod, $shippingbox, $quantity);
+					}
+				}
+			}*/
             foreach ($cartdata as $key => $val) {
                 if (is_array($val)) {
                     $x = 0;
@@ -1253,7 +1267,6 @@ class CartController extends Controller
                         $shippingbox = $dataval['shippingbox'];
                         $quantity = $dataval['qty'];
                         $boxfees = $cart->getPackagingFee($country, $totalweight, $subtotal, $gst, $deliverymethod, $shippingbox, $quantity);
-
                     }
                     $deliverycost = $cart->shippingCost($country, $deliverymethod, $shippingbox, $quantity, $subtotal, $gst, $totalweight);
                 }
@@ -1377,7 +1390,10 @@ class CartController extends Controller
 
             $itemdetails .= '</table>';
 
+
             Customer::where('cust_id', '=', $userid)->update(array('cust_firstname' => $billinginfo['bill_fname'], 'cust_lastname' => $billinginfo['bill_lname'], 'cust_address1' => $billinginfo['bill_ads1'], 'cust_address2' => $billinginfo['bill_ads2'], 'cust_city' => $billinginfo['bill_city'], 'cust_state' => $billinginfo['bill_state'], 'cust_country' => $billinginfo['bill_country'], 'cust_zip' => $billinginfo['bill_zip'], 'cust_phone' => $billinginfo['bill_mobile']));
+
+
 
             $setting = Settings::where('id', '=', '1')->first();
             if ($setting) {
@@ -1385,6 +1401,7 @@ class CartController extends Controller
                 $adminemail = $setting->admin_email;
                 $ccemail = $setting->cc_email;
             }
+
 
             $billing = '';
             $billing .= '<p style="margin:0;">' . $billinginfo['bill_fname'] . ' ' . $billinginfo['bill_lname'] . '</p>';
@@ -1404,6 +1421,7 @@ class CartController extends Controller
 
             $emailtemplate = EmailTemplate::where('template_type', '=', '10')->where('status', '=', '1')->first();
             if ($emailtemplate) {
+
 
                 if (strlen($orderid) == 3) {
                     $orderid = '0' . $orderid;
@@ -1472,7 +1490,6 @@ class CartController extends Controller
             Session::forget('discounttype');
 
             return redirect('/invoice/' . $quotationid)->with('success', 'Quotation Successfully Created!');
-
         } else {
             return redirect('/');
         }
@@ -1582,36 +1599,35 @@ class CartController extends Controller
                             }
                         }
                     }
-
                 }
 
                 /*if($coupondata->customer_type == 1) {
-            $usage = CouponCodeUsage::where('coupon_id', '=', $coupondata->id)->where('customer_id', '=', $customer)->count();
-            } elseif($coupondata->customer_type == 2) {
-            $usage = CouponCodeUsage::where('coupon_id', '=', $coupondata->id)->count();
-            } elseif($coupondata->customer_type == 3) {
-            if($cust->group_admin == 1) {
-            $usage = CouponCodeUsage::where('coupon_id', '=', $coupondata->id)->count();
-            }
-            }
-
-            if($coupondata->customer_id > 0 && $customer == $coupondata->customer_id) {
-            if($coupondata->nooftimes > $usage) {
-            $allowapply = 1;
-            } else {
-            if($coupondata->customer_type == 3 && $coupondata->nooftimes > $usage) {
-            $allowapply = 1;
-            } else {
-            $response = 'Coupon Code Usage Limit Exceeded!';
-            }
-            }
-            } elseif($coupondata->customer_id == 0) {
-            if($coupondata->nooftimes > $usage) {
-            $allowapply = 1;
-            } else {
-            $response = 'Invalid Coupon Code!';
-            }
-            }*/
+					$usage = CouponCodeUsage::where('coupon_id', '=', $coupondata->id)->where('customer_id', '=', $customer)->count();
+				} elseif($coupondata->customer_type == 2) {
+					$usage = CouponCodeUsage::where('coupon_id', '=', $coupondata->id)->count();
+				} elseif($coupondata->customer_type == 3) {
+					if($cust->group_admin == 1) {
+						$usage = CouponCodeUsage::where('coupon_id', '=', $coupondata->id)->count();
+					}
+				}
+				
+				if($coupondata->customer_id > 0 && $customer == $coupondata->customer_id) {					
+					if($coupondata->nooftimes > $usage) {
+						$allowapply = 1;
+					} else {
+						if($coupondata->customer_type == 3 && $coupondata->nooftimes > $usage) {
+							$allowapply = 1;
+						} else {					
+							$response = 'Coupon Code Usage Limit Exceeded!';
+						}
+					}
+				} elseif($coupondata->customer_id == 0) {
+					if($coupondata->nooftimes > $usage) {
+						$allowapply = 1;
+					} else {
+						$response = 'Invalid Coupon Code!';
+					}
+				}*/
             } else {
                 $response = 'Coupon Code Expired!';
             }
@@ -1628,6 +1644,22 @@ class CartController extends Controller
             if ($countrydata) {
                 $country = $countrydata->countrycode;
             }
+            if (Session::has('billinginfo')) {
+                $billinginfo = Session::get('billinginfo');
+                $country = $billinginfo['ship_country'] ?? 'SG';
+            }
+
+            $discounttext = '';
+            if ($coupondata->discount_type == 1) {
+                $discounttext = $coupondata->discount . '%';
+            } else {
+                $discounttext = '$' . $coupondata->discount;
+            }
+
+            Session::put('discounttext', $discounttext);
+            Session::put('discount', $coupondata->discount);
+            Session::put('couponcode', $couponcode);
+            Session::put('discounttype', $coupondata->discount_type);
 
             $cartItems = $this->cartServices->cartItems($country);
             $taxes = $cart->getGST($subtotal, $country);
@@ -1640,25 +1672,17 @@ class CartController extends Controller
                 $gst = $taxes;
             }
 
+
             $discount = $cart->getDiscount($subtotal, 0, 0, 0, $coupondata->discount_type, $coupondata->discount);
 
-            //$grandtotal = $cart->getGrandTotal($subtotal, $gst, 0, 0, $discount);
 
             $subtotal = $cartItems['subTotal'];
             $grandtotal = $cartItems['grandTotal'];
             $gst = $cartItems['taxDetails']['taxTotal'];
 
-            $discounttext = '';
-            if ($coupondata->discount_type == 1) {
-                $discounttext = $coupondata->discount . '%';
-            } else {
-                $discounttext = '$' . $coupondata->discount;
-            }
+            $grandtotal = $cart->getGrandTotal($subtotal, $gst, 0, 0, $discount);
 
-            Session::put('discount', $coupondata->discount);
-            Session::put('discounttext', $discounttext);
-            Session::put('couponcode', $couponcode);
-            Session::put('discounttype', $coupondata->discount_type);
+
 
             $response = $discount . '|' . $subtotal . '|' . $gst . '|' . $grandtotal . '|' . $discounttext;
         } else {
@@ -1679,5 +1703,4 @@ class CartController extends Controller
         Session::forget('discounttype');
         return redirect('/cart');
     }
-
 }

@@ -3,7 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\CheckStatus;
 use App\Http\Controllers\Admin\CategoryController;
-use  Illuminate\Http\Request;
+use App\Http\Controllers\PunchoutController;
+use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -24,6 +25,11 @@ return view('welcome');
 
 //Auth::routes();
 Route::middleware([CheckStatus::class])->group(function(){
+    
+    Route::post('/punchout/setup', [PunchoutController::class, 'setup']);
+    Route::get('/punchout/login', [PunchoutController::class, 'login']);
+    Route::get('/punchout/checkout', [PunchoutController::class, 'checkout']);
+    Route::get('/punchout/final_cxml', [PunchoutController::class, 'checkoutTest']);
     
     Route::get('test_grab','App\Http\Controllers\HomeController@testGrab');
 
@@ -81,7 +87,6 @@ Route::middleware([CheckStatus::class])->group(function(){
     Route::post('/getproductslist', 'App\Http\Controllers\ProductController@getproductslist');
     Route::post('/gettypeslist', 'App\Http\Controllers\ProductController@gettypeslist');
     Route::post('/submitqa', 'App\Http\Controllers\ProductController@submitqa');
-    Route::get('/updateLatestProducts/{tablename}', 'App\Http\Controllers\ProductController@updateLatestProducts');
     
     Route::resource('/cart', 'App\Http\Controllers\CartController');
     Route::match(['get', 'post'], '/addtocart', 'App\Http\Controllers\CartController@addtocart');
@@ -193,10 +198,15 @@ Route::prefix('/admin')->group(function () {
 
 //Route::post('/login', 'App\Http\Controllers\Auth\AdminLoginController@login')->name('admin.login.submit');
 
-    Route::resource('/', 'App\Http\Controllers\AdminController');
+    Route::get('/', 'App\Http\Controllers\AdminController@index');
     Route::post('/verifylogin', 'App\Http\Controllers\AdminController@verifylogin');
-    Route::get('/dashboard', 'App\Http\Controllers\AdminController@dashboard');
     Route::get('/logout', 'App\Http\Controllers\AdminController@logout');
+
+});
+
+Route::prefix('/admin')->middleware('admin.session')->group(function () {
+
+    Route::get('/dashboard', 'App\Http\Controllers\AdminController@dashboard');
 
     Route::resource('/country', 'App\Http\Controllers\Admin\CountryController');
     Route::get('/country/{id}/destroy', 'App\Http\Controllers\Admin\CountryController@destroy');

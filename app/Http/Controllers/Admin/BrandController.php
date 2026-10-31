@@ -89,7 +89,7 @@ class BrandController extends Controller
         if ($request->hasFile('Image')) {
             $image = $request->file('Image');
             //$image_name = time().'.'.$image->getClientOriginalExtension();
-            $filename = time() . '_' . $image->getClientOriginalName();
+            $filename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/brands');
             $image->move($destinationPath, $filename);
         }
@@ -97,7 +97,7 @@ class BrandController extends Controller
         if ($request->hasFile('MobileImage')) {
             $image = $request->file('MobileImage');
             //$image_name = time().'.'.$image->getClientOriginalExtension();
-            $mobilefilename = time() . '_' . $image->getClientOriginalName();
+            $mobilefilename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/brands');
             $image->move($destinationPath, $mobilefilename);
         }
@@ -124,7 +124,7 @@ class BrandController extends Controller
         if ($request->hasFile('Image')) {
             $image = $request->file('Image');
             //$image_name = time().'.'.$image->getClientOriginalExtension();
-            $filename = time() . '_' . $image->getClientOriginalName();
+            $filename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/brands');
             $image->move($destinationPath, $filename);
         }
@@ -132,7 +132,7 @@ class BrandController extends Controller
         if ($request->hasFile('MobileImage')) {
             $image = $request->file('MobileImage');
             //$image_name = time().'.'.$image->getClientOriginalExtension();
-            $mobilefilename = time() . '_' . $image->getClientOriginalName();
+            $mobilefilename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/brands');
             $image->move($destinationPath, $mobilefilename);
         }
