@@ -45,7 +45,7 @@ it('no longer marks an order paid just because the success URL was called', func
     $this->get($uri . '?orderid=' . $order . '&transactionid=made-up')->assertOk();
 
     expect(orderStatus($order))->toBe(0);
-})->with(['/api/paypalsuccess', '/api/successorder', '/api/hoolahsuccess']);
+})->with(['/api/paypalsuccess', '/api/successorder']);
 
 it('tells the mobile app the payment is pending when it cannot be verified', function () {
     $order = pendingOrder(['pay_method' => 'Hoolah']);
@@ -151,4 +151,22 @@ it('keeps a web order pending when /success cannot verify the payment', function
         ->assertDontSee('Purchase conversion', false);
 
     expect(orderStatus($order))->toBe(0);
+});
+
+// Hoolah was removed in Phase 4
+
+it('no longer offers Hoolah, even if its payment method row is still active', function () {
+    Fixtures::insert('paymentmethods', ['Id' => 4, 'payment_name' => 'Hoolah', 'type' => 1, 'status' => 1]);
+    DB::table('paymentmethods')->update(['type' => 1]);
+
+    $names = \App\Models\PaymentMethods::available()->where('status', 1)->pluck('payment_name')->all();
+
+    expect($names)->not->toContain('Hoolah')
+        ->and($names)->toContain('Paypal');
+});
+
+it('has removed the Hoolah endpoints', function () {
+    $uris = collect(app('router')->getRoutes())->map->uri();
+
+    expect($uris->filter(fn ($uri) => str_contains($uri, 'hoolah'))->values()->all())->toBe([]);
 });

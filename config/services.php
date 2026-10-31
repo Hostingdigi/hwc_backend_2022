@@ -57,6 +57,13 @@ return [
         'shared_secret' => env('PUNCHOUT_SHARED_SECRET'),
     ],
 
+    // Stripe keys stay in the admin (Payment Methods); only the webhook signing
+    // secret lives here. Stripe dashboard > Developers > Webhooks, event
+    // payment_intent.succeeded, URL https://<your domain>/api/webhooks/stripe
+    'stripe' => [
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+
     'recaptcha' => [
         'site_key' => env('GOOGLE_CAPTCHA_SITE_KEY'),
         'secret' => env('GOOGLE_CAPTCHA_SECRET_KEY'),

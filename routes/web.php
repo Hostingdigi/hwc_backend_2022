@@ -55,7 +55,7 @@ Route::middleware([CheckStatus::class])->group(function(){
     Route::get('/register', [CustomerController::class, 'register'])->name('register');
     Route::get('/forgotpassword', [CustomerController::class, 'forgotpassword'])->name('forgotpassword');
     Route::match(['get', 'post'], '/sendforgotemail', [CustomerController::class, 'sendforgotemail']);
-    Route::get('/resetpassword/{username}', [CustomerController::class, 'resetpassword'])->name('resetpassword');
+    Route::get('/resetpassword/{token}', [CustomerController::class, 'resetpassword'])->name('resetpassword');
     Route::post('/updateresetpassword', [CustomerController::class, 'updateresetpassword']);
     
     Route::post('/customer/updatepersonalinfo', [CustomerController::class, 'updatepersonalinfo']);
@@ -112,7 +112,6 @@ Route::middleware([CheckStatus::class])->group(function(){
     Route::match(['get', 'post'], '/stripe', [PaymentController::class, 'stripe']);
     Route::match(['get', 'post'], '/stripePaymentProcess', [PaymentController::class, 'stripePaymentProcess']);
     Route::match(['get', 'post'], '/success', [PaymentController::class, 'success']);
-    Route::match(['get', 'post'], '/hoolah', [PaymentController::class, 'hoolah']);
     Route::match(['get', 'post'], '/paypal', [PaymentController::class, 'paypal']);
     Route::match(['get', 'post'], '/atomecallback', [PaymentController::class, 'atomecallback']);
     Route::match(['get', 'post'], '/atome', [PaymentController::class, 'atome']);
@@ -180,8 +179,6 @@ Route::post('/createorder', [CartMobileController::class, 'createorder']);
 Route::match(['get', 'post'], '/updateorder', [CartMobileController::class, 'updateorder']);
 Route::post('/getshipandpackingprice', [CartMobileController::class, 'getshipandpackingprice']);
 
-Route::match(['get', 'post'], '/hoolahcancelpayment', [CartMobileController::class, 'hoolahcancelpayment']);
-Route::match(['get', 'post'], '/hoolahsuccess', [CartMobileController::class, 'hoolahsuccess']);
 Route::match(['get', 'post'], '/paypalsuccess', [CartMobileController::class, 'paypalsuccess']);
 Route::match(['get', 'post'], '/discountcoupon', [CartMobileController::class, 'discountcoupon']);
 

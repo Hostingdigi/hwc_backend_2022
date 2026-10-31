@@ -36,42 +36,9 @@
 					</div>
 				</div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://www.paypalobjects.com/api/checkout.js"></script>
-<script>
-paypal.Button.render({
-  env: '{{ $payenv }}',
- 
-  client: {
-	@if($payenv == 'production')  
-	production: '{{ $apikey }}'
-	@else
-	sandbox: '{{ $apikey }}'
-	@endif
-  },
-  payment: function (data, actions) {
-	return actions.payment.create({
-	  transactions: [{
-		amount: {
-		  total: '{{ str_replace("", " ", $grandtotal) }}',
-		  currency: '{{ $currency }}'
-		}
-	  }],
-	  redirect_urls: {
-		return_url: '{{ url("/") }}/successorder?orderid={{ $orderid }}',
-		cancel_url: '{{ url("/") }}/cancelorder?orderid={{ $orderid }}'
-	  }
-	});
-  },
-  onAuthorize: function (data, actions) {
-	return actions.payment.execute()
-	  .then(function () {
-		actions.redirect();
-	  });
-  },
-  onCancel: function (data, actions) {
-    actions.redirect();
-  }
-}, '#paypal-button');
-
-</script>
+@include('public.Payment.paypal-button', [
+    'orderId' => $orderid,
+    'return' => 'app',
+    'cancelUrl' => url('/cancelorder?orderid=' . $orderid),
+])
 

@@ -433,7 +433,7 @@ class CustomerController extends Controller
 
                 $replyto = $adminemail;
 
-                $url = url('/') . '/resetpassword/' . base64_encode($custemail);
+                $url = \App\Services\PasswordResets::linkFor($customer);
 
                 $reseturl = '<a href="' . $url . '">Reset Password</a>';
 
@@ -471,29 +471,30 @@ class CustomerController extends Controller
         }
     }
 
-    public function resetpassword($username)
+    public function resetpassword(Request $request, $token)
     {
-        $username = base64_decode($username);
-        $customer = Customer::where('cust_username', '=', $username)->orWhere('cust_email', '=', $username)->first();
-        if ($customer) {
-            $customerid = $customer->cust_id;
-            return view('public/Customer.resetpassword', compact('customerid'));
-        } else {
-            return redirect('/');
-        }
+        // The token is checked again when the form is submitted
+        $email = (string) $request->query('email', '');
+        return view('public/Customer.resetpassword', compact('token', 'email'));
     }
 
     public function updateresetpassword(Request $request)
     {
-        $customerid = $request->id;
-        $customer = Customer::where('cust_id', '=', $customerid)->first();
-        if ($customer) {
-            UserLoggedDevices::where('user_id', $customerid)->delete();
-            Customer::where('cust_id', '=', $customerid)->update(array('cust_password' => Hash::make($request->new_password)));
-            return redirect('/login')->with('success', 'Password Successfully Changed! Please login and continue!');
-        } else {
-            return redirect('/');
+        // Used to change the password of whatever customer id the form posted,
+        // with no token. Now the emailed single-use token must match.
+        $request->validate([
+            'token' => 'required|string',
+            'email' => 'required|email',
+            'new_password' => 'required|string|min:6|same:confirm_password',
+        ]);
+
+        if (!\App\Services\PasswordResets::reset($request->email, $request->token, $request->new_password)) {
+            return redirect('/forgotpassword')->with('message', 'This password reset link is invalid or has expired. Please request a new one.');
         }
+
+        $customer = Customer::where('cust_email', $request->email)->first();
+        UserLoggedDevices::where('user_id', $customer->cust_id)->delete();
+        return redirect('/login')->with('success', 'Password Successfully Changed! Please login and continue!');
     }
 
     public function addtofavorite(Request $request)

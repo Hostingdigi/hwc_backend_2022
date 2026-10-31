@@ -81,9 +81,6 @@
 												</div>
 											@endif
 										</div>	
-										<div class="text-center mt-3">
-											or installments of S${{ number_format($installmentgstPrice, 2) }} with <img src="{{ config('shop.img_url').('/images/8dc4dab.png') }}" style="width:80px; vertical-align: middle;">
-										</div>
 									@else
 										<div class="text-center mt-3">
 											<div class="prod-price-col-red">COMING SOON</div>	

@@ -631,7 +631,7 @@ class CartController extends Controller
         $countryid = $cartItems['countryId'];
         $customer = Session::has('customer_id') ? Customer::where('cust_id', Session::get('customer_id'))->first() : [];
 
-        $paymentmethods = PaymentMethods::where('type', '=', '1')->where('status', '=', '1')->get();
+        $paymentmethods = PaymentMethods::available()->where('type', '=', '1')->where('status', '=', '1')->get();
         $ordertype = 1;
 
         if (Session::has('old_order_id') && Session::get('old_order_id') > 0) {
@@ -674,12 +674,8 @@ class CartController extends Controller
                 //return view('public/Cart.stripe', compact('cartdata', 'subtotal', 'gst', 'grandtotal', 'taxtitle', 'sesid'));
                 return redirect('/stripe');
             } elseif (stripos($paymethodname, 'hoolah') !== false || $paymentmethod == 4) {
-                $billinginfo = Session::get('billinginfo');
-                if (($billinginfo['bill_country'] == 'SG' || $billinginfo['bill_country'] == 'MY') && strlen($billinginfo['bill_mobile']) >= 8) {
-                    return redirect('/hoolah');
-                } else {
-                    return redirect('/placeorder')->with('error', 'Invalid Country / Phone Number');
-                }
+                // Hoolah removed in Phase 4 (taken over by ShopBack; API no longer available)
+                return redirect('/placeorder')->with('error', 'This payment method is no longer available. Please choose another.');
             } elseif (stripos($paymethodname, 'Paypal') !== false || $paymentmethod == 6) {
                 return redirect('/paypal');
             } elseif (stripos($paymethodname, 'grap') !== false || $paymentmethod == 5) {
@@ -781,7 +777,6 @@ class CartController extends Controller
 
             if (stripos($paymethodname, 'paypal') !== false) {
             } elseif (stripos($paymethodname, 'stripe') !== false) {
-            } elseif (stripos($paymethodname, 'hoolah') !== false) {
             } else {
                 return redirect('/success');
             }
@@ -860,7 +855,7 @@ class CartController extends Controller
     {
         $orders = OrderMaster::where('order_id', '=', $orderid)->first();
         $orderdetails = OrderDetails::where('order_id', '=', $orderid)->get();
-        $paymentmethods = PaymentMethods::where('status', '=', '1')->get();
+        $paymentmethods = PaymentMethods::available()->where('status', '=', '1')->get();
 
         $cart = $cartdata = [];
         $cartcount = 1;
@@ -978,7 +973,7 @@ class CartController extends Controller
         $deliverytype = $cartItems['deliveryDetails']['title'];
         $packingfee = $cartItems['packingFees'];
         $deliverycost = $cartItems['deliveryDetails']['deliveryTotal'];
-        $paymentmethods = PaymentMethods::where('status', '1')->get();
+        $paymentmethods = PaymentMethods::available()->where('status', '1')->get();
 
 
         $orderid = $quotationid = 0;

@@ -843,10 +843,8 @@ class ProductController extends Controller
                     $content .= '<li class="list-inline-item strikeoutprice">S$' . number_format($roundObj->roundDecimal($actualprice), 2) . '</li>';
                 }
 
-                $hoolahimg = url('/images/8dc4dab.png');
-
+                // (The "or installments of S$x with Hoolah" line was removed with Hoolah in Phase 4)
                 $content .= '</ul>';
-                $content .= '<div class="text-center mt-3">or installments of S$' . number_format($roundObj->roundDecimal($installmentPrice), 2) . ' with <img src="' . $hoolahimg . '" style="width:80px; vertical-align: middle;"></div>';
                 $content .= '<div class="text-center mt-3">';
 
                 if ($product->Quantity > 0) {

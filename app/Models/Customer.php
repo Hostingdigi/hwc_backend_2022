@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * Storefront / mobile-app customer. Also the user model of the "web" auth guard
@@ -12,7 +13,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  */
 class Customer extends Authenticatable
 {
-    use HasFactory;
+    use HasApiTokens, HasFactory;
 
     public $table = 'customer_master';
 
@@ -41,6 +42,12 @@ class Customer extends Authenticatable
     public function getRememberTokenName()
     {
         return '';
+    }
+
+    // Password resets (App\Services\PasswordResets) key tokens by this address
+    public function getEmailForPasswordReset()
+    {
+        return $this->cust_email;
     }
 
     public function orders(): HasMany

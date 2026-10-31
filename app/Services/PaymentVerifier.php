@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\OrderMaster;
-use App\Models\PaymentMethods;
+use App\Services\Payments\GatewayCredentials;
 use Illuminate\Support\Facades\Http;
 use Log;
 use Throwable;
@@ -198,15 +198,7 @@ class PaymentVerifier
 
     protected function credentials($paymentMethodId)
     {
-        $pm = PaymentMethods::where('id', $paymentMethodId)->first();
-        $live = $pm && $pm->payment_mode == 'live';
-
-        return [
-            'live' => $live,
-            'key' => (string) ($pm ? ($live ? $pm->api_key : $pm->test_api_key) : ''),
-            'secret' => (string) ($pm ? ($live ? $pm->api_signature : $pm->test_api_signature) : ''),
-            'url' => (string) ($pm ? ($live ? $pm->live_url : $pm->testing_url) : ''),
-        ];
+        return GatewayCredentials::for((int) $paymentMethodId);
     }
 
     protected function pass($reason, $transactionId = null)

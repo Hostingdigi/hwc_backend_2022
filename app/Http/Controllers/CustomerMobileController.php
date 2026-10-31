@@ -838,7 +838,7 @@ class CustomerMobileController extends Controller
 
             $replyto = $adminemail;
 
-            $url = url('/') . '/resetpassword/' . base64_encode($custemail);
+            $url = \App\Services\PasswordResets::linkFor($customer);
 
             $reseturl = '<a href="' . $url . '">Reset Password</a>';
 

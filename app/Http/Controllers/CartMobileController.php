@@ -1004,10 +1004,10 @@ class CartMobileController extends Controller
         $type = $request->type;
         $data = $paymentmenthods = [];
         if ($type == 2) {
-            $paymethods = PaymentMethods::where('Id', '!=', 5)->where('status', '=', '1')->whereIn('type', [1, 2])->get();
+            $paymethods = PaymentMethods::available()->where('Id', '!=', 5)->where('status', '=', '1')->whereIn('type', [1, 2])->get();
 
         } else if ($type == 3) {
-            $paymethods = PaymentMethods::where('Id', '!=', 5)->where('status', '=', '1')->whereIn('type', [1, 3])->get();
+            $paymethods = PaymentMethods::available()->where('Id', '!=', 5)->where('status', '=', '1')->whereIn('type', [1, 3])->get();
 
         } else {
             return response()->json(['response' => 'Error', 'message' => 'Type is empty']);
@@ -1022,11 +1022,14 @@ class CartMobileController extends Controller
                 $paymentmenthods[$x]['testing_url'] = $paymethod->testing_url;
                 $paymentmenthods[$x]['live_url'] = $paymethod->live_url;
                 $paymentmenthods[$x]['api_key'] = $paymethod->api_key;
-                $paymentmenthods[$x]['api_signature'] = $paymethod->api_signature;
+                // api_signature holds the gateway SECRET (Stripe secret key, PayPal client
+                // secret, Atome secret) and was sent to anyone calling this endpoint. The
+                // field stays so the response shape is unchanged, but it is always empty.
+                $paymentmenthods[$x]['api_signature'] = '';
 
                 if ($paymethod->Id == 3) {
                     $paymentmenthods[$x]['test_api_key'] = $paymethod->test_api_key;
-                    $paymentmenthods[$x]['test_api_signature'] = $paymethod->test_api_signature;
+                    $paymentmenthods[$x]['test_api_signature'] = '';
                 }
 
                 ++$x;
@@ -1237,7 +1240,6 @@ class CartMobileController extends Controller
                 $orderincid = $ordermaster->id;
             }
 
-            $hoolahitems = [];
             $atomeitems = [];
             $cartitems = $orderinfo['products'];
 
@@ -1278,7 +1280,6 @@ class CartMobileController extends Controller
                     $ean = $cart['code'];
                 }
 
-                $hoolahitems = array("name" => $productname, "description" => $desc, "sku" => $sku, "ean" => $ean, "quantity" => $cart['quantity'], "originalPrice" => $cart['price'], "price" => $cart['price'], "images" => array(array("imageLocation" => $image)), "taxAmount" => "0", "discount" => "0", "detailDescription" => $desc);
 
                 $atomeitems = array("name" => $productname, "description" => $desc, "sku" => $sku, "ean" => $ean, "quantity" => $cart['quantity'], "originalPrice" => $cart['price'], "price" => $cart['price'], "images" => array(array("imageLocation" => $image)), "taxAmount" => "0", "discount" => "0", "detailDescription" => $desc);
 
@@ -1454,106 +1455,9 @@ class CartMobileController extends Controller
 
                 $data = response()->json(['response' => 'success', 'message' => 'Order Created', 'orderid' => $orderincid, 'successurl' => $successurl, 'cancelurl' => $cancelurl, 'paymenturl' => '', 'apikey' => '']);
 
-            } elseif ($orderinfo['paymethod'] == 'Hoolah') {
-                $paymode = 'live';
-                $paymentmethod = PaymentMethods::where('id', '=', '4')->orWhere('payment_name', 'LIKE', '%hoolah')->first();
-
-                if ($paymentmethod) {
-                    $paymode = $paymentmethod->payment_mode;
-                    if ($paymode == 'live') {
-                        $apikey = $paymentmethod->api_key;
-                        $apisignature = $paymentmethod->api_signature;
-                        $paymenturl = $paymentmethod->live_url;
-                    } else {
-                        $apikey = $paymentmethod->test_api_key;
-                        $apisignature = $paymentmethod->test_api_signature;
-                        $paymenturl = $paymentmethod->testing_url;
-                    }
-                }
-
-                $url = $paymenturl . "/auth/login";
-                $ch = curl_init($url);
-                $payload = json_encode(array("username" => $apikey, "password" => $apisignature));
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                $result = curl_exec($ch);
-                curl_close($ch);
-                if ($result) {
-                    $response = json_decode($result);
-                    $authtoken = $response->token;
-
-                    if ($authtoken != '') {
-
-                        $url = $paymenturl . "/order/initiate";
-
-                        $billmobile = $billinginfo['bill_mobile'];
-                        $orderurl = 'https://demo-js.demo-hoolah.co/';
-                        if ($billinginfo['bill_country'] == 'SG') {
-                            $billmobile = '+65' . $billmobile;
-                            if ($paymode == 'live') {
-                                $orderurl = 'https://js.secure-hoolah.co/';
-                            }
-                        } elseif ($billinginfo['bill_country'] == 'MY') {
-                            $billmobile = '+60' . $billmobile;
-                            $orderurl = 'https://my.demo-js.demo-hoolah.co/';
-                            if ($paymode == 'live') {
-                                $orderurl = 'https://my.js.secure-hoolah.co/';
-                            }
-                        }
-
-                        $billadd2 = $shipadd2 = "";
-                        if ($billinginfo['bill_address2']) {
-                            $billadd2 = $billinginfo['bill_address2'];
-                        }
-
-                        if ($shippinginfo['ship_address2']) {
-                            $shipadd2 = $shippinginfo['ship_address2'];
-                        }
-
-                        $closeurl = url('/') . '/hoolahcancelpayment?orderid=' . $orderincid;
-                        $returnurl = url('/') . '/hoolahsuccess?orderid=' . $orderincid;
-
-                        $ch = curl_init($url);
-                        # Setup request to send json via POST.
-                        $payload = array("consumerTitle" => "", "consumerFirstName" => $billinginfo['bill_fname'], "consumerLastName" => $billinginfo['bill_lname'], "consumerMiddleName" => "", "consumerEmail" => $billinginfo['bill_email'], "consumerPhoneNumber" => $billmobile, "shippingAddress" => array("line1" => $shippinginfo['ship_address1'], "line2" => $shipadd2, "suburb" => $shipcountryname, "postcode" => $shippinginfo['ship_zip'], "countryCode" => $shippinginfo['ship_country']), "billingAddress" => array("line1" => $billinginfo['bill_address1'], "line2" => $billadd2, "suburb" => $billcountryname, "postcode" => $billinginfo['bill_zip'], "countryCode" => $billinginfo['bill_country']), "items" => array($hoolahitems), "totalAmount" => $grandtotal, "originalAmount" => $grandtotal, "taxAmount" => $gst, "cartId" => $orderid, "orderType" => "ONLINE", "shippingAmount" => $deliverycost, "shippingMethod" => "FREE", "discount" => $discount, "voucherCode" => "", "currency" => $currency, "closeUrl" => $closeurl, "returnToShopUrl" => $returnurl);
-
-                        $payload = json_encode($payload);
-
-                        //print_r($payload); exit;
-                        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
-                        $header_str = "Authorization: Bearer " . $authtoken;
-                        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                            "Content-Type: application/json",
-                            "Accept: application/json",
-                            $header_str,
-                        ));
-                        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                        $result = curl_exec($ch);
-                        curl_close($ch);
-
-                        if ($result) {
-                            $response = json_decode($result);
-
-                            $orderContentToken = $response->orderContextToken;
-                            $orderid = $response->orderId;
-                            $orderuuid = $response->orderUuid;
-                            if ($orderContentToken) {
-                                OrderMaster::where('order_id', '=', $orderincid)->update(array('trans_id' => $orderContentToken));
-
-                                if ($discounttext != '' && $discount != 0) {
-                                    CouponCodeUsage::insert(array('coupon_id' => $couponid, 'customer_id' => $userid, 'order_id' => $orderincid));
-                                }
-
-                                $hoolahpaymenturl = $orderurl . '?ORDER_CONTEXT_TOKEN=' . $orderContentToken . '&platform=bespoke&version=1.0.1';
-
-                                $data = response()->json(['response' => 'success', 'message' => 'Order Created', 'orderid' => $orderincid, 'orderContentToken' => $orderContentToken, 'hoolahpaymenturl' => $hoolahpaymenturl]);
-
-                            }
-                        }
-                    }
-                }
             } elseif ($orderinfo['paymethod'] == 'Paypal') {
+                // (The Hoolah branch before this one was removed in Phase 4: Hoolah was
+                // taken over by ShopBack and its API no longer works.)
                 $payurl = url('/') . '/api/paypalpayment';
                 $successurl = url('/') . '/successorder?orderid=' . $orderincid . '&transactionid=';
                 $cancelurl = url('/') . '/cancelorder?orderid=' . $orderincid . '&transactionid=';
@@ -1820,27 +1724,6 @@ class CartMobileController extends Controller
         $token = $orderinfo['token'];
 
         return view('public/Payment.stripepayment', compact('orderid', 'order', 'orderdetails', 'apikey', 'apisignature', 'userid', 'currency', 'grandtotal'));
-    }
-
-    public function hoolahcancelpayment(Request $request)
-    {
-        $data = [];
-        $orderid = $request->orderid;
-        //$data = response()->json(['response' => 'failed', 'message' => 'Your Payment Transaction has been cancelled', 'orderid' => $orderid]);
-        //return $data;
-        return view('public/Payment.hoolahcancelpayment');
-    }
-
-    public function hoolahsuccess(Request $request)
-    {
-        $data = [];
-        $orderid = $request->orderid;
-        if (!$this->paymentConfirmed($request, $orderid)) {
-            return view('public/Payment.pendingverification', compact('orderid'));
-        }
-        return view('public/Payment.hoolahsuccess');
-        //$data = response()->json(['response' => 'success', 'message' => 'Your order has been completed', 'orderid' => $orderid]);
-        //return $data;
     }
 
     public function paypalsuccess(Request $request)
@@ -2598,7 +2481,6 @@ class CartMobileController extends Controller
                 $quotationid = $order->order_id;
             }
 
-            $hoolahitems = [];
             $atomeitems = [];
             $cartitems = $orderinfo['products'];
 
@@ -2758,7 +2640,7 @@ class CartMobileController extends Controller
         $orderid = $request->orderid;
         $orders = OrderMaster::where('order_id', '=', $orderid)->first();
         $orderdetails = OrderDetails::where('order_id', '=', $orderid)->get();
-        $paymentmethods = PaymentMethods::where('status', '=', '1')->get();
+        $paymentmethods = PaymentMethods::available()->where('status', '=', '1')->get();
 
         $cart = $cartdata = $cartdataMobile = $quotionDetails = [];
         $cartcount = 1;

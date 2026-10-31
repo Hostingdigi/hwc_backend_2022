@@ -33,7 +33,8 @@
 							
                             <form action="{{ url('/updateresetpassword') }}" method="POST" onsubmit="return validateform();">
 								@csrf
-								<input type="hidden" name="id" value="{{ $customerid }}">
+								<input type="hidden" name="token" value="{{ $token }}">
+								<input type="hidden" name="email" value="{{ $email }}">
 							  <div class="row">
 								
 								<div class="col-6">

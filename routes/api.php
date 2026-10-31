@@ -85,8 +85,6 @@ Route::post('/createorder', [CartMobileController::class, 'createorder']);
 Route::match(['get', 'post'], '/updateorder', [CartMobileController::class, 'updateorder']);
 Route::post('/getshipandpackingprice', [CartMobileController::class, 'getshipandpackingprice']);
 
-Route::match(['get', 'post'], '/hoolahcancelpayment', [CartMobileController::class, 'hoolahcancelpayment']);
-Route::match(['get', 'post'], '/hoolahsuccess', [CartMobileController::class, 'hoolahsuccess']);
 Route::match(['get', 'post'], '/paypalsuccess', [CartMobileController::class, 'paypalsuccess']);
 Route::match(['get', 'post'], '/discountcoupon', [CartMobileController::class, 'discountcoupon']);
 
@@ -127,3 +125,10 @@ Route::middleware('integration.key')->group(function () {
     Route::get('dailyorders', [ApiController::class, 'listDailyOrders']);
 });
 /* Mobile App - End */
+
+// PayPal JS SDK button (Orders v2) for the web checkout and the v1 app's PayPal web view
+Route::middleware('throttle:api-v2')->group(function () {
+    Route::post('paypal/orders/{order}', [\App\Http\Controllers\PayPalButtonController::class, 'create'])->whereNumber('order');
+    Route::post('paypal/orders/{order}/capture/{return}', [\App\Http\Controllers\PayPalButtonController::class, 'capture'])
+        ->whereNumber('order')->whereIn('return', ['web', 'app']);
+});
