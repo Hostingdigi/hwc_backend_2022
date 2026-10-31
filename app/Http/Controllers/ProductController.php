@@ -1078,7 +1078,7 @@ class ProductController extends Controller
                     ->cc($ccemail)
                     ->subject($emailsubject)
                     ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->setBody($emailcontent, 'text/html');
+                    ->html($emailcontent);
             });
         }
         echo 'Success';
@@ -1128,7 +1128,7 @@ class ProductController extends Controller
                     ->cc($ccemail)
                     ->subject($emailsubject)
                     ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->setBody($emailcontent, 'text/html');
+                    ->html($emailcontent);
             });
         }
         echo 'Success';

@@ -1191,7 +1191,7 @@ class ProductMobileController extends Controller
                 $message->to($adminemail)
                     ->subject($emailsubject)
                     ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->setBody($emailcontent, 'text/html');
+                    ->html($emailcontent);
             });
         }
         $data = response()->json(['response' => 'success', 'message' => 'Your Question Successfully Sent']);

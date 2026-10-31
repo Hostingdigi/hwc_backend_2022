@@ -9,7 +9,7 @@ use Tests\TestCase;
 |--------------------------------------------------------------------------
 |
 | Feature tests boot Laravel against the MySQL database named in phpunit.xml
-| (hwc_backend_testing). RefreshDatabase loads database/schema/mysql-schema.dump
+| (hwc_backend_testing). RefreshDatabase loads database/schema/mysql-schema.sql
 | once per run (this needs the `mysql` client on PATH) and wraps every test in
 | a transaction.
 |
@@ -17,4 +17,6 @@ use Tests\TestCase;
 |
 */
 
-uses(TestCase::class, RefreshDatabase::class)->in('Feature');
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
+    ->in('Feature');

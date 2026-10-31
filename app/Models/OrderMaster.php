@@ -19,4 +19,33 @@ class OrderMaster extends Model
 		'ship_email', 'trans_id', 'error_reason', 'cc_type', 'cc_number', 'cc_cvv2', 'cc_expiry', 'pay_approved_by', 'bill_ipaddress',
 		'ship_mobile', 'ship_fax', 'ship_landline', 'ship_ads1', 'ship_ads2', 'ship_country', 'ship_city', 'ship_state', 'ship_zip', 'date_entered'
 	];
+
+	// The table's key is order_id, but $primaryKey is left as "id" on purpose:
+	// OrderServices::createOrder() reads $order->id after create(). Relationships
+	// therefore name their keys explicitly.
+
+	public function customer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+	{
+		return $this->belongsTo(Customer::class, 'user_id', 'cust_id');
+	}
+
+	public function details(): \Illuminate\Database\Eloquent\Relations\HasMany
+	{
+		return $this->hasMany(OrderDetails::class, 'order_id', 'order_id');
+	}
+
+	public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+	{
+		return $this->hasMany(OrderPayment::class, 'order_id', 'order_id');
+	}
+
+	public function deliveries(): \Illuminate\Database\Eloquent\Relations\HasMany
+	{
+		return $this->hasMany(OrderDeliveryInfo::class, 'order_id', 'order_id');
+	}
+
+	public function coupon(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+	{
+		return $this->belongsTo(Couponcode::class, 'discount_id', 'id');
+	}
 }

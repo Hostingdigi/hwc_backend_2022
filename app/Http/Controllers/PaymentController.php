@@ -2509,7 +2509,7 @@ class PaymentController extends Controller
                     //     $message->to([$customeremail, $adminemail])
                     //         ->subject($emailsubject)
                     //         ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    //         ->setBody($emailcontent, 'text/html');
+                    //         ->html($emailcontent);
                     // });
                     
                 }catch(Exception $e){}
@@ -2688,7 +2688,7 @@ class PaymentController extends Controller
                     $message->to([$customeremail, $adminemail])
                         ->subject($emailsubject)
                         ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->setBody($emailcontent, 'text/html');
+                        ->html($emailcontent);
                 });
             }
         }
@@ -2861,7 +2861,7 @@ class PaymentController extends Controller
                     //     $message->to([$customeremail, $adminemail])
                     //         ->subject($emailsubject)
                     //         ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    //         ->setBody($emailcontent, 'text/html');
+                    //         ->html($emailcontent);
                     // });
                 }catch(Exception $e){
                     Log::error('ORDER ID : ' . $order->order_id . ' email is not works.');

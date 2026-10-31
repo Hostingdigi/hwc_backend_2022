@@ -1,25 +1,21 @@
 <?php
 
 use App\Http\Controllers\Controller;
-use App\Http\Kernel;
-use App\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\UploadedFile;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 // Phase 0: CSRF is back on for web routes, and uploads are restricted.
 // Laravel skips CSRF checks while running tests, so the configuration is asserted directly.
+// (Laravel 13 calls its CSRF middleware PreventRequestForgery; exceptions are set in bootstrap/app.php.)
 
 it('runs CSRF verification on every web route', function () {
-    $groups = (new ReflectionProperty(Kernel::class, 'middlewareGroups'));
-    $groups->setAccessible(true);
-
-    expect($groups->getValue(app(Kernel::class))['web'])->toContain(VerifyCsrfToken::class);
+    expect(app(Kernel::class)->getMiddlewareGroups()['web'])->toContain(PreventRequestForgery::class);
 });
 
 it('exempts only gateway callbacks, punchout setup and the legacy mobile endpoints', function () {
-    $except = (new ReflectionProperty(VerifyCsrfToken::class, 'except'));
-    $except->setAccessible(true);
-    $paths = $except->getValue(app(VerifyCsrfToken::class));
+    $paths = (new ReflectionProperty(PreventRequestForgery::class, 'neverVerify'))->getValue();
 
     expect($paths)->toContain('punchout/setup', 'success', 'atomecallback', 'grabpaywebhook', 'grabpay-complete', 'customerlogin')
         ->and($paths)->not->toContain('admin/*', '*', 'admin/verifylogin', 'logincheck', 'placeorder', 'applycouponcode');

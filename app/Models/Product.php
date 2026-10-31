@@ -35,5 +35,29 @@ class Product extends Model
 		}
 		return $catids;
 	}
-	
+
+	public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+	{
+		return $this->belongsTo(Category::class, 'Types', 'TypeId');
+	}
+
+	public function brand(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+	{
+		return $this->belongsTo(Brand::class, 'Brand', 'BrandId');
+	}
+
+	public function options(): \Illuminate\Database\Eloquent\Relations\HasMany
+	{
+		return $this->hasMany(ProductOptions::class, 'Prod', 'Id');
+	}
+
+	public function gallery(): \Illuminate\Database\Eloquent\Relations\HasMany
+	{
+		return $this->hasMany(ProductGallery::class, 'ProdId', 'Id');
+	}
+
+	public function reviews(): \Illuminate\Database\Eloquent\Relations\HasMany
+	{
+		return $this->hasMany(ProductReviews::class, 'ProdId', 'Id');
+	}
 }

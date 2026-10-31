@@ -1,32 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="./vendor/phpunit/phpunit/phpunit.xsd"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
 >
     <testsuites>
         <testsuite name="Unit">
-            <directory suffix="Test.php">./tests/Unit</directory>
+            <directory>tests/Unit</directory>
         </testsuite>
         <testsuite name="Feature">
-            <directory suffix="Test.php">./tests/Feature</directory>
+            <directory>tests/Feature</directory>
         </testsuite>
     </testsuites>
-    <coverage processUncoveredFiles="true">
+    <source>
         <include>
-            <directory suffix=".php">./app</directory>
+            <directory>app</directory>
         </include>
-    </coverage>
+    </source>
     <php>
         <!-- force="true" so values from .env (which may point at a live database) never leak into tests -->
         <env name="APP_ENV" value="testing" force="true"/>
         <env name="APP_KEY" value="base64:LJikEpvLIRNAzhmaTKCn+Vy2e+VkHUd84FQbW9fQxq0=" force="true"/>
         <env name="APP_DEBUG" value="true" force="true"/>
         <env name="APP_URL" value="http://localhost" force="true"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file" force="true"/>
         <env name="BCRYPT_ROUNDS" value="4" force="true"/>
-        <env name="CACHE_DRIVER" value="array" force="true"/>
+        <env name="BROADCAST_CONNECTION" value="null" force="true"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
         <!-- MySQL, not SQLite: the app relies on FIND_IN_SET, CONCAT and other MySQL behaviour -->
         <env name="DB_CONNECTION" value="mysql" force="true"/>
+        <env name="DB_URL" value="" force="true"/>
         <env name="DB_HOST" value="127.0.0.1" force="true"/>
         <env name="DB_PORT" value="3306" force="true"/>
         <env name="DB_DATABASE" value="hwc_backend_testing" force="true"/>
@@ -37,6 +40,8 @@
         <env name="SESSION_DRIVER" value="array" force="true"/>
         <env name="INTEGRATION_API_KEY" value="test-integration-key" force="true"/>
         <env name="PAYMENT_VERIFICATION_MODE" value="enforce" force="true"/>
+        <env name="PULSE_ENABLED" value="false" force="true"/>
         <env name="TELESCOPE_ENABLED" value="false" force="true"/>
+        <env name="NIGHTWATCH_ENABLED" value="false" force="true"/>
     </php>
 </phpunit>

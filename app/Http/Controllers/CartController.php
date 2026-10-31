@@ -1177,7 +1177,7 @@ class CartController extends Controller
                 $message->to($custemail)
                     ->subject($emailsubject)
                     ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->setBody($emailcontent, 'text/html');
+                    ->html($emailcontent);
             });
 
             //@mail($setting->admin_email, $emailsubject, $emailcontent, $headers);
@@ -1465,7 +1465,7 @@ class CartController extends Controller
                     $message->to($custemail)
                         ->subject($emailsubject)
                         ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->setBody($emailcontent, 'text/html');
+                        ->html($emailcontent);
                 });
 
                 //@mail($setting->admin_email, $emailsubject, $emailcontent, $headers);

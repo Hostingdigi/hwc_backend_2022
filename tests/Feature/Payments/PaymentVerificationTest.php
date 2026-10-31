@@ -8,6 +8,8 @@ use Tests\Support\Fixtures;
 // (App\Services\PaymentVerifier). Gateways are faked; nothing leaves the machine.
 
 beforeEach(function () {
+    Http::preventStrayRequests();
+
     Fixtures::insert('paymentmethods', ['Id' => 3, 'payment_name' => 'Credit Card', 'payment_mode' => 'test', 'test_api_signature' => 'sk_test_fake', 'status' => 1]);
     Fixtures::insert('paymentmethods', ['Id' => 6, 'payment_name' => 'Paypal', 'payment_mode' => 'test', 'test_api_key' => 'pp-client', 'test_api_signature' => 'pp-secret', 'status' => 1]);
     Fixtures::insert('paymentmethods', ['Id' => 7, 'payment_name' => 'Atome', 'payment_mode' => 'test', 'test_api_key' => 'at-key', 'test_api_signature' => 'at-secret', 'testing_url' => 'https://atome.test/v2', 'status' => 1]);

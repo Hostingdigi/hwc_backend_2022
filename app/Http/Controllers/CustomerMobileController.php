@@ -108,7 +108,7 @@ class CustomerMobileController extends Controller
                     $message->to($custemail)
                         ->subject($emailsubject)
                         ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->setBody($emailcontent, 'text/html');
+                        ->html($emailcontent);
                 });
             }
         }
@@ -877,7 +877,7 @@ class CustomerMobileController extends Controller
                     $message->to($custemail)
                         ->subject($emailsubject)
                         ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->setBody($emailcontent, 'text/html');
+                        ->html($emailcontent);
                 });
             }
             $data = response()->json(['response' => 'success', 'message' => 'Reset password Link sent']);

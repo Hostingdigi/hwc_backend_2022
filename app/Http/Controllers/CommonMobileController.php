@@ -402,14 +402,14 @@ class CommonMobileController extends Controller
                 $message->to($adminemail)
                     ->subject($emailsubject)
                     ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->setBody($emailcontent, 'text/html');
+                    ->html($emailcontent);
             });
 
             Mail::send([], [], function ($message) use ($email, $emailsubject, $emailcontent) {
                 $message->to($email)
                     ->subject($emailsubject)
                     ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->setBody($emailcontent, 'text/html');
+                    ->html($emailcontent);
             });
 
             $data = response()->json(['response' => 'success', 'message' => 'Feedback Successfully Sent!', 'html' => $emailcontent]);
@@ -501,7 +501,7 @@ class CommonMobileController extends Controller
             $message->to($to_email, $to_name)
                 ->subject('Test Mail')
                 ->from(env('MAIL_USERNAME'), 'Test Mail')
-                ->setBody($html, 'text/html');
+                ->html($html);
         });
 
         return response()->json(['status' => true, 'message' => 'Successfully email sent']);

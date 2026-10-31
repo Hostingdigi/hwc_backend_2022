@@ -1,64 +1,67 @@
 <?php
 
+use App\Http\Controllers\ApiController;
 use App\Http\Controllers\CartMobileController;
+use App\Http\Controllers\CommonMobileController;
+use App\Http\Controllers\CustomerMobileController;
+use App\Http\Controllers\ProductMobileController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
 |
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
+| Loaded under the /api prefix with the "api" middleware group
+| (see bootstrap/app.php).
 |
  */
-use Illuminate\Support\Facades\Route;
 
 /* Mobile App - Start */
-Route::post('/storecustomer', 'App\Http\Controllers\CustomerMobileController@storecustomer');
-Route::match(['get', 'post'], '/chkcustomeravailable', 'App\Http\Controllers\CustomerMobileController@chkcustomeravailable');
-Route::post('/customerlogin', 'App\Http\Controllers\CustomerMobileController@customerlogin');
-Route::match(['get', 'post'], '/customerdata', 'App\Http\Controllers\CustomerMobileController@customerdata');
-Route::match(['get', 'post'], '/changecustomerpassword', 'App\Http\Controllers\CustomerMobileController@changecustomerpassword');
-Route::match(['get', 'post'], '/customerforgotpassword', 'App\Http\Controllers\CustomerMobileController@customerforgotpassword');
+Route::post('/storecustomer', [CustomerMobileController::class, 'storecustomer']);
+Route::match(['get', 'post'], '/chkcustomeravailable', [CustomerMobileController::class, 'chkcustomeravailable']);
+Route::post('/customerlogin', [CustomerMobileController::class, 'customerlogin']);
+Route::match(['get', 'post'], '/customerdata', [CustomerMobileController::class, 'customerdata']);
+Route::match(['get', 'post'], '/changecustomerpassword', [CustomerMobileController::class, 'changecustomerpassword']);
+Route::match(['get', 'post'], '/customerforgotpassword', [CustomerMobileController::class, 'customerforgotpassword']);
 
-Route::match(['get', 'post'], '/mywishlist', 'App\Http\Controllers\CustomerMobileController@mywishlist');
-Route::match(['get', 'post'], '/addwishlist', 'App\Http\Controllers\CustomerMobileController@addwishlist');
-Route::match(['get', 'post'], '/removefromwishlist', 'App\Http\Controllers\CustomerMobileController@removefromwishlist');
+Route::match(['get', 'post'], '/mywishlist', [CustomerMobileController::class, 'mywishlist']);
+Route::match(['get', 'post'], '/addwishlist', [CustomerMobileController::class, 'addwishlist']);
+Route::match(['get', 'post'], '/removefromwishlist', [CustomerMobileController::class, 'removefromwishlist']);
 
-Route::match(['get', 'post'], '/orderlist', 'App\Http\Controllers\CustomerMobileController@orderlist');
-Route::match(['get', 'post'], '/orderinfo', 'App\Http\Controllers\CustomerMobileController@orderinfo');
+Route::match(['get', 'post'], '/orderlist', [CustomerMobileController::class, 'orderlist']);
+Route::match(['get', 'post'], '/orderinfo', [CustomerMobileController::class, 'orderinfo']);
 
-Route::post('/updatecustomerdata', 'App\Http\Controllers\CustomerMobileController@updatecustomerdata');
-Route::get('/allcategory', 'App\Http\Controllers\CommonMobileController@allcategory');
-Route::get('/allbrands', 'App\Http\Controllers\CommonMobileController@allbrands');
-Route::get('/allcountries', 'App\Http\Controllers\CommonMobileController@allcountries');
+Route::post('/updatecustomerdata', [CustomerMobileController::class, 'updatecustomerdata']);
+Route::get('/allcategory', [CommonMobileController::class, 'allcategory']);
+Route::get('/allbrands', [CommonMobileController::class, 'allbrands']);
+Route::get('/allcountries', [CommonMobileController::class, 'allcountries']);
 
-Route::get('/allbrandswithorder', 'App\Http\Controllers\CommonMobileController@allbrandswithorder');
+Route::get('/allbrandswithorder', [CommonMobileController::class, 'allbrandswithorder']);
 
-Route::get('/offermessages', 'App\Http\Controllers\CommonMobileController@offermessages');
+Route::get('/offermessages', [CommonMobileController::class, 'offermessages']);
 
-Route::get('/popularbrands', 'App\Http\Controllers\CommonMobileController@popularbrands');
-Route::get('/brandbyfilter/{filter}', 'App\Http\Controllers\CommonMobileController@brandbyfilter');
-Route::get('/offerCategories', 'App\Http\Controllers\CommonMobileController@offerCategories');
-Route::get('/homebanners', 'App\Http\Controllers\CommonMobileController@homebanners');
-Route::get('/adbanners', 'App\Http\Controllers\CommonMobileController@adbanners');
-Route::get('/terms', 'App\Http\Controllers\CommonMobileController@terms');
-Route::post('/sendfeedback', 'App\Http\Controllers\CommonMobileController@sendfeedback');
-Route::get('/mobileversions', 'App\Http\Controllers\CommonMobileController@mobileversions');
+Route::get('/popularbrands', [CommonMobileController::class, 'popularbrands']);
+Route::get('/brandbyfilter/{filter}', [CommonMobileController::class, 'brandbyfilter']);
+Route::get('/offerCategories', [CommonMobileController::class, 'offerCategories']);
+Route::get('/homebanners', [CommonMobileController::class, 'homebanners']);
+Route::get('/adbanners', [CommonMobileController::class, 'adbanners']);
+Route::get('/terms', [CommonMobileController::class, 'terms']);
+Route::post('/sendfeedback', [CommonMobileController::class, 'sendfeedback']);
+Route::get('/mobileversions', [CommonMobileController::class, 'mobileversions']);
 
-Route::get('/promotionalitems', 'App\Http\Controllers\ProductMobileController@promotionalitems');
-Route::match(['get', 'post'], '/branditems', 'App\Http\Controllers\ProductMobileController@branditems');
-Route::match(['get', 'post'], '/categoryitems', 'App\Http\Controllers\ProductMobileController@categoryitems');
-Route::match(['get', 'post'], '/childcategories', 'App\Http\Controllers\CommonMobileController@childcategories');
-Route::match(['get', 'post'], '/itemdetails', 'App\Http\Controllers\ProductMobileController@itemdetails');
-Route::match(['get', 'post'], '/childcategorywithproducts', 'App\Http\Controllers\ProductMobileController@childcategorywithproducts');
-Route::get('/allitems', 'App\Http\Controllers\ProductMobileController@allitems');
-Route::get('/promotionalitemnames', 'App\Http\Controllers\ProductMobileController@promotionalitemnames');
-Route::get('/allitemnames', 'App\Http\Controllers\ProductMobileController@allitemnames');
-Route::any('/sendqa', 'App\Http\Controllers\ProductMobileController@sendqa');
+Route::get('/promotionalitems', [ProductMobileController::class, 'promotionalitems']);
+Route::match(['get', 'post'], '/branditems', [ProductMobileController::class, 'branditems']);
+Route::match(['get', 'post'], '/categoryitems', [ProductMobileController::class, 'categoryitems']);
+Route::match(['get', 'post'], '/childcategories', [CommonMobileController::class, 'childcategories']);
+Route::match(['get', 'post'], '/itemdetails', [ProductMobileController::class, 'itemdetails']);
+Route::match(['get', 'post'], '/childcategorywithproducts', [ProductMobileController::class, 'childcategorywithproducts']);
+Route::get('/allitems', [ProductMobileController::class, 'allitems']);
+Route::get('/promotionalitemnames', [ProductMobileController::class, 'promotionalitemnames']);
+Route::get('/allitemnames', [ProductMobileController::class, 'allitemnames']);
+Route::any('/sendqa', [ProductMobileController::class, 'sendqa']);
 
-Route::match(['get', 'post'], '/storeproductrating', 'App\Http\Controllers\ProductMobileController@storeproductrating');
+Route::match(['get', 'post'], '/storeproductrating', [ProductMobileController::class, 'storeproductrating']);
 
 Route::prefix('cart')->group(function () {
     Route::post('add_item', [CartMobileController::class, 'addItem']);
@@ -70,58 +73,58 @@ Route::prefix('cart')->group(function () {
 Route::post('list-shipping-methods', [CartMobileController::class, 'ListShippingmethods']);
 Route::post('get-shipping-package-price', [CartMobileController::class, 'getShippingPackagePrice']);
 
-Route::any('/shoppingcart', 'App\Http\Controllers\CartMobileController@shoppingcart');
-Route::match(['get', 'post'], '/addtoshoppingcart', 'App\Http\Controllers\CartMobileController@addtoshoppingcart');
-Route::match(['get', 'post'], '/clearshoppingcart', 'App\Http\Controllers\CartMobileController@clearshoppingcart');
-Route::match(['get', 'post'], '/clearcustomershoppingcart', 'App\Http\Controllers\CartMobileController@clearcustomershoppingcart');
-Route::get('/removeshoppingcartitem', 'App\Http\Controllers\CartMobileController@removeshoppingcartitem');
-Route::match(['get', 'post'], '/updateshoppingcart', 'App\Http\Controllers\CartMobileController@updateshoppingcart');
-Route::get('/shippingmethods', 'App\Http\Controllers\CartMobileController@shippingmethods');
-Route::get('/paymethods', 'App\Http\Controllers\CartMobileController@paymethods');
-Route::post('/createorder', 'App\Http\Controllers\CartMobileController@createorder');
-Route::post('createorder-two', 'App\Http\Controllers\CartMobileController@createorderTwo');
-Route::match(['get', 'post'], '/updateorder', 'App\Http\Controllers\CartMobileController@updateorder');
-Route::post('/getshipandpackingprice', 'App\Http\Controllers\CartMobileController@getshipandpackingprice');
+Route::any('/shoppingcart', [CartMobileController::class, 'shoppingcart']);
+Route::match(['get', 'post'], '/addtoshoppingcart', [CartMobileController::class, 'addtoshoppingcart']);
+Route::match(['get', 'post'], '/clearshoppingcart', [CartMobileController::class, 'clearshoppingcart']);
+Route::match(['get', 'post'], '/clearcustomershoppingcart', [CartMobileController::class, 'clearcustomershoppingcart']);
+Route::get('/removeshoppingcartitem', [CartMobileController::class, 'removeshoppingcartitem']);
+Route::match(['get', 'post'], '/updateshoppingcart', [CartMobileController::class, 'updateshoppingcart']);
+Route::get('/shippingmethods', [CartMobileController::class, 'shippingmethods']);
+Route::get('/paymethods', [CartMobileController::class, 'paymethods']);
+Route::post('/createorder', [CartMobileController::class, 'createorder']);
+Route::post('createorder-two', [CartMobileController::class, 'createorderTwo']);
+Route::match(['get', 'post'], '/updateorder', [CartMobileController::class, 'updateorder']);
+Route::post('/getshipandpackingprice', [CartMobileController::class, 'getshipandpackingprice']);
 
-Route::match(['get', 'post'], '/hoolahcancelpayment', 'App\Http\Controllers\CartMobileController@hoolahcancelpayment');
-Route::match(['get', 'post'], '/hoolahsuccess', 'App\Http\Controllers\CartMobileController@hoolahsuccess');
-Route::match(['get', 'post'], '/paypalsuccess', 'App\Http\Controllers\CartMobileController@paypalsuccess');
-Route::match(['get', 'post'], '/discountcoupon', 'App\Http\Controllers\CartMobileController@discountcoupon');
+Route::match(['get', 'post'], '/hoolahcancelpayment', [CartMobileController::class, 'hoolahcancelpayment']);
+Route::match(['get', 'post'], '/hoolahsuccess', [CartMobileController::class, 'hoolahsuccess']);
+Route::match(['get', 'post'], '/paypalsuccess', [CartMobileController::class, 'paypalsuccess']);
+Route::match(['get', 'post'], '/discountcoupon', [CartMobileController::class, 'discountcoupon']);
 
-Route::match(['get', 'post'], '/successorder', 'App\Http\Controllers\CartMobileController@successorder');
-Route::match(['get', 'post'], '/cancelorder', 'App\Http\Controllers\CartMobileController@cancelorder');
-Route::match(['get', 'post'], '/paypalpayment', 'App\Http\Controllers\CartMobileController@paypalpayment');
-Route::match(['get', 'post'], '/stripepayment', 'App\Http\Controllers\CartMobileController@stripepayment');
+Route::match(['get', 'post'], '/successorder', [CartMobileController::class, 'successorder']);
+Route::match(['get', 'post'], '/cancelorder', [CartMobileController::class, 'cancelorder']);
+Route::match(['get', 'post'], '/paypalpayment', [CartMobileController::class, 'paypalpayment']);
+Route::match(['get', 'post'], '/stripepayment', [CartMobileController::class, 'stripepayment']);
 
-Route::post('ios-create-payment-intend', 'App\Http\Controllers\CartMobileController@iOSCreateStripePaymentIntend');
+Route::post('ios-create-payment-intend', [CartMobileController::class, 'iOSCreateStripePaymentIntend']);
 
-Route::post('/createquotation', 'App\Http\Controllers\CartMobileController@createquotation');
-Route::match(['get', 'post'], '/quotationlist', 'App\Http\Controllers\CustomerMobileController@quotationlist');
+Route::post('/createquotation', [CartMobileController::class, 'createquotation']);
+Route::match(['get', 'post'], '/quotationlist', [CustomerMobileController::class, 'quotationlist']);
 
-Route::match(['get', 'post'], '/makerepayment', 'App\Http\Controllers\CartMobileController@makerepayment');
+Route::match(['get', 'post'], '/makerepayment', [CartMobileController::class, 'makerepayment']);
 
-Route::post('products/category-wise', 'App\Http\Controllers\ProductMobileController@listProductsByCategoryWise');
-Route::post('products/brand-wise', 'App\Http\Controllers\ProductMobileController@listProductsByBrandWise');
-Route::get('faq', 'App\Http\Controllers\CommonMobileController@listFaqs');
-Route::get('new-arrivals', 'App\Http\Controllers\ProductMobileController@newArrivals');
-Route::post('new-arrivals-names', 'App\Http\Controllers\ProductMobileController@newArrivalsNames');
-Route::post('privacy-policy', 'App\Http\Controllers\CommonMobileController@listPrivacyPolicy');
+Route::post('products/category-wise', [ProductMobileController::class, 'listProductsByCategoryWise']);
+Route::post('products/brand-wise', [ProductMobileController::class, 'listProductsByBrandWise']);
+Route::get('faq', [CommonMobileController::class, 'listFaqs']);
+Route::get('new-arrivals', [ProductMobileController::class, 'newArrivals']);
+Route::post('new-arrivals-names', [ProductMobileController::class, 'newArrivalsNames']);
+Route::post('privacy-policy', [CommonMobileController::class, 'listPrivacyPolicy']);
 // Test email (sends to any address, so it is key-protected below)
 
-Route::post('request-account-deactivate', 'App\Http\Controllers\CustomerMobileController@requestAccountDeactivate');
-Route::post('verify-account-deactivate', 'App\Http\Controllers\CustomerMobileController@verifyAccountDeactivate');
+Route::post('request-account-deactivate', [CustomerMobileController::class, 'requestAccountDeactivate']);
+Route::post('verify-account-deactivate', [CustomerMobileController::class, 'verifyAccountDeactivate']);
 
 Route::middleware('integration.key')->group(function () {
-    Route::post('send-test-email', 'App\Http\Controllers\CommonMobileController@sendTestEmail');
+    Route::post('send-test-email', [CommonMobileController::class, 'sendTestEmail']);
 
-    Route::post('create_category', 'App\Http\Controllers\ApiController@createCategory');
-    Route::post('create_sub_category', 'App\Http\Controllers\ApiController@createSubCategory');
+    Route::post('create_category', [ApiController::class, 'createCategory']);
+    Route::post('create_sub_category', [ApiController::class, 'createSubCategory']);
 
-    Route::post('create_product', 'App\Http\Controllers\ApiController@createProduct');
-    Route::post('productStatusUpdate', 'App\Http\Controllers\ApiController@productStatusUpdate');
-    Route::post('stock_update', 'App\Http\Controllers\ApiController@stockUpdate');
-    Route::post('product_all_update', 'App\Http\Controllers\ApiController@productAllUpdate');
+    Route::post('create_product', [ApiController::class, 'createProduct']);
+    Route::post('productStatusUpdate', [ApiController::class, 'productStatusUpdate']);
+    Route::post('stock_update', [ApiController::class, 'stockUpdate']);
+    Route::post('product_all_update', [ApiController::class, 'productAllUpdate']);
 
-    Route::get('dailyorders', 'App\Http\Controllers\ApiController@listDailyOrders');
+    Route::get('dailyorders', [ApiController::class, 'listDailyOrders']);
 });
 /* Mobile App - End */

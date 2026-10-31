@@ -108,7 +108,7 @@ class CustomerController extends Controller
                 $message->to($custemail)
                     ->subject($emailsubject)
                     ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->setBody($emailcontent, 'text/html');
+                    ->html($emailcontent);
             });
         }
 
@@ -477,7 +477,7 @@ class CustomerController extends Controller
                         $message->to($custemail)
                             ->subject($emailsubject)
                             ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                            ->setBody($emailcontent, 'text/html');
+                            ->html($emailcontent);
                     });
                 }
 

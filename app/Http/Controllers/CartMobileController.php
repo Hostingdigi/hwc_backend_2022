@@ -1361,7 +1361,7 @@ class CartMobileController extends Controller
                     $message->to($custemail)
                         ->subject($emailsubject)
                         ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->setBody($emailcontent, 'text/html');
+                        ->html($emailcontent);
                 });
             }
 
@@ -2028,7 +2028,7 @@ class CartMobileController extends Controller
                     $message->to([$customeremail, $adminemail])
                         ->subject($emailsubject)
                         ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->setBody($emailcontent, 'text/html');
+                        ->html($emailcontent);
                 });
 
                 //@mail($adminemail, $emailsubject, $emailcontent, $headers);
@@ -2197,7 +2197,7 @@ class CartMobileController extends Controller
                     $message->to([$customeremail, $adminemail])
                         ->subject($emailsubject)
                         ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->setBody($emailcontent, 'text/html');
+                        ->html($emailcontent);
                 });
             }
         }
@@ -2844,7 +2844,7 @@ class CartMobileController extends Controller
                     $message->to($custemail)
                         ->subject($emailsubject)
                         ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->setBody($emailcontent, 'text/html');
+                        ->html($emailcontent);
                 });
 
                 //@mail($setting->admin_email, $emailsubject, $emailcontent, $headers);

@@ -123,7 +123,7 @@ class HomeController extends Controller
                         $message->to($email)
                             ->subject($emailsubject)
                             ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                            ->setBody($emailcontent, 'text/html');
+                            ->html($emailcontent);
                     });
                 }
 
@@ -203,7 +203,7 @@ class HomeController extends Controller
                     $message->to($adminemail)
                         ->subject($emailsubject)
                         ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->setBody($emailcontent, 'text/html');
+                        ->html($emailcontent);
                 });
 
                 #@mail($adminemail, $emailsubject, $emailcontent, $headers);
@@ -212,7 +212,7 @@ class HomeController extends Controller
                         $message->to($ccemail)
                             ->subject($emailsubject)
                             ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                            ->setBody($emailcontent, 'text/html');
+                            ->html($emailcontent);
                     });
                     #@mail($ccemail, $emailsubject, $emailcontent, $headers);
                 }
@@ -264,7 +264,7 @@ class HomeController extends Controller
                     $message->to($adminemail)
                         ->subject($emailsubject)
                         ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->setBody($emailcontent, 'text/html');
+                        ->html($emailcontent);
                 });
                 if ($ccemail != '') {
                     #@mail($ccemail, $emailsubject, $emailcontent, $headers);
@@ -272,7 +272,7 @@ class HomeController extends Controller
                         $message->to($ccemail)
                             ->subject($emailsubject)
                             ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                            ->setBody($emailcontent, 'text/html');
+                            ->html($emailcontent);
                     });
                 }
             }
