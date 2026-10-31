@@ -1,4 +1,4 @@
-@include('header')
+@include('header', ['paymentPending' => true])
 <section id="breadcrumbs" class="breadcrumbs">
       <div class="container">
         <ol>

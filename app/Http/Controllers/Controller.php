@@ -35,12 +35,20 @@ class Controller extends BaseController
      */
     protected function safeUploadName($file)
     {
-        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'];
+        // extension => content types it may have (detected from the file's bytes)
+        $allowed = [
+            'jpg' => ['image/jpeg'],
+            'jpeg' => ['image/jpeg'],
+            'png' => ['image/png'],
+            'gif' => ['image/gif'],
+            'webp' => ['image/webp'],
+            'pdf' => ['application/pdf'],
+        ];
 
         $extension = strtolower($file->getClientOriginalExtension());
-        $detected = strtolower((string) $file->guessExtension());
+        $detected = strtolower((string) $file->getMimeType());
 
-        if (!in_array($extension, $allowed) || ($detected !== '' && !in_array($detected, $allowed))) {
+        if (!isset($allowed[$extension]) || !in_array($detected, $allowed[$extension])) {
             abort(422, 'Only JPG, PNG, GIF, WEBP or PDF files can be uploaded.');
         }
 

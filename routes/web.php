@@ -330,10 +330,6 @@ Route::prefix('/admin')->middleware('admin.session')->group(function () {
     Route::post('update_order_item', 'App\Http\Controllers\Admin\OrderController@updateOrderItem');
     Route::get('search/prods', 'App\Http\Controllers\Admin\OrderController@searchProd');
 
-    Route::resource('/request_for_quote', 'App\Http\Controllers\Admin\QuoteController');
-    Route::get('/request_for_quote/{id}/destroy', 'App\Http\Controllers\Admin\QuoteController@destroy');
-    Route::get('/request_for_quote/{id}/{status}/updatestatus', 'App\Http\Controllers\Admin\QuoteController@updatestatus');
-
     Route::resource('/manageadmin', 'App\Http\Controllers\Admin\ManageAdminController');
     Route::get('/manageadmin/{id}/destroy', 'App\Http\Controllers\Admin\ManageAdminController@destroy');
 

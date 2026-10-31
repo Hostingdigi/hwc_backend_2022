@@ -122,7 +122,8 @@ type='text/javascript';e.parentNode.insertBefore($,e)})(document,'script');
   gtag('config', 'UA-142468295-1');
  
 </script>
-	@if($seourl == 'success')
+	{{-- No purchase conversion while the payment is still unverified (pendingverification view) --}}
+	@if($seourl == 'success' && empty($paymentPending))
 	@php
 	$billemail = '';
 	if(isset($_REQUEST['orderid'])) {
@@ -150,7 +151,7 @@ type='text/javascript';e.parentNode.insertBefore($,e)})(document,'script');
   gtag('config','AW-762150370', {'allow_enhanced_conversions':true});
 </script>
 
-@if($seourl == 'success')
+@if($seourl == 'success' && empty($paymentPending))
 <!-- Event snippet for Purchase conversion page -->
 <script>
   gtag('event', 'conversion', {

@@ -23,7 +23,6 @@ use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Mail;
-use PDF;
 use Session;
 use Auth;
 
