@@ -337,7 +337,7 @@
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this order?');
 	if(chk) {
-		window.location = "{{ url('/admin/orders') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/orders') }}/"+id+"/destroy");
 	}
 }
 function chkupdatestatus(id, status) {
@@ -347,7 +347,7 @@ function chkupdatestatus(id, status) {
 	}
 	var chk = confirm('Are you sure! you want to '+statustext+' this order?');
 	if(chk) {
-		window.location = "{{ url('/admin/orders') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/orders') }}/"+id+"/"+status+"/updatestatus");
 	}
 }
 </script>	

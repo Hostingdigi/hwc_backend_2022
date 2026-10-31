@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Controller extends BaseController
@@ -55,6 +56,26 @@ class Controller extends BaseController
         $base = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) ?: 'file';
 
         return time() . '_' . Str::limit($base, 80, '') . '.' . $extension;
+    }
+
+    /**
+     * Stores an upload on the "uploads" disk (public/uploads) under the folder of
+     * $destinationPath, e.g. public_path('uploads/brands') -> "brands".
+     * Name the file with safeUploadName() first.
+     */
+    protected function storeUpload($file, $destinationPath, $filename)
+    {
+        $folder = trim(str_replace('\\', '/', substr($destinationPath, strlen(public_path('uploads')))), '/');
+
+        Storage::disk('uploads')->putFileAs($folder, $file, $filename);
+    }
+
+    /**
+     * Quoted SQL string literal for "column = <literal>" inside raw where clauses.
+     */
+    protected function sqlQuote($value)
+    {
+        return DB::connection()->getPdo()->quote((string) $value);
     }
 
     /**

@@ -25,22 +25,22 @@ class BrandController extends Controller
         $join = 'BrandId > 0';
         if ($EnName != '') {
             if ($Nametype == 1) {
-                $join .= ' AND EnName = "' . $EnName . '"';
+                $join .= ' AND EnName = ' . $this->sqlQuote($EnName) . '';
             } else {
-                $join .= ' AND EnName LIKE "%' . $EnName . '%"';
+                $join .= ' AND EnName LIKE ' . $this->sqlLike($EnName);
             }
         }
         if ($PopularBrand != '') {
-            $join .= ' AND PopularBrand = ' . $PopularBrand;
+            $join .= ' AND PopularBrand = ' . (int) $PopularBrand;
         }
         if ($dis_type != '') {
-            $join .= ' AND dis_type = ' . $dis_type;
+            $join .= ' AND dis_type = ' . (int) $dis_type;
         }
         if ($BrandStatus != '') {
-            $join .= ' AND BrandStatus = ' . $BrandStatus;
+            $join .= ' AND BrandStatus = ' . (int) $BrandStatus;
         }
         if ($exclude_global_dis != '') {
-            $join .= ' AND exclude_global_dis = ' . $exclude_global_dis;
+            $join .= ' AND exclude_global_dis = ' . (int) $exclude_global_dis;
         }
         $brands = Brand::whereRaw($join)->orderBy($sortby, $sortorder)->paginate(50);
 
@@ -54,12 +54,12 @@ class BrandController extends Controller
             $adminrole = Session::get('priority');
         }
 
-        return view('admin.Brand.index')->with(compact('brands', 'PopularBrand', 'dis_type', 'exclude_global_dis', 'EnName', 'Nametype', 'moduleaccess', 'adminrole', 'BrandStatus'));
+        return view('admin.brand.index')->with(compact('brands', 'PopularBrand', 'dis_type', 'exclude_global_dis', 'EnName', 'Nametype', 'moduleaccess', 'adminrole', 'BrandStatus'));
     }
 
     public function create()
     {
-        return view('admin/Brand.create');
+        return view('admin/brand.create');
     }
 
     public function store(Request $request)
@@ -91,7 +91,7 @@ class BrandController extends Controller
             //$image_name = time().'.'.$image->getClientOriginalExtension();
             $filename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/brands');
-            $image->move($destinationPath, $filename);
+            $this->storeUpload($image, $destinationPath, $filename);
         }
 
         if ($request->hasFile('MobileImage')) {
@@ -99,7 +99,7 @@ class BrandController extends Controller
             //$image_name = time().'.'.$image->getClientOriginalExtension();
             $mobilefilename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/brands');
-            $image->move($destinationPath, $mobilefilename);
+            $this->storeUpload($image, $destinationPath, $mobilefilename);
         }
 
         $brand->Image = $filename;
@@ -111,7 +111,7 @@ class BrandController extends Controller
     {
 
         $brand = Brand::where('BrandId', '=', $id)->first();
-        return view('admin/Brand.edit', compact('brand'));
+        return view('admin/brand.edit', compact('brand'));
     }
 
     public function update(Request $request)
@@ -126,7 +126,7 @@ class BrandController extends Controller
             //$image_name = time().'.'.$image->getClientOriginalExtension();
             $filename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/brands');
-            $image->move($destinationPath, $filename);
+            $this->storeUpload($image, $destinationPath, $filename);
         }
 
         if ($request->hasFile('MobileImage')) {
@@ -134,7 +134,7 @@ class BrandController extends Controller
             //$image_name = time().'.'.$image->getClientOriginalExtension();
             $mobilefilename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/brands');
-            $image->move($destinationPath, $mobilefilename);
+            $this->storeUpload($image, $destinationPath, $mobilefilename);
         }
 
         $exclude_global_dis = 0;
@@ -270,7 +270,7 @@ class BrandController extends Controller
         $groups = CustomerGroup::where('Status', '=', '1')->get();
         $groupprices = BrandPrice::where('Brand', '=', $brandid)->get();
         $editprice = [];
-        return view('admin/Brand.groupprice', compact('brand', 'groups', 'groupprices', 'editprice'));
+        return view('admin/brand.groupprice', compact('brand', 'groups', 'groupprices', 'editprice'));
     }
 
     public function addgroupprice(Request $request)
@@ -291,7 +291,7 @@ class BrandController extends Controller
         $groups = CustomerGroup::where('Status', '=', '1')->get();
         $groupprices = BrandPrice::where('Brand', '=', $brandid)->get();
         $editprice = BrandPrice::where('Brand', '=', $brandid)->where('Id', '=', $id)->first();
-        return view('admin/Brand.groupprice', compact('brand', 'groups', 'groupprices', 'editprice'));
+        return view('admin/brand.groupprice', compact('brand', 'groups', 'groupprices', 'editprice'));
     }
 
     public function updategroupprice(Request $request)

@@ -143,8 +143,8 @@
 															<div class="img-box">
 															<a href="{{ url('/prod/'.$product->UniqueKey) }}">
 															@if($product->Image != '')
-																<img class="main-img img-fluid" src="{{ env('IMG_URL').('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
-																<img class="sec-img img-fluid" src="{{ env('IMG_URL').('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
+																<img class="main-img img-fluid" src="{{ config('shop.img_url').('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
+																<img class="sec-img img-fluid" src="{{ config('shop.img_url').('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
 															@else
 																<img class="main-img img-fluid" src="{{ url('/images/noimage.png') }}"  alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
 															@endif

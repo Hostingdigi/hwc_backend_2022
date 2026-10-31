@@ -55,13 +55,13 @@ class PromotionsController extends Controller
 			$image = $request->file('EnBanimage');			
 			$filename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/promotionsbanner');
-			$image->move($destinationPath, $filename);                                
+			$this->storeUpload($image, $destinationPath, $filename);                                
 		}	
 		if($request->hasFile('EnBanMobileimage')) {
 			$image = $request->file('EnBanMobileimage');			
 			$mobilefilename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/promotionsbanner');
-			$image->move($destinationPath, $mobilefilename);                                
+			$this->storeUpload($image, $destinationPath, $mobilefilename);                                
 		}	
 		$promotions->EnBanimage = $filename;
 		$promotions->EnBanMobileimage = $mobilefilename;
@@ -110,13 +110,13 @@ class PromotionsController extends Controller
 			$image = $request->file('EnBanimage');
 			$filename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/promotionsbanner');
-			$image->move($destinationPath, $filename);
+			$this->storeUpload($image, $destinationPath, $filename);
 		}
 		if($request->hasFile('EnBanMobileimage')) {
 			$image = $request->file('EnBanMobileimage');
 			$mobilefilename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/promotionsbanner');
-			$image->move($destinationPath, $mobilefilename);
+			$this->storeUpload($image, $destinationPath, $mobilefilename);
 		}
 			
 		Promotions::Where('ban_id', '=', $id)->update(array('ban_name' => $request->ban_name, 'ban_link' => $request->ban_link, 'EnBanimage' => $filename, 'EnBanMobileimage' => $mobilefilename, 'ban_caption' => $request->ban_caption, 'ban_status' => $request->ban_status));		

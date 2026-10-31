@@ -45,7 +45,7 @@ class PageContentController extends Controller
 			$image = $request->file('banner_image');			
 			$filename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/pagecontent');
-			$image->move($destinationPath, $filename);                                
+			$this->storeUpload($image, $destinationPath, $filename);                                
 		}
         $pagecontent->banner_image = $filename;
         $pagecontent->ChContent = $request->ChContent;
@@ -72,7 +72,7 @@ class PageContentController extends Controller
 			$image = $request->file('banner_image');			
 			$filename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/pagecontent');
-			$image->move($destinationPath, $filename);                                
+			$this->storeUpload($image, $destinationPath, $filename);                                
 		}
 		PageContent::where('Id', '=', $id)->update(array('EnTitle' => $request->EnTitle, 'EnContent' => $request->ShortDesc, 'parent_id' => $request->parent_id, 'UniqueKey' => $request->UniqueKey, 'page_link' => $request->UniqueKey, 'menu_type' => $request->menu_type, 'banner_type' => $request->banner_type, 'banner_image' => $filename, 'ChContent' => $request->ChContent, 'meta_title' => $request->meta_title, 'meta_keywords' => $request->meta_keywords, 'meta_description' => $request->meta_description, 'rights_to_visible' => $request->rights_to_visible, 'display_status' => $request->display_status));
 		

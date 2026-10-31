@@ -137,7 +137,7 @@ function chkdelete(id) {
 
 	if(chk) {
 
-		window.location = "{{ url('/admin/paymentmethods') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/paymentmethods') }}/"+id+"/destroy");
 
 	}
 
@@ -157,7 +157,7 @@ function chkupdatestatus(id, status) {
 
 	if(chk) {
 
-		window.location = "{{ url('/admin/paymentmethods') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/paymentmethods') }}/"+id+"/"+status+"/updatestatus");
 
 	}
 

@@ -26,14 +26,6 @@ class SubscriberController extends Controller
         print_r($subscriber);
         die;*/
     }
-    public function Subscriber()
-    {
-        $subscriber = Subscriber::all();
-        return view('admin/Subscriber/index', compact('subscriber'));
-        /*echo "<pre>";
-        print_r($subscriber);
-        die;*/
-    }
     public function create()
     {
 		$subscriber = Subscriber::all();		

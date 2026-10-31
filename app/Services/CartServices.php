@@ -218,7 +218,7 @@ class CartServices
             $handlingfee = 0;
         }
         else{
-            $handlingfee = $total_weight * env('HANDLING_PER');
+            $handlingfee = $total_weight * config('shop.handling_per_kg');
         }
         
         return $handlingfee;
@@ -256,7 +256,7 @@ class CartServices
         } else {
 
             $weight = $totalweight;
-            $zones = InternationalShipping::where('Status', 1)->whereRaw("concat(',',CountriesList,',') LIKE ?", ['%,' . $countryid . '%,'])->first();
+            $zones = \App\Services\ShippingZones::forCountryId($countryid);
 
             if ($zones) {
                 $freeshipcost = $zones->FreeShippingCost;

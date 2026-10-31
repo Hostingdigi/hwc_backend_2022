@@ -60,7 +60,7 @@ class BanneradsController extends Controller
 			$image = $request->file('EnBanimage');			
 			$filename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/bannerads');
-			$image->move($destinationPath, $filename); 
+			$this->storeUpload($image, $destinationPath, $filename); 
 			$bannerads->EnBanimage = $filename;			
         }	
 		
@@ -116,7 +116,7 @@ class BanneradsController extends Controller
 			$image = $request->file('EnBanimage');						
 		$filename = $this->safeUploadName($image);			
 		$destinationPath = public_path('uploads/bannerads');			
-		$image->move($destinationPath, $filename);                                		
+		$this->storeUpload($image, $destinationPath, $filename);                                		
 		}	
 		
 		

@@ -124,7 +124,7 @@
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this customer group?');
 	if(chk) {
-		window.location = "{{ url('/admin/customergroup') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/customergroup') }}/"+id+"/destroy");
 	}
 }
 function chkupdatestatus(id, status) {
@@ -134,7 +134,7 @@ function chkupdatestatus(id, status) {
 	}
 	var chk = confirm('Are you sure! you want to '+statustext+' this customer group?');
 	if(chk) {
-		window.location = "{{ url('/admin/customergroup') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/customergroup') }}/"+id+"/"+status+"/updatestatus");
 	}
 }
 </script>	

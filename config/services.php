@@ -45,4 +45,21 @@ return [
         'mode' => env('PAYMENT_VERIFICATION_MODE', 'enforce'),
     ],
 
+    // Mobile createorder: "enforce" refuses an order whose app-sent total differs
+    // from the server quote; "log" accepts it (old behaviour) but logs the mismatch
+    'mobile_pricing' => [
+        'mode' => env('MOBILE_PRICING_MODE', 'enforce'),
+    ],
+
+    // cXML punchout: the SharedSecret the buyer's procurement system sends in
+    // Header/Sender/Credential. Setup requests are refused while this is empty.
+    'punchout' => [
+        'shared_secret' => env('PUNCHOUT_SHARED_SECRET'),
+    ],
+
+    'recaptcha' => [
+        'site_key' => env('GOOGLE_CAPTCHA_SITE_KEY'),
+        'secret' => env('GOOGLE_CAPTCHA_SECRET_KEY'),
+    ],
+
 ];

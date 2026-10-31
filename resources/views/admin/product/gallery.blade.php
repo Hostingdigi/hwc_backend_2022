@@ -245,7 +245,7 @@ $('.dataex-html5-selectors').DataTable({
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this product gallery image?');
 	if(chk) {
-		window.location = "{{ url('/admin/products') }}/"+id+"/destroygallery";
+		adminPost("{{ url('/admin/products') }}/"+id+"/destroygallery");
 	}
 }
 
@@ -256,7 +256,7 @@ function chkupdatestatus(id, status){
 	}
 	var chk = confirm('Are you sure! you want to '+statustext+' this product image?');
 	if(chk) {
-		window.location = "{{ url('/admin/products') }}/"+id+"/"+status+"/updategallerystatus";
+		adminPost("{{ url('/admin/products') }}/"+id+"/"+status+"/updategallerystatus");
 	}
 }
 </script>

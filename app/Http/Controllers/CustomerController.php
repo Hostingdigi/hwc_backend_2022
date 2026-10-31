@@ -33,11 +33,6 @@ class CustomerController extends Controller
         $countries = Country::all();
         return view('public/Customer.register', compact('countries'));
     }
-    public function create()
-    {
-        $countries = Country::all();
-        return view('Customer.create', compact('countries'));
-    }
     public function store(Request $request)
     {
         $customer = new Customer;
@@ -59,12 +54,11 @@ class CustomerController extends Controller
         $customer->cust_company = $request->cust_company;
         $customer->cust_type = 1;
         $customer->save();
-        $customerid = 0;
-        $cust = Customer::orderBy('cust_id', 'desc')->select('cust_id')->first();
-        if ($cust) {
-            $customerid = $cust->cust_id;
-        }
+        // The new customer's id from the insert (it used to re-query "the highest
+        // cust_id", which can be someone else's when two people register at once)
+        $customerid = $customer->cust_id;
 
+        Auth::guard('web')->login($customer);
         Session::put('customer_id', $customerid);
         Session::put('customer_name', $request->cust_firstname . ' ' . $request->cust_lastname);
 
@@ -104,12 +98,7 @@ class CustomerController extends Controller
 
             #@mail($request->cust_email, $emailsubject, $emailcontent, $headers);
             $custemail = $request->cust_email;
-            Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                $message->to($custemail)
-                    ->subject($emailsubject)
-                    ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->html($emailcontent);
-            });
+            Mail::to($custemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
         }
 
         /*$emailids = $custemail;
@@ -127,13 +116,6 @@ class CustomerController extends Controller
         return redirect('/customer/dashboard')->with('success', 'Account Successfully Created!');
 
     }
-    public function edit($id)
-    {
-        $countries = Country::all();
-        $customer = Customer::where('cust_id', '=', $id)->first();
-        return view('Customer.edit', compact('customer', 'countries'));
-    }
-
     /**
      * Update the specified resource in storage.
      *
@@ -240,6 +222,10 @@ class CustomerController extends Controller
         if ($customer) {
             $password = Hash::check($request->password, $customer->cust_password);
             if ($password) {
+                // Logs in on the "web" guard and regenerates the session id (no session
+                // fixation). The legacy session keys below are still read across the app.
+                Auth::guard('web')->login($customer);
+
                 Session::put('customer_id', $customer->cust_id);
                 Session::put('customer_name', $customer->cust_firstname . ' ' . $customer->cust_lastname);
                 Session::put('customer_email', $customer->cust_email);
@@ -349,7 +335,9 @@ class CustomerController extends Controller
                 ['session_id', '=', $request->session()->getId()],
             ])->delete();
         }
-        
+
+        Auth::guard('web')->logout();
+
         //Session::flash();
         Session::forget(['punchout','punchout_id','buyer_cookie']);
         Session::forget('customer_id');
@@ -473,12 +461,7 @@ class CustomerController extends Controller
 
                     #@mail($custemail, $emailsubject, $emailcontent, $headers);
 
-                    Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                        $message->to($custemail)
-                            ->subject($emailsubject)
-                            ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                            ->html($emailcontent);
-                    });
+                    Mail::to($custemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
                 }
 
                 return redirect('/forgotpassword')->with('success', 'Password rest link successully sent to registered email!');

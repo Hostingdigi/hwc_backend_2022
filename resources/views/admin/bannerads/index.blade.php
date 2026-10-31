@@ -141,7 +141,7 @@
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this Page Content ?');
 	if(chk) {
-		window.location = "{{ url('/admin/banner_ads') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/banner_ads') }}/"+id+"/destroy");
 	}
 }
 function chkupdatestatus(id, status) {
@@ -151,7 +151,7 @@ function chkupdatestatus(id, status) {
 	}
 	var chk = confirm('Are you sure! you want to '+statustext+' this Static Page ?');
 	if(chk) {
-		window.location = "{{ url('/admin/banner_ads') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/banner_ads') }}/"+id+"/"+status+"/updatestatus");
 	}
 }
 

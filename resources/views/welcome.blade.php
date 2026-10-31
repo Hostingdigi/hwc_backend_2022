@@ -39,9 +39,9 @@
 								<div class="img-box">
 								<a href="{{ url('/prod/'.$promoitem->UniqueKey) }}">
 									@if($promoitem->Image != '')
-										<img src="{{ env('IMG_URL').('/uploads/product/'.$promoitem->Image) }}" class="card-img-top" alt="{{ $promoitem->EnName }}" title="{{ $promoitem->EnName }}">
+										<img src="{{ config('shop.img_url').('/uploads/product/'.$promoitem->Image) }}" class="card-img-top" alt="{{ $promoitem->EnName }}" title="{{ $promoitem->EnName }}">
 									@else
-										<img src="{{ env('IMG_URL').('/images/noimage.png') }}" class="card-img-top" alt="{{ $promoitem->EnName }}" title="{{ $promoitem->EnName }}">
+										<img src="{{ config('shop.img_url').('/images/noimage.png') }}" class="card-img-top" alt="{{ $promoitem->EnName }}" title="{{ $promoitem->EnName }}">
 									@endif									
 								</a>
 								</div>
@@ -82,7 +82,7 @@
 											@endif
 										</div>	
 										<div class="text-center mt-3">
-											or installments of S${{ number_format($installmentgstPrice, 2) }} with <img src="{{ env('IMG_URL').('/images/8dc4dab.png') }}" style="width:80px; vertical-align: middle;">
+											or installments of S${{ number_format($installmentgstPrice, 2) }} with <img src="{{ config('shop.img_url').('/images/8dc4dab.png') }}" style="width:80px; vertical-align: middle;">
 										</div>
 									@else
 										<div class="text-center mt-3">
@@ -161,7 +161,7 @@
 					@else
 						<div class="col-md-3  col-xs-3">
 						  <div class="card mb-2">
-							<a href="{{ $bannerad->ban_link }}"><img class="card-img-top-home" src="{{ env('IMG_URL').'/uploads/bannerads/'.$bannerad->EnBanimage }}" alt="{{ $bannerad->ban_name }}"></a>
+							<a href="{{ $bannerad->ban_link }}"><img class="card-img-top-home" src="{{ config('shop.img_url').'/uploads/bannerads/'.$bannerad->EnBanimage }}" alt="{{ $bannerad->ban_name }}"></a>
 						  </div>
 						</div>	
 						@php						
@@ -201,7 +201,7 @@
 						{!! $bannerad->Video !!}
 					</div> 
 				@else					
-					<img class="d-block w-100" src="{{ env('IMG_URL').'/uploads/bannerads/'.$bannerad->EnBanimage }}" alt="{{ $bannerad->ban_name }}">
+					<img class="d-block w-100" src="{{ config('shop.img_url').'/uploads/bannerads/'.$bannerad->EnBanimage }}" alt="{{ $bannerad->ban_name }}">
 				@endif
 				</div>
 				@php ++$x; @endphp
@@ -267,11 +267,11 @@ $homecategories = \App\Models\Category::where('TypeStatus', '=', '1')->where('of
 				<div class="col-lg-3 col-md-4 col-sm-6">
 					<div class="">
 						<a href="{{ url('/type/'.$homecategory->UniqueKey) }}">
-						    <img src="{{ env('IMG_URL').('/uploads/category/'.$homecategory->Image) }}" alt="{{ $homecategory->EnName }}" class="homecat">
+						    <img src="{{ config('shop.img_url').('/uploads/category/'.$homecategory->Image) }}" alt="{{ $homecategory->EnName }}" class="homecat">
 						@if($homecategory->Image && file_exists(public_path('/uploads/category/'.$homecategory->Image)))
-							<!--<img src="{{ env('IMG_URL').('/uploads/category/'.$homecategory->Image) }}" alt="{{ $homecategory->EnName }}" class="homecat">-->
+							<!--<img src="{{ config('shop.img_url').('/uploads/category/'.$homecategory->Image) }}" alt="{{ $homecategory->EnName }}" class="homecat">-->
 						@else
-							<!--<img src="{{ env('IMG_URL').('/images/noimage.png') }}" alt="{{ $homecategory->EnName }}" class="homecat" title="{{ $homecategory->EnName }}">-->
+							<!--<img src="{{ config('shop.img_url').('/images/noimage.png') }}" alt="{{ $homecategory->EnName }}" class="homecat" title="{{ $homecategory->EnName }}">-->
 						@endif
 						<div class="caption">
 							<h4 class="pt-3 pb-1">{{ $homecategory->EnName }}</h4>
@@ -297,7 +297,7 @@ $homecategories = \App\Models\Category::where('TypeStatus', '=', '1')->where('of
 @endphp
 @if($homeban1)
 <section>	
-	<div><a href="{{ $homeban1->ban_link }}"><img src="{{ env('IMG_URL').('/uploads/bannermaster/'.$homeban1->EnBanimage) }}" alt="{{ $homeban1->ban_name }}" style="width:100%;"></a></div>
+	<div><a href="{{ $homeban1->ban_link }}"><img src="{{ config('shop.img_url').('/uploads/bannermaster/'.$homeban1->EnBanimage) }}" alt="{{ $homeban1->ban_name }}" style="width:100%;"></a></div>
 </section>
 @endif
 <!-- banner  end -->
@@ -318,11 +318,11 @@ $homecategories = \App\Models\Category::where('TypeStatus', '=', '1')->where('of
 		@foreach($homebrands as $homebrand)	
 			<div class="col-lg-2 col-md-4 col-sm-6 col-6">	
 				<a href="{{ url('/brand/'.$homebrand->UniqueKey) }}">
-				    <img src="{{ env('IMG_URL').('/uploads/brands/'.$homebrand->Image) }}" alt="{{ $homebrand->EnName }}" style="width:100%; margin:0px 0px 21px 0px;">
+				    <img src="{{ config('shop.img_url').('/uploads/brands/'.$homebrand->Image) }}" alt="{{ $homebrand->EnName }}" style="width:100%; margin:0px 0px 21px 0px;">
 				@if($homebrand->Image && file_exists(public_path('/uploads/brands/'.$homebrand->Image)))
-					<!--<img src="{{ env('IMG_URL').('/uploads/brands/'.$homebrand->Image) }}" alt="{{ $homebrand->EnName }}" style="width:100%; margin:0px 0px 21px 0px;">-->
+					<!--<img src="{{ config('shop.img_url').('/uploads/brands/'.$homebrand->Image) }}" alt="{{ $homebrand->EnName }}" style="width:100%; margin:0px 0px 21px 0px;">-->
 				@else
-					<!--<img src="{{ env('IMG_URL').('/images/noimage.png') }}" alt="{{ $homebrand->EnName }}" style="width:100%; margin:0px 0px 21px 0px;">-->
+					<!--<img src="{{ config('shop.img_url').('/images/noimage.png') }}" alt="{{ $homebrand->EnName }}" style="width:100%; margin:0px 0px 21px 0px;">-->
 				@endif	
 				</a>
 			</div>
@@ -340,7 +340,7 @@ $homecategories = \App\Models\Category::where('TypeStatus', '=', '1')->where('of
 @endphp
 @if($homeban2)
 <section>	
-	<div><a href="{{ $homeban2->ban_link }}"><img src="{{ env('IMG_URL').('/uploads/bannermaster/'.$homeban2->EnBanimage) }}" alt="{{ $homeban2->ban_name }}" style="width:100%;"></a></div>
+	<div><a href="{{ $homeban2->ban_link }}"><img src="{{ config('shop.img_url').('/uploads/bannermaster/'.$homeban2->EnBanimage) }}" alt="{{ $homeban2->ban_name }}" style="width:100%;"></a></div>
 </section>
 @endif
 <!-- About section start-->
@@ -353,7 +353,7 @@ $homecategories = \App\Models\Category::where('TypeStatus', '=', '1')->where('of
 		<div class="col-md-4">
 			<div>
 			@if($welcomecontent->banner_image != '')
-				<img src="{{ env('IMG_URL').('/uploads/pagecontent/'.$welcomecontent->banner_image) }}" alt="" style="width:100%;">
+				<img src="{{ config('shop.img_url').('/uploads/pagecontent/'.$welcomecontent->banner_image) }}" alt="" style="width:100%;">
 			@else
 				<img src="{{ asset('img/ads/about.jpg') }}" alt="" style="width:100%;">
 			@endif

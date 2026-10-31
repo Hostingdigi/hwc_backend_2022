@@ -398,19 +398,9 @@ class CommonMobileController extends Controller
             $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
             //@mail($adminemail, $emailsubject, $emailcontent, $headers);
-            Mail::send([], [], function ($message) use ($adminemail, $emailsubject, $emailcontent) {
-                $message->to($adminemail)
-                    ->subject($emailsubject)
-                    ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->html($emailcontent);
-            });
+            Mail::to($adminemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
 
-            Mail::send([], [], function ($message) use ($email, $emailsubject, $emailcontent) {
-                $message->to($email)
-                    ->subject($emailsubject)
-                    ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->html($emailcontent);
-            });
+            Mail::to($email)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
 
             $data = response()->json(['response' => 'success', 'message' => 'Feedback Successfully Sent!', 'html' => $emailcontent]);
         } else {
@@ -497,12 +487,7 @@ class CommonMobileController extends Controller
         $to_name = "Test User";
         $to_email = $request->email;
         $html = '<b>Test email</b>';
-        Mail::send([], [], function ($message) use ($to_name, $to_email, $html) {
-            $message->to($to_email, $to_name)
-                ->subject('Test Mail')
-                ->from(env('MAIL_USERNAME'), 'Test Mail')
-                ->html($html);
-        });
+        Mail::to($to_email, $to_name)->send(new \App\Mail\TemplateMail('Test Mail', $html, 'Test Mail'));
 
         return response()->json(['status' => true, 'message' => 'Successfully email sent']);
     }

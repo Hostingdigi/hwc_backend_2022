@@ -23,7 +23,19 @@ class PunchoutController extends Controller
 
     public function setup(Request $request)
     {
-        $xml = simplexml_load_string($request->getContent());
+        $xml = @simplexml_load_string($request->getContent());
+        if ($xml === false || !isset($xml->Request->PunchOutSetupRequest)) {
+            return $this->cxmlStatus(400, 'Bad Request');
+        }
+
+        // The buyer's procurement system must send the shared secret agreed with
+        // them. Without this check anyone could open a punchout session, which also
+        // switches the cart to 0% tax.
+        $expected = (string) config('services.punchout.shared_secret');
+        $given = (string) ($xml->Header->Sender->Credential->SharedSecret ?? '');
+        if ($expected === '' || !hash_equals($expected, $given)) {
+            return $this->cxmlStatus(401, 'Unauthorized');
+        }
 
         // Extract BuyerCookie
         $buyerCookie = (string) $xml->Request->PunchOutSetupRequest->BuyerCookie;
@@ -54,13 +66,26 @@ class PunchoutController extends Controller
         return response($response, 200)->header('Content-Type', 'text/xml');
     }
 
+    /** A cXML reply carrying only a status (cXML reports errors in-band). */
+    private function cxmlStatus(int $code, string $text)
+    {
+        $response = '<?xml version="1.0" encoding="UTF-8"?>'
+            . '<cXML payloadID="' . uniqid() . '" timestamp="' . now()->toIso8601String() . '">'
+            . '<Response><Status code="' . $code . '" text="' . e($text) . '"/></Response></cXML>';
+
+        return response($response, 200)->header('Content-Type', 'text/xml');
+    }
 
     public function login(Request $request)
     {
         if(!$request->filled('buyer')) abort(401, 'Unauthorized punchout request');
 
         // $encryptedId = Crypt::encryptString(25436);
-        $buyerId = Crypt::decryptString(trim($request->buyer));
+        try {
+            $buyerId = Crypt::decryptString(trim($request->buyer));
+        } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+            abort(401, 'Unauthorized punchout request');
+        }
 
         $punchoutUser = PunchoutSession::where(['buyer_cookie' => $buyerId, 'status' => 1])->latest()->first();
 

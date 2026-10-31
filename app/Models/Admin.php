@@ -2,22 +2,21 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * Back-office user (table: admins). User model of the "admin" auth guard.
+ *
+ * priority = 0 is a super admin. Any other value is the id of a role_rights row
+ * whose comma-separated "rights" lists the admin module ids the user may open
+ * (see App\Http\Middleware\AuthorizeAdminModule for the module map).
+ */
 class Admin extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $guard = 'admin';
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
     protected $fillable = [
         'name',
         'username',
@@ -25,22 +24,35 @@ class Admin extends Authenticatable
         'designation',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     *
-     * @var array
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    private $moduleRights = null;
+
+    public function isSuperAdmin(): bool
+    {
+        return (int) $this->priority === 0;
+    }
+
     /**
-     * The attributes that should be cast to native types.
+     * Module ids this admin's role grants (empty for super admins, who get everything).
      *
-     * @var array
+     * @return string[]
      */
-   /* protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];*/
+    public function moduleRights(): array
+    {
+        if ($this->moduleRights === null) {
+            $rights = $this->isSuperAdmin() ? null : RoleRights::where('id', $this->priority)->value('rights');
+            $this->moduleRights = $rights ? array_map('trim', explode(',', $rights)) : [];
+        }
+
+        return $this->moduleRights;
+    }
+
+    public function canAccessModule(int $moduleId): bool
+    {
+        return $this->isSuperAdmin() || in_array((string) $moduleId, $this->moduleRights(), true);
+    }
 }

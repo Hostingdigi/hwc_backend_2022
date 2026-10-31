@@ -58,7 +58,7 @@ class PaymentMethodsController extends Controller
             //$image_name = time().'.'.$image->getClientOriginalExtension();
             $filename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/images');
-            $image->move($destinationPath, $filename);
+            $this->storeUpload($image, $destinationPath, $filename);
         }
         $paymentmethods->payment_logo = $filename;
         $paymentmethods->save();
@@ -82,7 +82,7 @@ class PaymentMethodsController extends Controller
             //$image_name = time().'.'.$image->getClientOriginalExtension();
             $filename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/images');
-            $image->move($destinationPath, $filename);
+            $this->storeUpload($image, $destinationPath, $filename);
         }
         PaymentMethods::Where('Id', '=', $id)->update(array('payment_mode' => $request->payment_mode, 'payment_name' => $request->payment_name, 'testing_url' => $request->testing_url, 'test_api_key' => $request->test_api_key, 'test_api_signature' => $request->test_api_signature, 'live_url' => $request->live_url, 'api_key' => $request->api_key, 'api_signature' => $request->api_signature, 'email' => $request->email, 'status' => $request->status, 'payment_logo' => $filename));
         return redirect('/admin/paymentmethods')->with('success', 'PaymentMethods Successfully Updated!');

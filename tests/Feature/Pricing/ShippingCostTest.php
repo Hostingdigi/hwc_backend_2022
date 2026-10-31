@@ -79,7 +79,23 @@ it('charges nothing for a country with no zone', function () {
     expect($this->cart->getShippingCost('MY', 2, '', 1, 50, 0, 3))->toEqual(0);
 });
 
-it('KNOWN BUG: matches a zone by id prefix, so country 12 uses the zone of country 129', function () {
-    // The zone lookup is LIKE '%,12%,' instead of '%,12,%'. Kept as-is in Phase 0.
-    expect($this->cart->getShippingCost('AU', 2, '', 1, 50, 0, 3))->toEqualWithDelta(59.30, 0.00001);
+it('matches the zone by exact country id, not by prefix (12 is not 129)', function () {
+    // Fixed in Phase 3: the old LIKE '%,12%,' lookup put country 12 in country 129's zone
+    expect($this->cart->getShippingCost('AU', 2, '', 1, 50, 0, 3))->toEqual(0);
+
+    Fixtures::insert('international_shipping_methods', [
+        'Zone' => 'Zone B', 'CountriesList' => '59,12,9', 'Status' => 1, 'FreeShippingCost' => 0,
+        'ShipCost' => '1:10,5:20', 'PriceRange70' => 1, 'PriceRange300' => 1, 'PriceRange99999' => 1,
+    ]);
+
+    // 3kg -> band 20; commission 5 + 0.40; DHL extra 8.50
+    expect($this->cart->getShippingCost('AU', 2, '', 1, 50, 0, 3))->toEqualWithDelta(33.90, 0.00001);
+});
+
+it('ignores trailing commas and inactive zones in the country list', function () {
+    \Illuminate\Support\Facades\DB::table('international_shipping_methods')->update(['CountriesList' => '129,', 'Status' => 0]);
+    expect(\App\Services\ShippingZones::forCountryId(129))->toBeNull();
+
+    \Illuminate\Support\Facades\DB::table('international_shipping_methods')->update(['Status' => 1]);
+    expect(\App\Services\ShippingZones::forCountryId(129)->Zone)->toBe('Zone A');
 });

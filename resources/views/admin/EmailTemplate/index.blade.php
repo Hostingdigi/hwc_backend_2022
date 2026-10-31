@@ -130,7 +130,7 @@ function chkdelete(id) {
 
 	if(chk) {
 
-		window.location = "{{ url('/admin/emailtemplate') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/emailtemplate') }}/"+id+"/destroy");
 
 	}
 
@@ -150,7 +150,7 @@ function chkupdatestatus(id, status) {
 
 	if(chk) {
 
-		window.location = "{{ url('/admin/emailtemplate') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/emailtemplate') }}/"+id+"/"+status+"/updatestatus");
 
 	}
 

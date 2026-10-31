@@ -232,7 +232,7 @@
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this customer?');
 	if(chk) {
-		window.location = "{{ url('/admin/customer') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/customer') }}/"+id+"/destroy");
 	}
 }
 function chkupdatestatus(id, status) {
@@ -242,7 +242,7 @@ function chkupdatestatus(id, status) {
 	}
 	var chk = confirm('Are you sure! you want to '+statustext+' this customer?');
 	if(chk) {
-		window.location = "{{ url('/admin/customer') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/customer') }}/"+id+"/"+status+"/updatestatus");
 	}
 }
 </script>	

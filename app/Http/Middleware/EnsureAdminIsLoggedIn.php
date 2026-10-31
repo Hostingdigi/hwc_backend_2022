@@ -4,17 +4,17 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Session;
+use Illuminate\Support\Facades\Auth;
 
 class EnsureAdminIsLoggedIn
 {
     /**
-     * Admin login (AdminController@verifylogin) stores admin_id in the session.
-     * Every admin route except the login form and the login post must have it.
+     * Every admin route except the login form, login post and logout needs an
+     * admin logged in on the "admin" guard (AdminController@verifylogin).
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!Session::has('admin_id')) {
+        if (!Auth::guard('admin')->check()) {
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['message' => 'Unauthenticated.'], 401);
             }

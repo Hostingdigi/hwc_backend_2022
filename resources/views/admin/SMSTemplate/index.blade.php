@@ -83,7 +83,7 @@ function chkdelete(id) {
 
 	if(chk) {
 
-		window.location = "{{ url('/admin/smstemplate') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/smstemplate') }}/"+id+"/destroy");
 
 	}
 
@@ -103,7 +103,7 @@ function chkupdatestatus(id, status) {
 
 	if(chk) {
 
-		window.location = "{{ url('/admin/smstemplate') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/smstemplate') }}/"+id+"/"+status+"/updatestatus");
 
 	}
 

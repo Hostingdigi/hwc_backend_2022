@@ -110,7 +110,7 @@
 									<li class="subtot" style="border-top: 1px solid #e5e5e5; padding-top:12px;">Shipping ({{ $deliverytype }}) <span>S${{ number_format(str_replace(',','',$deliverycost), 2) }}</span></li>
 
 									@if($fuelcharges >0)
-										<li>{{env('FUEL_SUBCHARGE')}}% Fuel Surcharges<span>S${{ number_format(str_replace(',','',$fuelcharges), 2) }}</span></li>
+										<li>{{config('shop.fuel_surcharge_percent')}}% Fuel Surcharges<span>S${{ number_format(str_replace(',','',$fuelcharges), 2) }}</span></li>
 									@endif
 									@if($handlingfee >0)
 										<li>Handling Fee<span>S${{ number_format(str_replace(',','',$handlingfee), 2) }}</span></li>

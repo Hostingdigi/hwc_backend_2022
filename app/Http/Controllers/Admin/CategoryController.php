@@ -25,24 +25,24 @@ class CategoryController extends Controller
 
         if ($EnName != '') {
             if ($Nametype == 1) {
-                $join .= ' AND EnName = "' . $EnName . '"';
+                $join .= ' AND EnName = ' . $this->sqlQuote($EnName) . '';
             } else {
-                $join .= ' AND EnName LIKE "%' . $EnName . '%"';
+                $join .= ' AND EnName LIKE ' . $this->sqlLike($EnName);
             }
         }
 
         if ($TypeStatus != '') {
-            $join .= ' AND TypeStatus = ' . $TypeStatus;
+            $join .= ' AND TypeStatus = ' . (int) $TypeStatus;
         }
 
         if ($Types != '') {
-            $join .= ' AND (TypeId = ' . $Types . ' OR ParentLevel = ' . $Types . ')';
+            $join .= ' AND (TypeId = ' . (int) $Types . ' OR ParentLevel = ' . (int) $Types . ')';
         }
         if ($dis_type != '') {
-            $join .= ' AND dis_type = ' . $dis_type;
+            $join .= ' AND dis_type = ' . (int) $dis_type;
         }
         if ($offerCategory != '') {
-            $join .= ' AND offerCategory = ' . $offerCategory;
+            $join .= ' AND offerCategory = ' . (int) $offerCategory;
         }
 
         $adminrole = 0;
@@ -91,7 +91,7 @@ class CategoryController extends Controller
             //$image_name = time().'.'.$image->getClientOriginalExtension();
             $filename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/category');
-            $image->move($destinationPath, $filename);
+            $this->storeUpload($image, $destinationPath, $filename);
         }
 
         if ($request->hasFile('MobileImage')) {
@@ -99,7 +99,7 @@ class CategoryController extends Controller
             //$image_name = time().'.'.$image->getClientOriginalExtension();
             $mobilefilename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/category');
-            $image->move($destinationPath, $mobilefilename);
+            $this->storeUpload($image, $destinationPath, $mobilefilename);
         }
 
         $category->Image = $filename;
@@ -126,14 +126,14 @@ class CategoryController extends Controller
             //$image_name = time().'.'.$image->getClientOriginalExtension();
             $filename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/category');
-            $image->move($destinationPath, $filename);
+            $this->storeUpload($image, $destinationPath, $filename);
         }
         if ($request->hasFile('MobileImage')) {
             $image = $request->file('MobileImage');
             //$image_name = time().'.'.$image->getClientOriginalExtension();
             $mobilefilename = $this->safeUploadName($image);
             $destinationPath = public_path('uploads/category');
-            $image->move($destinationPath, $mobilefilename);
+            $this->storeUpload($image, $destinationPath, $mobilefilename);
         }
 
         $offerCategory = 0;

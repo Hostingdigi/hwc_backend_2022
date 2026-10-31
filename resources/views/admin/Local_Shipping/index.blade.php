@@ -106,7 +106,7 @@
 function chkconfirm(id) {
 	var chk = confirm('Are you sure! you want to delete this Local Shipping Method?');
 	if(chk) {
-		window.location = "{{ url('/admin/local_shipping') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/local_shipping') }}/"+id+"/destroy");
 	}
 }
 </script>	

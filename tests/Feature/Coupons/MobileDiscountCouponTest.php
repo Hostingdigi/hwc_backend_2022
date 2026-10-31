@@ -101,16 +101,35 @@ it('accepts a category coupon when every item is in the category', function () {
     expect(applyCoupon($this, 'SAVE10')->json('message'))->toBe('Valid Coupon Code');
 });
 
-it('KNOWN BUG: brand coupons crash ($cartitem[id] is an undefined constant in PHP 8)', function () {
-    coupon(['brand_id' => 7]);
-    $this->withoutExceptionHandling();
+// Fixed in Phase 3: these two kinds of coupon used to crash with a 500
 
-    expect(fn () => applyCoupon($this, 'SAVE10'))->toThrow(Error::class, 'Undefined constant "App\Http\Controllers\id"');
+it('accepts a brand coupon when every item is that brand', function () {
+    coupon(['brand_id' => 7]);
+
+    expect(applyCoupon($this, 'SAVE10')->assertOk()->json('message'))->toBe('Valid Coupon Code');
 });
 
-it('KNOWN BUG: customer-specific coupons crash (undefined $customer)', function () {
-    coupon(['customer_id' => $this->customer]);
-    $this->withoutExceptionHandling();
+it('rejects a brand coupon when an item is another brand, with an empty message', function () {
+    coupon(['brand_id' => 8]);
 
-    expect(fn () => applyCoupon($this, 'SAVE10'))->toThrow(ErrorException::class, 'Undefined variable $customer');
+    expect(applyCoupon($this, 'SAVE10')->assertOk()->json())->toMatchArray(['message' => '', 'couponid' => '']);
+});
+
+it('accepts a customer-specific coupon for that customer', function () {
+    coupon(['customer_id' => $this->customer]);
+
+    expect(applyCoupon($this, 'SAVE10')->assertOk()->json('message'))->toBe('Valid Coupon Code');
+});
+
+it('rejects a customer-specific coupon for anyone else', function () {
+    coupon(['customer_id' => $this->customer + 1000]);
+
+    expect(applyCoupon($this, 'SAVE10')->assertOk()->json('message'))->toBe('Invalid Coupon Code!');
+});
+
+it('enforces the usage limit on a customer-specific coupon', function () {
+    $id = coupon(['customer_id' => $this->customer, 'nooftimes' => 1, 'customer_type' => 1]);
+    DB::table('coupon_code_usage')->insert(['coupon_id' => $id, 'customer_id' => $this->customer, 'order_id' => 1]);
+
+    expect(applyCoupon($this, 'SAVE10')->json('message'))->toBe('Coupon Code Usage Limit Exceeded!');
 });

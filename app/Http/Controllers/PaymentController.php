@@ -390,7 +390,8 @@ class PaymentController extends Controller
                 }
             } else {
                 $ordermaster->save();
-                $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
+                // The new order's id from the insert ($primaryKey is "id"), not the racy "highest order_id"
+                $order = (object) ['order_id' => $ordermaster->id];
                 if ($order) {
                     $orderid = $order->order_id;
                     $orderincid = $order->order_id;
@@ -833,7 +834,8 @@ class PaymentController extends Controller
             }
             } else {
             $ordermaster->save();
-            $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
+            // The new order's id from the insert ($primaryKey is "id"), not the racy "highest order_id"
+            $order = (object) ['order_id' => $ordermaster->id];
             if($order) {
             $orderid = $order->order_id;
             $orderincid = $order->order_id;
@@ -1156,7 +1158,8 @@ class PaymentController extends Controller
             } else {
                 $ordermaster->save();
 
-                $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
+                // The new order's id from the insert ($primaryKey is "id"), not the racy "highest order_id"
+                $order = (object) ['order_id' => $ordermaster->id];
                 if ($order) {
                     $orderid = $order->order_id;
                     $orderincid = $order->order_id;
@@ -2684,12 +2687,7 @@ class PaymentController extends Controller
                 #@mail($customeremail, $emailsubject, $emailcontent, $headers);
                 #@mail($adminemail, $emailsubject, $emailcontent, $headers);
 
-                Mail::send([], [], function ($message) use ($adminemail, $customeremail, $emailsubject, $emailcontent) {
-                    $message->to([$customeremail, $adminemail])
-                        ->subject($emailsubject)
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->html($emailcontent);
-                });
+                Mail::to([$customeremail, $adminemail])->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
             }
         }
 
@@ -3169,7 +3167,8 @@ class PaymentController extends Controller
             } else {
                 $ordermaster->save();
 
-                $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
+                // The new order's id from the insert ($primaryKey is "id"), not the racy "highest order_id"
+                $order = (object) ['order_id' => $ordermaster->id];
                 if ($order) {
                     $orderid = $order->order_id;
                     $orderincid = $order->order_id;

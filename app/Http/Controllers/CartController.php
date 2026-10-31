@@ -473,18 +473,9 @@ class CartController extends Controller
         }
 
         if ($country != 'SG' && $country != '') {
-            $intership = InternationalShipping::where('Status', '=', '1')->get();
-            if ($intership) {
-                foreach ($intership as $intershipping) {
-                    $intercountry = $intershipping->CountriesList;
-                    if ($intercountry) {
-                        $intercountrys = @explode(',', $intercountry);
-                        if (in_array($countryid, $intercountrys)) {
-                            $freeshippingamount = $intershipping->FreeShippingCost;
-                            break;
-                        }
-                    }
-                }
+            $zone = \App\Services\ShippingZones::forCountryId($countryid);
+            if ($zone) {
+                $freeshippingamount = $zone->FreeShippingCost;
             }
             if ($freeshippingamount > str_replace(',', '', $subtotal)) {
                 $remaining = ($freeshippingamount - str_replace(',', '', $subtotal));
@@ -823,18 +814,9 @@ class CartController extends Controller
         }
 
         if ($countrycode != 'SG' && $countrycode != '') {
-            $intership = InternationalShipping::where('Status', '=', '1')->get();
-            if ($intership) {
-                foreach ($intership as $intershipping) {
-                    $intercountry = $intershipping->CountriesList;
-                    if ($intercountry) {
-                        $intercountrys = @explode(',', $intercountry);
-                        if (in_array($countryid, $intercountrys)) {
-                            $freeshippingamount = $intershipping->FreeShippingCost;
-                            break;
-                        }
-                    }
-                }
+            $zone = \App\Services\ShippingZones::forCountryId($countryid);
+            if ($zone) {
+                $freeshippingamount = $zone->FreeShippingCost;
             }
             if ($freeshippingamount > str_replace(',', '', $subtotal)) {
                 $remaining = ($freeshippingamount - str_replace(',', '', $subtotal));
@@ -1059,7 +1041,8 @@ class CartController extends Controller
         $ordermaster['order_type'] = '2';
         $ordermaster->save();
 
-        $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
+        // The new order's id from the insert ($primaryKey is "id"), not the racy "highest order_id"
+        $order = (object) ['order_id' => $ordermaster->id];
         if ($order) {
             $orderid = $order->order_id;
             $quotationid = $orderid;
@@ -1173,12 +1156,7 @@ class CartController extends Controller
             $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
             #@mail($custemail, $emailsubject, $emailcontent, $headers);
-            Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                $message->to($custemail)
-                    ->subject($emailsubject)
-                    ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->html($emailcontent);
-            });
+            Mail::to($custemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
 
             //@mail($setting->admin_email, $emailsubject, $emailcontent, $headers);
         }
@@ -1347,7 +1325,8 @@ class CartController extends Controller
             $ordermaster['order_type'] = '2';
             $ordermaster->save();
 
-            $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
+            // The new order's id from the insert ($primaryKey is "id"), not the racy "highest order_id"
+            $order = (object) ['order_id' => $ordermaster->id];
             if ($order) {
                 $orderid = $order->order_id;
                 $quotationid = $orderid;
@@ -1461,12 +1440,7 @@ class CartController extends Controller
                 $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
                 #@mail($custemail, $emailsubject, $emailcontent, $headers);
-                Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                    $message->to($custemail)
-                        ->subject($emailsubject)
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->html($emailcontent);
-                });
+                Mail::to($custemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
 
                 //@mail($setting->admin_email, $emailsubject, $emailcontent, $headers);
             }

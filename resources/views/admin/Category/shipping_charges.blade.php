@@ -149,7 +149,7 @@
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this category?');
 	if(chk) {
-		window.location = "{{ url('/admin/category/shipping-charges/delete') }}/"+id;
+		adminPost("{{ url('/admin/category/shipping-charges/delete') }}/"+id);
 	}
 }
 function chkupdatestatus(id, status) {
@@ -159,7 +159,7 @@ function chkupdatestatus(id, status) {
 	}
 	var chk = confirm('Are you sure! you want to '+statustext+' this category?');
 	if(chk) {
-		window.location = "{{ url('/admin/category') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/category') }}/"+id+"/"+status+"/updatestatus");
 	}
 }
 

@@ -348,7 +348,7 @@
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this product option?');
 	if(chk) {
-		window.location = "{{ url('/admin/products/options') }}/"+id+"/destroyoption";	
+		adminPost("{{ url('/admin/products/options') }}/"+id+"/destroyoption");	
 	}
 }
 
@@ -359,7 +359,7 @@ function chkupdatestatus(id, status) {
 	}
 	var chk = confirm('Are you sure! you want to '+statustext+' this product option?');
 	if(chk) {
-		window.location = "{{ url('/admin/products/options') }}/"+id+"/"+status+"/updateoptionstatus";	
+		adminPost("{{ url('/admin/products/options') }}/"+id+"/"+status+"/updateoptionstatus");	
 	}
 }
 function bulk_update_item(val){

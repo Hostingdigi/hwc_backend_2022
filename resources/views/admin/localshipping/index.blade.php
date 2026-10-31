@@ -128,7 +128,7 @@
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this c ?');
 	if(chk) {
-		window.location = "{{ url('/admin/local_shipping_methods') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/local_shipping_methods') }}/"+id+"/destroy");
 	}
 }
 function chkupdatestatus(id, status) {
@@ -138,7 +138,7 @@ function chkupdatestatus(id, status) {
 	}
 	var chk = confirm('Are you sure! you want to '+statustext+' this Local Shipping Method ?');
 	if(chk) {
-		window.location = "{{ url('/admin/local_shipping_methods') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/local_shipping_methods') }}/"+id+"/"+status+"/updatestatus");
 	}
 }
 </script>	

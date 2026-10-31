@@ -134,7 +134,7 @@
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this country?');
 	if(chk) {
-		window.location = "{{ url('/admin/country') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/country') }}/"+id+"/destroy");
 	}
 }
 function chkupdatestatus(id, status) {
@@ -144,7 +144,7 @@ function chkupdatestatus(id, status) {
 	}
 	var chk = confirm('Are you sure! you want to '+statustext+' this country?');
 	if(chk) {
-		window.location = "{{ url('/admin/country') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/country') }}/"+id+"/"+status+"/updatestatus");
 	}
 }
 </script>	

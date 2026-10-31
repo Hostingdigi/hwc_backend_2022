@@ -165,7 +165,7 @@ function chkdelete(id) {
 
 
 
-		window.location = "{{ url('/admin/menu') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/menu') }}/"+id+"/destroy");
 
 
 
@@ -205,7 +205,7 @@ function chkupdatestatus(id, status) {
 
 
 
-		window.location = "{{ url('/admin/menu') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/menu') }}/"+id+"/"+status+"/updatestatus");
 
 
 

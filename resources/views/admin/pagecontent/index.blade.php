@@ -190,7 +190,7 @@ function chkdelete(id) {
 
 	if(chk) {
 
-		window.location = "{{ url('/admin/static_pages') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/static_pages') }}/"+id+"/destroy");
 
 	}
 
@@ -210,7 +210,7 @@ function chkupdatestatus(id, status) {
 
 	if(chk) {
 
-		window.location = "{{ url('/admin/static_pages') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/static_pages') }}/"+id+"/"+status+"/updatestatus");
 
 	}
 

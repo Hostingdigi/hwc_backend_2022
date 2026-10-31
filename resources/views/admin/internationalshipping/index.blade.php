@@ -129,7 +129,7 @@
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this International Shipping Method ?');
 	if(chk) {
-		window.location = "{{ url('/admin/international_shipping_methods') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/international_shipping_methods') }}/"+id+"/destroy");
 	}
 }
 function chkupdatestatus(id, status) {
@@ -139,7 +139,7 @@ function chkupdatestatus(id, status) {
 	}
 	var chk = confirm('Are you sure! you want to '+statustext+' this International Shipping Method ?');
 	if(chk) {
-		window.location = "{{ url('/admin/international_shipping_methods') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/international_shipping_methods') }}/"+id+"/"+status+"/updatestatus");
 	}
 }
 </script>	

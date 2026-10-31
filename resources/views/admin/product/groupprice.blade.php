@@ -268,7 +268,7 @@
 function chkdelete(id, productid) {
 	var chk = confirm('Are you sure! you want to delete this product group price?');
 	if(chk) {
-		window.location = "{{ url('/admin/products/groupprice') }}/"+id+"/"+productid+"/destroygroupprice";	
+		adminPost("{{ url('/admin/products/groupprice') }}/"+id+"/"+productid+"/destroygroupprice");	
 	}
 }
 

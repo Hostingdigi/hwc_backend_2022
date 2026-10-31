@@ -150,13 +150,14 @@ class OrderServices
 
         if ($isUnFulfilledOrderExist) {
             $orderid = $isUnFulfilledOrderExist->order_id;
-            $ordermaster = OrderMaster::where('order_id', $orderid)->update($orderData + [
+            // update() returns 0 when nothing changed (a retry within the same second),
+            // which used to be treated as a failure. The order exists, so carry on.
+            OrderMaster::where('order_id', $orderid)->update($orderData + [
                 'is_fulfilled' => 0,
                 'user_id' => $userid,
                 'order_status' => 0,
                 'date_entered' => now()
             ]);
-            if (!$ordermaster) return $orderReturnData;
         }else{
             $ordermaster = OrderMaster::create($orderData + [
                 'is_fulfilled' => 0,
@@ -174,26 +175,15 @@ class OrderServices
             'payment_status' => 0
         ]);
 
-        foreach ($cartdata as $cart) {
-
-            $orderdetails = new OrderDetails;
-            $orderdetails['order_id'] = $orderid;
-            $orderdetails['prod_id'] = $cart['productId'];
-            $orderdetails['prod_name'] = $cart['productName'];
-            $orderdetails['prod_quantity'] = $cart['qty'];
-            $orderdetails['prod_unit_price'] = $cart['price'];
-            $orderdetails['prod_option'] = $cart['productoption'];
-            $orderdetails['Weight'] = $cart['weight'];
-            $orderdetails['prod_code'] = $cart['productcode'];
-            $orderdetails->save();
-
-            $qty = 0;
-            $product = Product::where('Id', $cart['productId'])->select('Quantity')->first();
-            if ($product->Quantity > $cart['qty']) {
-                $qty = $product->Quantity - $cart['qty'];
-            }
-            Product::where('Id', $cart['productId'])->update(['Quantity' => $qty]);
-        }
+        OrderLines::sync($orderid, collect($cartdata)->map(fn ($cart) => [
+            'prod_id' => $cart['productId'],
+            'prod_name' => $cart['productName'],
+            'prod_quantity' => $cart['qty'],
+            'prod_unit_price' => $cart['price'],
+            'prod_option' => $cart['productoption'],
+            'Weight' => $cart['weight'],
+            'prod_code' => $cart['productcode'],
+        ])->values()->all());
 
         $orderReturnData['status'] = true;
         $orderReturnData['orderId'] = $orderid;

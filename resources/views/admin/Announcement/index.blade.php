@@ -135,7 +135,7 @@
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this announcement?');
 	if(chk) {
-		window.location = "{{ url('/admin/announcement') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/announcement') }}/"+id+"/destroy");
 	}
 }
 function chkupdatestatus(id, status) {
@@ -145,7 +145,7 @@ function chkupdatestatus(id, status) {
 	}
 	var chk = confirm('Are you sure! you want to '+statustext+' this announcement?');
 	if(chk) {
-		window.location = "{{ url('/admin/announcement') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/announcement') }}/"+id+"/"+status+"/updatestatus");
 	}
 }
 </script>	

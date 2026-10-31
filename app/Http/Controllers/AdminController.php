@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ManageAdmin;
-use App\Models\RoleRights;
+use App\Models\Admin;
 use Hash;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Session;
 
 class AdminController extends Controller
@@ -45,37 +45,30 @@ class AdminController extends Controller
 
     public function verifylogin(Request $request)
     {
+        $admin = Admin::where('username', '=', (string) $request->username)->first();
 
-        $username = $request->username;
-        $admin = ManageAdmin::where('username', '=', $username)->first();
-        if ($admin) {
-            $password = Hash::check($request->password, $admin->password);
-            if ($password) {
-                Session::put('admin_id', $admin->id);
-                Session::put('priority', $admin->priority);
-
-                if ($admin->priority > 0) {
-                    $rolerights = RoleRights::where('id', '=', $admin->priority)->first();
-                    if ($rolerights) {
-                        $accessrights = @explode(',', $rolerights->rights);
-                        Session::put('accessrights', $accessrights);
-                    }
-                }
-                return redirect('/admin/dashboard');
-            } else {
-                return redirect()->back()->withInput($request->only('username', 'remember'))->with('message', 'Invalid Login Credentials!');
-            }
-        } else {
+        if (!$admin || !Hash::check((string) $request->password, $admin->password)) {
             return redirect()->back()->withInput($request->only('username', 'remember'))->with('message', 'Invalid Login Credentials!');
         }
 
+        // Logs in on the "admin" guard and regenerates the session id (no session fixation).
+        Auth::guard('admin')->login($admin);
+
+        // Legacy session keys still read by the admin views and controllers
+        Session::put('admin_id', $admin->id);
+        Session::put('priority', $admin->priority);
+        Session::forget('accessrights');
+        if (!$admin->isSuperAdmin()) {
+            Session::put('accessrights', $admin->moduleRights());
+        }
+
+        return redirect('/admin/dashboard');
     }
 
     public function logout()
     {
-        Session::forget('admin_id');
-        Session::forget('priority');
-        Session::forget('ninja_authkey');
+        Auth::guard('admin')->logout();
+        Session::forget(['admin_id', 'priority', 'accessrights', 'ninja_authkey']);
         return redirect('/admin/');
     }
 }

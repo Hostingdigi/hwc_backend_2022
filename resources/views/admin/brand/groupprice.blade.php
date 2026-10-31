@@ -288,7 +288,7 @@ $('.dataex-html5-selectors').DataTable( {	dom: 'Bfrtip',	buttons: [			]});
 function chkdelete(id, brandid) {
 	var chk = confirm('Are you sure! you want to delete this brand group price?');
 	if(chk) {
-		window.location = "{{ url('/admin/brands/groupprice') }}/"+id+"/"+brandid+"/destroygroupprice";	
+		adminPost("{{ url('/admin/brands/groupprice') }}/"+id+"/"+brandid+"/destroygroupprice");	
 	}
 }
 

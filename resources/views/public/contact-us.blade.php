@@ -57,7 +57,7 @@
                                 </div>
 							    <!-- Google reCAPTCHA widget -->
                                 <div class="col-md-12">
-                                    <div class="g-recaptcha" data-sitekey="{{ env('GOOGLE_CAPTCHA_SITE_KEY') }}" data-badge="inline"  data-callback="setResponse"></div>
+                                    <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.site_key') }}" data-badge="inline"  data-callback="setResponse"></div>
                                     <br>
                                     <input type="hidden" id="captcha-response" name="captcha_response" />
                                 </div>			

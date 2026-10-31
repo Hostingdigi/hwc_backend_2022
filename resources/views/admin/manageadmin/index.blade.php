@@ -126,7 +126,7 @@
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this Admin?');
 	if(chk) {
-		window.location = "{{ url('/admin/manageadmin') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/manageadmin') }}/"+id+"/destroy");
 	}
 }
 </script>	

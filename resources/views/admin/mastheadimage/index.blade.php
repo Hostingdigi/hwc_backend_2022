@@ -212,7 +212,7 @@ function chkdelete(id) {
 
 	if(chk) {
 
-		window.location = "{{ url('/admin/banner_master') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/banner_master') }}/"+id+"/destroy");
 
 	}
 
@@ -232,7 +232,7 @@ function chkupdatestatus(id, status) {
 
 	if(chk) {
 
-		window.location = "{{ url('/admin/banner_master') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/banner_master') }}/"+id+"/"+status+"/updatestatus");
 
 	}
 

@@ -32,12 +32,12 @@ class Local_ShippingController extends Controller
     public function create()
     {
 		$Local_shipping_method = Local_shipping_method::all();		
-        return view('admin/Local_shipping.create', compact('Local_shipping_method'));
+        return view('admin/Local_Shipping.create', compact('Local_shipping_method'));
     }
     public function edit($id)
     {
         $Local_shipping_method = Local_shipping_method::find($id);			
-		return view('admin/Local_shipping.edit', compact('Local_shipping_method'));
+		return view('admin/Local_Shipping.edit', compact('Local_shipping_method'));
     }
     public function update(Request $request, Local_shipping_method $Local_shipping_method)
     {

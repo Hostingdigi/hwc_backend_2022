@@ -19,8 +19,11 @@ use App\Models\Settings;
 use App\Models\ShippingMethods;
 use App\Services\CartServices;
 use DB;
+use App\Services\MobileCheckoutQuote;
+use App\Services\OrderLines;
 use App\Services\PaymentVerifier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Mail;
 use Session;
 use Stripe;
@@ -36,9 +39,12 @@ class CartMobileController extends Controller
      */
     protected $cartServices = null;
 
-    public function __construct(CartServices $cartServices)
+    protected $mobileCheckoutQuote;
+
+    public function __construct(CartServices $cartServices, MobileCheckoutQuote $mobileCheckoutQuote)
     {
         $this->cartServices = $cartServices;
+        $this->mobileCheckoutQuote = $mobileCheckoutQuote;
     }
 
     protected $orderStatus = [
@@ -1047,14 +1053,15 @@ class CartMobileController extends Controller
             $shippinginfo = $orderinfo['shipping'][0];
             //$carddetails = $orderinfo['carddetails'][0];
 
-            if ($userid <= 0) {
+            $guestCheckout = $userid <= 0;
+            if ($guestCheckout) {
                 $chkcustomer = Customer::where('cust_email', '=', $billinginfo['bill_email'])->select('cust_id')->first();
                 if (!$chkcustomer) {
-                    Customer::insert(array('cust_firstname' => $billinginfo['bill_fname'], 'cust_lastname' => $billinginfo['bill_lname'], 'cust_email' => $billinginfo['bill_email'], 'cust_address1' => $billinginfo['bill_ads1'], 'cust_address2' => $billinginfo['bill_ads2'], 'cust_city' => $billinginfo['bill_city'], 'cust_state' => $billinginfo['bill_state'], 'cust_country' => $countryid, 'cust_zip' => $billinginfo['bill_zip'], 'cust_phone' => $billinginfo['bill_mobile'], 'cust_status' => 0));
-                    $cust = Customer::where('cust_id', '>', '0')->orderBy('cust_id', 'desc')->select('cust_id')->first();
-                    if ($cust) {
-                        $userid = $cust->cust_id;
-                    }
+                    // Fixed in Phase 3: $countryid was used before it was set (guest checkout
+                    // crashed), and the new id was read back as "the highest cust_id" (a race
+                    // when two customers are created at once).
+                    $guestCountryId = (int) Country::where('countrycode', $billinginfo['bill_country'] ?? '')->value('countryid');
+                    $userid = Customer::insertGetId(array('cust_firstname' => $billinginfo['bill_fname'], 'cust_lastname' => $billinginfo['bill_lname'], 'cust_email' => $billinginfo['bill_email'], 'cust_address1' => $billinginfo['bill_address1'] ?? '', 'cust_address2' => $billinginfo['bill_address2'] ?? '', 'cust_city' => $billinginfo['bill_city'], 'cust_state' => $billinginfo['bill_state'], 'cust_country' => $guestCountryId, 'cust_zip' => $billinginfo['bill_zip'], 'cust_phone' => $billinginfo['bill_mobile'], 'cust_status' => 0));
                 } else {
                     $userid = $chkcustomer->cust_id;
                 }
@@ -1085,6 +1092,25 @@ class CartMobileController extends Controller
                 $countryid = $countrydata->countryid;
                 $taxtitle = $countrydata->taxtitle;
                 $taxValue = $countrydata->taxpercentage;
+            }
+
+            // The app sends its own payable_amount. Check it against the server's quote
+            // (the same calculation as get-shipping-package-price) so a tampered or
+            // stale total can't create an order. See services.mobile_pricing.mode.
+            $quote = $this->serverQuoteFor($userid, $guestCheckout, $orderinfo, $shippinginfo['ship_country']);
+            $serverTotal = MobileCheckoutQuote::amount($quote);
+            $appTotal = (float) str_replace(',', '', (string) $orderinfo['payable_amount']);
+            if (abs($serverTotal - $appTotal) > 0.01) {
+                Log::warning('MOBILE ORDER TOTAL MISMATCH', [
+                    'customer_id' => $userid, 'app_total' => $appTotal, 'server_total' => $serverTotal,
+                    'mode' => config('services.mobile_pricing.mode', 'enforce'),
+                ]);
+                if (config('services.mobile_pricing.mode', 'enforce') !== 'log') {
+                    return response()->json(['response' => 'failed', 'message' => 'Your cart has changed. Please review your cart and try again.']);
+                }
+            } else {
+                $grandtotal = number_format($serverTotal, 2, '.', '');
+                $orderinfo['payable_amount'] = $grandtotal;
             }
 
             $couponId = 0;
@@ -1203,14 +1229,12 @@ class CartMobileController extends Controller
                 $today = date('Y-m-d H:i:s');
                 OrderMaster::where('order_id', '=', $orderincid)->update(array('pay_method' => $paymethodname, 'date_entered' => $today));
             } else {
-
                 $ordermaster->save();
 
-                $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
-                if ($order) {
-                    $orderid = $order->order_id;
-                    $orderincid = $order->order_id;
-                }
+                // OrderMaster's $primaryKey is "id", so Eloquent puts the new order_id
+                // there. (It used to re-query "the highest order_id": a race.)
+                $orderid = $ordermaster->id;
+                $orderincid = $ordermaster->id;
             }
 
             $hoolahitems = [];
@@ -1220,37 +1244,31 @@ class CartMobileController extends Controller
             $itemdetails = '<table style="width:100%; background:#f1f1f1;">';
             $itemdetails .= '<tr><th>Item</th><th >Qty</th><th style="text-align:right">Price</th><th>Total</th></tr>';
 
-            foreach ($cartitems as $cart) {
-                $orderdetails = new OrderDetails;
-                $orderdetails['order_id'] = $orderid;
-                $orderdetails['prod_id'] = $cart['id'];
-                $orderdetails['prod_name'] = $cart['name'];
-                $orderdetails['prod_quantity'] = $cart['quantity'];
-                $orderdetails['prod_unit_price'] = str_replace(',', '', $cart['price']);
-                $orderdetails['prod_option'] = $cart['option'];
-                $orderdetails['Weight'] = $cart['weight'];
-                $orderdetails['prod_code'] = $cart['code'];
-                $orderdetails->save();
-                /*$qty = 0;
-                $product = Product::where('Id', '=', $cart['id'])->select('Quantity')->first();
-                if($product->Quantity > $cart['quantity']) {
-                $qty = $product->Quantity - $cart['quantity'];
-                }
-                Product::where('Id', '=', $cart['id'])->update(array('Quantity' => $qty));*/
+            // Order lines + stock, replacing (not duplicating) them when the app retries
+            // with existorderid. Fixed in Phase 3.
+            OrderLines::sync($orderid, collect($cartitems)->map(fn ($cart) => [
+                'prod_id' => $cart['id'],
+                'prod_name' => $cart['name'],
+                'prod_quantity' => $cart['quantity'],
+                'prod_unit_price' => str_replace(',', '', $cart['price']),
+                'prod_option' => $cart['option'],
+                'Weight' => $cart['weight'],
+                'prod_code' => $cart['code'],
+            ])->values()->all());
 
+            foreach ($cartitems as $cart) {
                 $desc = $image = '';
 
-                $qty = 0;
+                // Description and image only when stock remains (same rule as before:
+                // "stock left after this order > 0" == "stock before > quantity")
                 $product = Product::where('Id', '=', $cart['id'])->select('Quantity', 'Image', 'EnShortDesc')->first();
-                if ($product->Quantity > $cart['quantity']) {
-                    $qty = $product->Quantity - $cart['quantity'];
+                if ($product->Quantity > 0) {
                     $desc = $product->EnShortDesc;
                     if ($desc == '') {
                         $desc = $cart['name'];
                     }
                     $image = url('/') . '/uploads/product/' . $product->Image;
                 }
-                Product::where('Id', '=', $cart['id'])->update(array('Quantity' => $qty));
 
                 $productname = $cart['name'];
 
@@ -1357,12 +1375,7 @@ class CartMobileController extends Controller
 
                 //@mail($custemail, $emailsubject, $emailcontent, $headers);
 
-                Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                    $message->to($custemail)
-                        ->subject($emailsubject)
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->html($emailcontent);
-                });
+                Mail::to($custemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
             }
 
             $grandtotal = str_replace(',', '', $grandtotal);
@@ -2024,12 +2037,7 @@ class CartMobileController extends Controller
                 $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
                 //@mail($customeremail, $emailsubject, $emailcontent, $headers);
-                Mail::send([], [], function ($message) use ($customeremail, $adminemail, $emailsubject, $emailcontent) {
-                    $message->to([$customeremail, $adminemail])
-                        ->subject($emailsubject)
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->html($emailcontent);
-                });
+                Mail::to([$customeremail, $adminemail])->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
 
                 //@mail($adminemail, $emailsubject, $emailcontent, $headers);
             }
@@ -2193,12 +2201,7 @@ class CartMobileController extends Controller
                 //@mail($customeremail, $emailsubject, $emailcontent, $headers);
 
                 //@mail($adminemail, $emailsubject, $emailcontent, $headers);
-                Mail::send([], [], function ($message) use ($customeremail, $adminemail, $emailsubject, $emailcontent) {
-                    $message->to([$customeremail, $adminemail])
-                        ->subject($emailsubject)
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->html($emailcontent);
-                });
+                Mail::to([$customeremail, $adminemail])->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
             }
         }
 
@@ -2218,150 +2221,38 @@ class CartMobileController extends Controller
         return $data;
     }
 
-    public function getShippingPackagePrice(Request $request)
+    /**
+     * Server-side quote for a mobile order: the customer's server cart (cart_details)
+     * when they have one, otherwise the products in the request priced from the
+     * database (guest checkout).
+     */
+    private function serverQuoteFor($customerId, $guestCheckout, array $orderinfo, $shipCountry): array
     {
+        $items = $guestCheckout ? collect() : DB::table('cart_details')->where('user_id', $customerId)->get();
 
-        $data = [];
-        $packagingprice = $shippingprice = $subtotal = $deliverycost = $packingfee = $grandtotal = 0;
-        $orderinfo = $request->orderinfo;
-        $gstText = 'GST(7%)';
-
-        if ($orderinfo) {
-            $orderinfo = $orderinfo[0];
-            $country = $orderinfo['country'];
-
-            $cartdetails = DB::table('cart_details')->where('user_id', $orderinfo['customer_id'])->get();
-            $price = new \App\Models\Price();
-            foreach ($cartdetails as $cartItem) {
-                $productprice = $price->getDiscountPrice($cartItem->prod_id);
-                $total = $productprice * $cartItem->prod_quantity;
-                $productDeails = Product::find($cartItem->prod_id);
-                $prodOptionDetails = ProductOptions::where([['Prod', '=', $cartItem->prod_id], ['Id', '=', $cartItem->prod_option_id]])->first();
-
-                if ($cartItem->prod_option_id > 0 && !empty($prodOptionDetails)) {
-                    $optionprice = $price->getOptionPrice($cartItem->prod_id, $cartItem->prod_option_id) * $cartItem->prod_quantity;
-                    $total += $optionprice;
-                    $cartItem->shippingbox = $prodOptionDetails->ShippingBox;
-                    $cartItem->productWeight = $prodOptionDetails->Weight;
-                } else {
-                    $cartItem->shippingbox = $productDeails->ShippingBox;
-                    $cartItem->productWeight = $productDeails->Weight;
-                }
-                $subtotal += $total;
-            }
-
-            $cart = new \App\Models\Cart();
-
-            //Exclude default tax amount
-            $countryDetails = Country::where('countrycode', $country)->first();
-            $taxAmount = round((($subtotal * $countryDetails->taxpercentage) / (100 + $countryDetails->taxpercentage)), 2);
-            $subtotal = round($subtotal - $taxAmount, 2);
-
-            $gst = $cart->getGST($subtotal, $country);
-            $taxDetails = $this->cartServices->getTax($subtotal, $country);
-            $gstText = $taxDetails['taxLabel'];
-            $gst = $taxDetails['taxTotal'];
-
-            $taxes = $cart->getGST($subtotal, $country);
-
-            /*if ($country != '') {
-            $taxvals = @explode("|", $taxes);
-            $gstText = $taxvals[0];
-            $gst = $taxvals[1];
-            } else {
-            $gst = $taxes;
-            }*/
-
-            $grandtotal = $cart->getGrandTotal($subtotal, $gst);
-            $deliverymethod = $orderinfo['shipmethod'];
-
-            $couponcode = $orderinfo['couponcode'];
-
-            if ($country != 'SG') {
-                $settings = PaymentSettings::where('Id', '=', '1')->select('min_package_fee')->first();
-                $packingfee = $settings->min_package_fee;
-            }
-
-            $boxfees = 0;
-            $totalweight = $deliverycosttotalitem = $totaldeliverycost = 0;
-
-            foreach ($cartdetails as $item) {
-                $totalweight += $item->productWeight;
-                $shippingbox = $item->shippingbox;
-                if ($shippingbox == "L" || $shippingbox == "XL" || $shippingbox == "XXL" || $shippingbox == "P") {
-                    $deliverycostperitem = $cart->shippingCost($country, $deliverymethod, $shippingbox, $item->prod_quantity, $subtotal, $gst, $item->productWeight);
-
-                    $deliverycosttotalitem += $deliverycostperitem * $item->prod_quantity;
-                } else {
-                    $product_weight = $item->productWeight * $item->prod_quantity;
-                    //$totalweight += $product_weight;
-                }
-                $quantity = $item->prod_quantity;
-                $boxfees += $cart->getPackagingFee($country, $totalweight, $subtotal, $gst, $deliverymethod, $shippingbox, $quantity);
-
-            }
-
-            if ($totalweight > 0) {
-                #$boxfees = $cart->getPackagingFee($country, $totalweight, $subtotal, $gst, $deliverymethod, $shippingbox, $quantity);
-                $totaldeliverycost = $cart->shippingCost($country, $deliverymethod, $shippingbox, $quantity, $subtotal, $gst, $totalweight);
-            }
-
-            //$deliverycost = $deliverycosttotalitem + $totaldeliverycost;
-            $deliverycost = $totaldeliverycost;
-
-            // Calculate default category shipping cost
-            $defaultDeliveryCharges = [];
-            if(!in_array($deliverymethod,[1,3,10]))
-            {
-                foreach ($cartdetails as $val) {
-                    $product = Product::where('Id',$val->prod_id)->first();
-                    if($product){
-                        $category = Category::where('TypeId',$product->Types)->first();
-                        if($category){
-                            $existsCategoryShippingCharge = CategoryShippingCharge::where('status',1)
-                                ->whereRaw('FIND_IN_SET(?, category_ids)', [$product->Types])
-                                ->first();
-                            if($existsCategoryShippingCharge && !in_array($existsCategoryShippingCharge->id,$defaultDeliveryCharges)) 
-                                $defaultDeliveryCharges[] = $existsCategoryShippingCharge->id;
-                        }
-                    }
-                }
-            }
-
-            if(!empty($defaultDeliveryCharges)) $deliverycost = $totaldeliverycost = CategoryShippingCharge::where('status',1)
-            ->whereIn('id',$defaultDeliveryCharges)->sum('amount');
-            //End
-
-            $packingfee = number_format(($packingfee + $boxfees), 2);
-
-            #$deliverycost = $cart->shippingCost($country, $deliverymethod, $shippingbox, $quantity, $subtotal, $gst);
-            #$packingfee = number_format(($packingfee + $boxfees), 2);
-
-            $discounttype = $disamount = 0;
-            $discountInvalid = false;
-            $discounttext = $discounterrortext = '';
-            if (isset($orderinfo['couponcode']) && !empty($orderinfo['couponcode'])) {
-                $coupondata = Couponcode::where('coupon_code', '=', trim($orderinfo['couponcode']))->where('status', '=', '1')->first();
-                if ($coupondata) {
-                    $discounttext = 'Coupon discount(' . ($coupondata->discount_type == 1 ? $coupondata->discount . '%)' : '$' . $coupondata->discount . ')');
-                    $discounttype = $coupondata->discount_type;
-                    $disamount = $coupondata->discount;
-                } else {
-                    $discountInvalid = true;
-                    $discounterrortext = 'Invalid coupon code';
-                }
-            }
-            $fuelcharges = $this->cartServices->getFuelCharges($deliverycost, $country);
-            $handlingfee = $this->cartServices->getHandlingFee($totalweight, $country);
-            $deliverycost += $fuelcharges + $handlingfee;
-
-            $discount = $cart->getDiscount($subtotal, $gst, $deliverycost, $packingfee, $discounttype, $disamount, $fuelcharges, $handlingfee);
-            $grandtotal = $cart->getGrandTotal($subtotal, $gst, $deliverycost, $packingfee, $discount, 0, 0);
-
+        if ($items->isEmpty()) {
+            $items = collect($orderinfo['products'] ?? [])->map(fn ($p) => (object) [
+                'prod_id' => $p['id'],
+                'prod_quantity' => $p['quantity'],
+                'prod_option_id' => $p['option_id'] ?? 0,
+            ]);
         }
 
-        return response()->json(['response' => 'success', 'message' => 'Shipping & Packaing Price', 'gstText' => $gstText, 'gst' => $gst, 'packagingprice' => $packingfee, 'shippingprice' => $deliverycost,
-            'grandtotal' => $grandtotal, 'deliverycosttotalitem' => $deliverycosttotalitem, 'totaldeliverycost' => $totaldeliverycost, 'totalweight' => $totalweight, 'subtotal_text' => 'w/o ' . $taxDetails['taxLabelOnly'], 'subtotal' => $subtotal, 'discount' => $discount, 'discount_text' => $discounttext, 'is_discount_invalid' => $discountInvalid, 'discount_error_text' => $discounterrortext, 'fuelcharges' => number_format($fuelcharges, 2), 'handlingfee' => number_format($handlingfee, 2)]);
+        return $this->mobileCheckoutQuote->forItems($items, $shipCountry, $orderinfo['shipmethod'], $orderinfo['couponid'] ?? '');
+    }
+
+    public function getShippingPackagePrice(Request $request)
+    {
+        $orderinfo = $request->orderinfo[0] ?? null;
+        $quote = [];
+
+        if ($orderinfo) {
+            $quote = $this->mobileCheckoutQuote->forCustomer(
+                $orderinfo['customer_id'], $orderinfo['country'], $orderinfo['shipmethod'], $orderinfo['couponcode'] ?? ''
+            );
+        }
+
+        return response()->json(['response' => 'success', 'message' => 'Shipping & Packaing Price'] + $quote);
     }
 
     public function getshipandpackingprice(Request $request)
@@ -2470,7 +2361,7 @@ class CartMobileController extends Controller
                         }
                         if ($coupondata->brand_id > 0) {
                             foreach ($cartitems as $cartitem) {
-                                $chkproduct = Product::where('Id', '=', $cartitem[id])->where('Brand', '=', $coupondata->brand_id)->where('ProdStatus', '=', '1')->first();
+                                $chkproduct = Product::where('Id', '=', $cartitem['id'])->where('Brand', '=', $coupondata->brand_id)->where('ProdStatus', '=', '1')->first();
                                 if (!$chkproduct) {
                                     $chkbrand = 0;
                                     break;
@@ -2479,7 +2370,7 @@ class CartMobileController extends Controller
                         }
 
                         if ($coupondata->customer_id > 0) {
-                            if ($customer == $coupondata->customer_id) {
+                            if ($customerid == $coupondata->customer_id) {
                                 if ($coupondata->customer_type == 1) {
                                     $usage = CouponCodeUsage::where('coupon_id', '=', $coupondata->id)->where('customer_id', '=', $customerid)->count();
                                 } elseif ($coupondata->customer_type == 2) {
@@ -2561,8 +2452,18 @@ class CartMobileController extends Controller
 
                 $shippingAddress = $request->has('shipping') ? $request->shipping[0] : [];
 
+                // Charge the order's stored (server-checked) total when the app names the
+                // order; fall back to the amount it sent. Stripe needs whole cents.
+                $amount = $request['orderinfo'][0]['amount'];
+                if ($request->filled('order_id')) {
+                    $order = OrderMaster::where('order_id', $request->order_id)->where('order_status', 0)->first();
+                    if ($order) {
+                        $amount = $order->payable_amount;
+                    }
+                }
+
                 $paymentIntent = \Stripe\PaymentIntent::create([
-                    'amount' => ($request['orderinfo'][0]['amount'] * 100),
+                    'amount' => (int) round((float) str_replace(',', '', (string) $amount) * 100),
                     'currency' => 'sgd',
                     'automatic_payment_methods' => [
                         'enabled' => true,
@@ -2583,7 +2484,9 @@ class CartMobileController extends Controller
                 $data['status'] = true;
                 $data['clientSecret'] = $paymentIntent->client_secret;
 
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
+                // Was "catch (Exception ...)" with no import, i.e. a class that does not
+                // exist, so Stripe errors became 500s instead of this JSON reply.
                 $data['message'] = $e->getMessage();
             }
 
@@ -2609,14 +2512,15 @@ class CartMobileController extends Controller
             $shippinginfo = $orderinfo['shipping'][0];
             //$carddetails = $orderinfo['carddetails'][0];
 
-            if ($userid <= 0) {
+            $guestCheckout = $userid <= 0;
+            if ($guestCheckout) {
                 $chkcustomer = Customer::where('cust_email', '=', $billinginfo['bill_email'])->select('cust_id')->first();
                 if (!$chkcustomer) {
-                    Customer::insert(array('cust_firstname' => $billinginfo['bill_fname'], 'cust_lastname' => $billinginfo['bill_lname'], 'cust_email' => $billinginfo['bill_email'], 'cust_address1' => $billinginfo['bill_ads1'], 'cust_address2' => $billinginfo['bill_ads2'], 'cust_city' => $billinginfo['bill_city'], 'cust_state' => $billinginfo['bill_state'], 'cust_country' => $countryid, 'cust_zip' => $billinginfo['bill_zip'], 'cust_phone' => $billinginfo['bill_mobile'], 'cust_status' => 0));
-                    $cust = Customer::where('cust_id', '>', '0')->orderBy('cust_id', 'desc')->select('cust_id')->first();
-                    if ($cust) {
-                        $userid = $cust->cust_id;
-                    }
+                    // Fixed in Phase 3: $countryid was used before it was set (guest checkout
+                    // crashed), and the new id was read back as "the highest cust_id" (a race
+                    // when two customers are created at once).
+                    $guestCountryId = (int) Country::where('countrycode', $billinginfo['bill_country'] ?? '')->value('countryid');
+                    $userid = Customer::insertGetId(array('cust_firstname' => $billinginfo['bill_fname'], 'cust_lastname' => $billinginfo['bill_lname'], 'cust_email' => $billinginfo['bill_email'], 'cust_address1' => $billinginfo['bill_address1'] ?? '', 'cust_address2' => $billinginfo['bill_address2'] ?? '', 'cust_city' => $billinginfo['bill_city'], 'cust_state' => $billinginfo['bill_state'], 'cust_country' => $guestCountryId, 'cust_zip' => $billinginfo['bill_zip'], 'cust_phone' => $billinginfo['bill_mobile'], 'cust_status' => 0));
                 } else {
                     $userid = $chkcustomer->cust_id;
                 }
@@ -2686,7 +2590,8 @@ class CartMobileController extends Controller
             $ordermaster['ship_zip'] = $shippinginfo['ship_zip'];
             $ordermaster->save();
 
-            $order = OrderMaster::orderBy('order_id', 'desc')->select('order_id')->first();
+            // The new order's id from the insert ($primaryKey is "id"), not the racy "highest order_id"
+            $order = (object) ['order_id' => $ordermaster->id];
             if ($order) {
                 $orderid = $order->order_id;
                 $orderincid = $order->order_id;
@@ -2701,37 +2606,31 @@ class CartMobileController extends Controller
             $itemdetails .= '<tr><th width="40%">Item</th><th width="15%" style="text-align:center;">Quantity</th><th width="25%" style="text-align:right">Price</th><th width="20%" style="text-align:right">Total</th></tr>';
             $itemdetails .= '<tr><td colspan="4"><hr></td></tr>';
 
-            foreach ($cartitems as $cart) {
-                $orderdetails = new OrderDetails;
-                $orderdetails['order_id'] = $orderid;
-                $orderdetails['prod_id'] = $cart['id'];
-                $orderdetails['prod_name'] = $cart['name'];
-                $orderdetails['prod_quantity'] = $cart['quantity'];
-                $orderdetails['prod_unit_price'] = str_replace(',', '', $cart['price']);
-                $orderdetails['prod_option'] = $cart['option'];
-                $orderdetails['Weight'] = $cart['weight'];
-                $orderdetails['prod_code'] = $cart['code'];
-                $orderdetails->save();
-                /*$qty = 0;
-                $product = Product::where('Id', '=', $cart['id'])->select('Quantity')->first();
-                if($product->Quantity > $cart['quantity']) {
-                $qty = $product->Quantity - $cart['quantity'];
-                }
-                Product::where('Id', '=', $cart['id'])->update(array('Quantity' => $qty));*/
+            // Order lines + stock, replacing (not duplicating) them when the app retries
+            // with existorderid. Fixed in Phase 3.
+            OrderLines::sync($orderid, collect($cartitems)->map(fn ($cart) => [
+                'prod_id' => $cart['id'],
+                'prod_name' => $cart['name'],
+                'prod_quantity' => $cart['quantity'],
+                'prod_unit_price' => str_replace(',', '', $cart['price']),
+                'prod_option' => $cart['option'],
+                'Weight' => $cart['weight'],
+                'prod_code' => $cart['code'],
+            ])->values()->all());
 
+            foreach ($cartitems as $cart) {
                 $desc = $image = '';
 
-                $qty = 0;
+                // Description and image only when stock remains (same rule as before:
+                // "stock left after this order > 0" == "stock before > quantity")
                 $product = Product::where('Id', '=', $cart['id'])->select('Quantity', 'Image', 'EnShortDesc')->first();
-                if ($product->Quantity > $cart['quantity']) {
-                    $qty = $product->Quantity - $cart['quantity'];
+                if ($product->Quantity > 0) {
                     $desc = $product->EnShortDesc;
                     if ($desc == '') {
                         $desc = $cart['name'];
                     }
                     $image = url('/') . '/uploads/product/' . $product->Image;
                 }
-                Product::where('Id', '=', $cart['id'])->update(array('Quantity' => $qty));
 
                 $productname = $cart['name'];
 
@@ -2840,12 +2739,7 @@ class CartMobileController extends Controller
                 $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
                 #@mail($custemail, $emailsubject, $emailcontent, $headers);
-                Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                    $message->to($custemail)
-                        ->subject($emailsubject)
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->html($emailcontent);
-                });
+                Mail::to($custemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
 
                 //@mail($setting->admin_email, $emailsubject, $emailcontent, $headers);
             }

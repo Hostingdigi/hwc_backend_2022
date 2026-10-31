@@ -37,13 +37,13 @@ class MastheadImageController extends Controller
 			$image = $request->file('EnBanimage');			
 			$filename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/bannermaster');
-			$image->move($destinationPath, $filename);                                
+			$this->storeUpload($image, $destinationPath, $filename);                                
 		}
 		if($request->hasFile('EnBanMobileimage')) {
 			$image = $request->file('EnBanMobileimage');			
 			$mobilefilename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/bannermaster');
-			$image->move($destinationPath, $mobilefilename);                                
+			$this->storeUpload($image, $destinationPath, $mobilefilename);                                
 		}
 		
 		
@@ -76,14 +76,14 @@ class MastheadImageController extends Controller
 			$image = $request->file('EnBanimage');			
 			$filename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/bannermaster');
-			$image->move($destinationPath, $filename);                                
+			$this->storeUpload($image, $destinationPath, $filename);                                
 		}
 		
 		if($request->hasFile('EnBanMobileimage')) {
 			$image = $request->file('EnBanMobileimage');			
 			$mobilefilename = $this->safeUploadName($image);
 			$destinationPath = public_path('uploads/bannermaster');
-			$image->move($destinationPath, $mobilefilename);                                
+			$this->storeUpload($image, $destinationPath, $mobilefilename);                                
 		}
 		
 

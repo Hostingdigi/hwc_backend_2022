@@ -59,51 +59,51 @@ class OrderController extends Controller
         if ($orderstatus != '') {
             if ($orderstatus == '2') {
                 if ($join != '') {
-                    $join .= ' AND (order_status = "' . $orderstatus . '" OR order_status = "3")';
+                    $join .= ' AND (order_status = ' . $this->sqlQuote($orderstatus) . ' OR order_status = "3")';
                 } else {
-                    $join .= '(order_status = "' . $orderstatus . '" OR order_status = "3")';
+                    $join .= '(order_status = ' . $this->sqlQuote($orderstatus) . ' OR order_status = "3")';
                 }
             } else {
                 if ($join != '') {
-                    $join .= ' AND order_status = "' . $orderstatus . '"';
+                    $join .= ' AND order_status = ' . $this->sqlQuote($orderstatus) . '';
                 } else {
-                    $join .= 'order_status = "' . $orderstatus . '"';
+                    $join .= 'order_status = ' . $this->sqlQuote($orderstatus) . '';
                 }
             }
         }
         if ($ordertype != '') {
             if ($join != '') {
-                $join .= ' AND order_type = "' . $ordertype . '"';
+                $join .= ' AND order_type = ' . $this->sqlQuote($ordertype) . '';
             } else {
-                $join .= 'order_type = "' . $ordertype . '"';
+                $join .= 'order_type = ' . $this->sqlQuote($ordertype) . '';
             }
         }
         if ($orderstartno != '') {
             if ($join != '') {
-                $join .= ' AND order_id >= "' . $orderstartno . '"';
+                $join .= ' AND order_id >= ' . $this->sqlQuote($orderstartno) . '';
             } else {
-                $join .= 'order_id >= "' . $orderstartno . '"';
+                $join .= 'order_id >= ' . $this->sqlQuote($orderstartno) . '';
             }
         }
         if ($orderendno != '') {
             if ($join != '') {
-                $join .= ' AND order_id <= "' . $orderendno . '"';
+                $join .= ' AND order_id <= ' . $this->sqlQuote($orderendno) . '';
             } else {
-                $join .= 'order_id <= "' . $orderendno . '"';
+                $join .= 'order_id <= ' . $this->sqlQuote($orderendno) . '';
             }
         }
         if ($orderfrom != '') {
             if ($join != '') {
-                $join .= ' AND DATE(date_entered) >= "' . $orderfrom . '"';
+                $join .= ' AND DATE(date_entered) >= ' . $this->sqlQuote($orderfrom) . '';
             } else {
-                $join .= 'DATE(date_entered) >= "' . $orderfrom . '"';
+                $join .= 'DATE(date_entered) >= ' . $this->sqlQuote($orderfrom) . '';
             }
         }
         if ($orderto != '') {
             if ($join != '') {
-                $join .= ' AND DATE(date_entered) <= "' . $orderto . '"';
+                $join .= ' AND DATE(date_entered) <= ' . $this->sqlQuote($orderto) . '';
             } else {
-                $join .= 'DATE(date_entered) <= "' . $orderto . '"';
+                $join .= 'DATE(date_entered) <= ' . $this->sqlQuote($orderto) . '';
             }
         }
 
@@ -111,73 +111,73 @@ class OrderController extends Controller
             if ($filtercolumn == 'cust_firstname') {
                 if ($filter_srch_type == '1') {
                     if ($join != '') {
-                        $join .= ' AND bill_fname = "' . $filter_srch_val . '"';
+                        $join .= ' AND bill_fname = ' . $this->sqlQuote($filter_srch_val) . '';
                     } else {
-                        $join .= 'bill_fname = "' . $filter_srch_val . '"';
+                        $join .= 'bill_fname = ' . $this->sqlQuote($filter_srch_val) . '';
                     }
                 } else {
                     if ($join != '') {
-                        $join .= ' AND bill_fname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= ' AND bill_fname LIKE ' . $this->sqlLike($filter_srch_val);
                     } else {
-                        $join .= 'bill_fname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= 'bill_fname LIKE ' . $this->sqlLike($filter_srch_val);
                     }
                 }
             } elseif ($filtercolumn == 'cust_lastname') {
                 if ($filter_srch_type == '1') {
                     if ($join != '') {
-                        $join .= ' AND bill_lname = "' . $filter_srch_val . '"';
+                        $join .= ' AND bill_lname = ' . $this->sqlQuote($filter_srch_val) . '';
                     } else {
-                        $join .= 'bill_lname = "' . $filter_srch_val . '"';
+                        $join .= 'bill_lname = ' . $this->sqlQuote($filter_srch_val) . '';
                     }
                 } else {
                     if ($join != '') {
-                        $join .= ' AND bill_lname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= ' AND bill_lname LIKE ' . $this->sqlLike($filter_srch_val);
                     } else {
-                        $join .= 'bill_lname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= 'bill_lname LIKE ' . $this->sqlLike($filter_srch_val);
                     }
                 }
             } elseif ($filtercolumn == 'cust_email') {
                 if ($filter_srch_type == '1') {
                     if ($join != '') {
-                        $join .= ' AND bill_email = "' . $filter_srch_val . '"';
+                        $join .= ' AND bill_email = ' . $this->sqlQuote($filter_srch_val) . '';
                     } else {
-                        $join .= 'bill_email = "' . $filter_srch_val . '"';
+                        $join .= 'bill_email = ' . $this->sqlQuote($filter_srch_val) . '';
                     }
                 } else {
                     if ($join != '') {
-                        $join .= ' AND bill_email LIKE "%' . $filter_srch_val . '%"';
+                        $join .= ' AND bill_email LIKE ' . $this->sqlLike($filter_srch_val);
                     } else {
-                        $join .= 'bill_email LIKE "%' . $filter_srch_val . '%"';
+                        $join .= 'bill_email LIKE ' . $this->sqlLike($filter_srch_val);
                     }
                 }
             } elseif ($filtercolumn == 'cust_phone') {
                 if ($filter_srch_type == '1') {
                     if ($join != '') {
-                        $join .= ' AND bill_mobile = "' . $filter_srch_val . '"';
+                        $join .= ' AND bill_mobile = ' . $this->sqlQuote($filter_srch_val) . '';
                     } else {
-                        $join .= 'bill_mobile = "' . $filter_srch_val . '"';
+                        $join .= 'bill_mobile = ' . $this->sqlQuote($filter_srch_val) . '';
                     }
                 } else {
                     if ($join != '') {
-                        $join .= ' AND bill_mobile LIKE "%' . $filter_srch_val . '%"';
+                        $join .= ' AND bill_mobile LIKE ' . $this->sqlLike($filter_srch_val);
                     } else {
-                        $join .= 'bill_mobile LIKE "%' . $filter_srch_val . '%"';
+                        $join .= 'bill_mobile LIKE ' . $this->sqlLike($filter_srch_val);
                     }
                 }
             }
         }
         if ($paymethod != '') {
             if ($join != '') {
-                $join .= ' AND pay_method = "' . $paymethod . '"';
+                $join .= ' AND pay_method = ' . $this->sqlQuote($paymethod) . '';
             } else {
-                $join .= 'pay_method = "' . $paymethod . '"';
+                $join .= 'pay_method = ' . $this->sqlQuote($paymethod) . '';
             }
         }
         if ($order_from != '') {
             if ($join != '') {
-                $join .= ' AND order_from = "' . $order_from . '"';
+                $join .= ' AND order_from = ' . $this->sqlQuote($order_from) . '';
             } else {
-                $join .= 'order_from = "' . $order_from . '"';
+                $join .= 'order_from = ' . $this->sqlQuote($order_from) . '';
             }
         }
         //echo $sortcolumn ;
@@ -239,73 +239,73 @@ class OrderController extends Controller
         $join = 'order_type > 0 AND order_status = 0 ';
         if ($orderstatus != '') {
             if ($join != '') {
-                $join .= ' AND order_status = "' . $orderstatus . '"';
+                $join .= ' AND order_status = ' . $this->sqlQuote($orderstatus) . '';
             } else {
-                $join .= 'order_status = "' . $orderstatus . '"';
+                $join .= 'order_status = ' . $this->sqlQuote($orderstatus) . '';
             }
         }
         if ($ordertype != '') {
             if ($join != '') {
-                $join .= ' AND order_type = "' . $ordertype . '"';
+                $join .= ' AND order_type = ' . $this->sqlQuote($ordertype) . '';
             } else {
-                $join .= 'order_type = "' . $ordertype . '"';
+                $join .= 'order_type = ' . $this->sqlQuote($ordertype) . '';
             }
         }
         if ($orderstartno != '') {
             if ($join != '') {
-                $join .= ' AND order_id >= "' . $orderstartno . '"';
+                $join .= ' AND order_id >= ' . $this->sqlQuote($orderstartno) . '';
             } else {
-                $join .= 'order_id >= "' . $orderstartno . '"';
+                $join .= 'order_id >= ' . $this->sqlQuote($orderstartno) . '';
             }
         }
         if ($orderendno != '') {
             if ($join != '') {
-                $join .= ' AND order_id <= "' . $orderendno . '"';
+                $join .= ' AND order_id <= ' . $this->sqlQuote($orderendno) . '';
             } else {
-                $join .= 'order_id <= "' . $orderendno . '"';
+                $join .= 'order_id <= ' . $this->sqlQuote($orderendno) . '';
             }
         }
         if ($orderfrom != '') {
             if ($join != '') {
-                $join .= ' AND created_at >= "' . $orderfrom . '"';
+                $join .= ' AND created_at >= ' . $this->sqlQuote($orderfrom) . '';
             } else {
-                $join .= 'created_at >= "' . $orderfrom . '"';
+                $join .= 'created_at >= ' . $this->sqlQuote($orderfrom) . '';
             }
         }
         if ($orderto != '') {
             if ($join != '') {
-                $join .= ' AND created_at <= "' . $orderto . '"';
+                $join .= ' AND created_at <= ' . $this->sqlQuote($orderto) . '';
             } else {
-                $join .= 'created_at <= "' . $orderto . '"';
+                $join .= 'created_at <= ' . $this->sqlQuote($orderto) . '';
             }
         }
         if ($filter_srch_val != '') {
             if ($filtercolumn == 'cust_firstname') {
                 if ($filter_srch_type == '1') {
                     if ($join != '') {
-                        $join .= ' AND bill_fname = "' . $filter_srch_val . '"';
+                        $join .= ' AND bill_fname = ' . $this->sqlQuote($filter_srch_val) . '';
                     } else {
-                        $join .= 'bill_fname = "' . $filter_srch_val . '"';
+                        $join .= 'bill_fname = ' . $this->sqlQuote($filter_srch_val) . '';
                     }
                 } else {
                     if ($join != '') {
-                        $join .= ' AND bill_fname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= ' AND bill_fname LIKE ' . $this->sqlLike($filter_srch_val);
                     } else {
-                        $join .= 'bill_fname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= 'bill_fname LIKE ' . $this->sqlLike($filter_srch_val);
                     }
                 }
             } elseif ($filtercolumn == 'cust_lastname') {
                 if ($filter_srch_type == '1') {
                     if ($join != '') {
-                        $join .= ' AND bill_lname = "' . $filter_srch_val . '"';
+                        $join .= ' AND bill_lname = ' . $this->sqlQuote($filter_srch_val) . '';
                     } else {
-                        $join .= 'bill_lname = "' . $filter_srch_val . '"';
+                        $join .= 'bill_lname = ' . $this->sqlQuote($filter_srch_val) . '';
                     }
                 } else {
                     if ($join != '') {
-                        $join .= ' AND bill_lname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= ' AND bill_lname LIKE ' . $this->sqlLike($filter_srch_val);
                     } else {
-                        $join .= 'bill_lname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= 'bill_lname LIKE ' . $this->sqlLike($filter_srch_val);
                     }
                 }
             }
@@ -365,73 +365,73 @@ class OrderController extends Controller
         $join = 'order_type > 0 AND order_status > 0 ';
         if ($orderstatus != '') {
             if ($join != '') {
-                $join .= ' AND order_status = "' . $orderstatus . '"';
+                $join .= ' AND order_status = ' . $this->sqlQuote($orderstatus) . '';
             } else {
-                $join .= 'order_status = "' . $orderstatus . '"';
+                $join .= 'order_status = ' . $this->sqlQuote($orderstatus) . '';
             }
         }
         if ($ordertype != '') {
             if ($join != '') {
-                $join .= ' AND order_type = "' . $ordertype . '"';
+                $join .= ' AND order_type = ' . $this->sqlQuote($ordertype) . '';
             } else {
-                $join .= 'order_type = "' . $ordertype . '"';
+                $join .= 'order_type = ' . $this->sqlQuote($ordertype) . '';
             }
         }
         if ($orderstartno != '') {
             if ($join != '') {
-                $join .= ' AND order_id >= "' . $orderstartno . '"';
+                $join .= ' AND order_id >= ' . $this->sqlQuote($orderstartno) . '';
             } else {
-                $join .= 'order_id >= "' . $orderstartno . '"';
+                $join .= 'order_id >= ' . $this->sqlQuote($orderstartno) . '';
             }
         }
         if ($orderendno != '') {
             if ($join != '') {
-                $join .= ' AND order_id <= "' . $orderendno . '"';
+                $join .= ' AND order_id <= ' . $this->sqlQuote($orderendno) . '';
             } else {
-                $join .= 'order_id <= "' . $orderendno . '"';
+                $join .= 'order_id <= ' . $this->sqlQuote($orderendno) . '';
             }
         }
         if ($orderfrom != '') {
             if ($join != '') {
-                $join .= ' AND created_at >= "' . $orderfrom . '"';
+                $join .= ' AND created_at >= ' . $this->sqlQuote($orderfrom) . '';
             } else {
-                $join .= 'created_at >= "' . $orderfrom . '"';
+                $join .= 'created_at >= ' . $this->sqlQuote($orderfrom) . '';
             }
         }
         if ($orderto != '') {
             if ($join != '') {
-                $join .= ' AND created_at <= "' . $orderto . '"';
+                $join .= ' AND created_at <= ' . $this->sqlQuote($orderto) . '';
             } else {
-                $join .= 'created_at <= "' . $orderto . '"';
+                $join .= 'created_at <= ' . $this->sqlQuote($orderto) . '';
             }
         }
         if ($filter_srch_val != '') {
             if ($filtercolumn == 'cust_firstname') {
                 if ($filter_srch_type == '1') {
                     if ($join != '') {
-                        $join .= ' AND bill_fname = "' . $filter_srch_val . '"';
+                        $join .= ' AND bill_fname = ' . $this->sqlQuote($filter_srch_val) . '';
                     } else {
-                        $join .= 'bill_fname = "' . $filter_srch_val . '"';
+                        $join .= 'bill_fname = ' . $this->sqlQuote($filter_srch_val) . '';
                     }
                 } else {
                     if ($join != '') {
-                        $join .= ' AND bill_fname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= ' AND bill_fname LIKE ' . $this->sqlLike($filter_srch_val);
                     } else {
-                        $join .= 'bill_fname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= 'bill_fname LIKE ' . $this->sqlLike($filter_srch_val);
                     }
                 }
             } elseif ($filtercolumn == 'cust_lastname') {
                 if ($filter_srch_type == '1') {
                     if ($join != '') {
-                        $join .= ' AND bill_lname = "' . $filter_srch_val . '"';
+                        $join .= ' AND bill_lname = ' . $this->sqlQuote($filter_srch_val) . '';
                     } else {
-                        $join .= 'bill_lname = "' . $filter_srch_val . '"';
+                        $join .= 'bill_lname = ' . $this->sqlQuote($filter_srch_val) . '';
                     }
                 } else {
                     if ($join != '') {
-                        $join .= ' AND bill_lname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= ' AND bill_lname LIKE ' . $this->sqlLike($filter_srch_val);
                     } else {
-                        $join .= 'bill_lname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= 'bill_lname LIKE ' . $this->sqlLike($filter_srch_val);
                     }
                 }
             }
@@ -544,73 +544,73 @@ class OrderController extends Controller
         $join = 'order_type > 0 AND order_status = 0 ';
         if ($orderstatus != '') {
             if ($join != '') {
-                $join .= ' AND order_status = "' . $orderstatus . '"';
+                $join .= ' AND order_status = ' . $this->sqlQuote($orderstatus) . '';
             } else {
-                $join .= 'order_status = "' . $orderstatus . '"';
+                $join .= 'order_status = ' . $this->sqlQuote($orderstatus) . '';
             }
         }
         if ($ordertype != '') {
             if ($join != '') {
-                $join .= ' AND order_type = "' . $ordertype . '"';
+                $join .= ' AND order_type = ' . $this->sqlQuote($ordertype) . '';
             } else {
-                $join .= 'order_type = "' . $ordertype . '"';
+                $join .= 'order_type = ' . $this->sqlQuote($ordertype) . '';
             }
         }
         if ($orderstartno != '') {
             if ($join != '') {
-                $join .= ' AND order_id >= "' . $orderstartno . '"';
+                $join .= ' AND order_id >= ' . $this->sqlQuote($orderstartno) . '';
             } else {
-                $join .= 'order_id >= "' . $orderstartno . '"';
+                $join .= 'order_id >= ' . $this->sqlQuote($orderstartno) . '';
             }
         }
         if ($orderendno != '') {
             if ($join != '') {
-                $join .= ' AND order_id <= "' . $orderendno . '"';
+                $join .= ' AND order_id <= ' . $this->sqlQuote($orderendno) . '';
             } else {
-                $join .= 'order_id <= "' . $orderendno . '"';
+                $join .= 'order_id <= ' . $this->sqlQuote($orderendno) . '';
             }
         }
         if ($orderfrom != '') {
             if ($join != '') {
-                $join .= ' AND created_at >= "' . $orderfrom . '"';
+                $join .= ' AND created_at >= ' . $this->sqlQuote($orderfrom) . '';
             } else {
-                $join .= 'created_at >= "' . $orderfrom . '"';
+                $join .= 'created_at >= ' . $this->sqlQuote($orderfrom) . '';
             }
         }
         if ($orderto != '') {
             if ($join != '') {
-                $join .= ' AND created_at <= "' . $orderto . '"';
+                $join .= ' AND created_at <= ' . $this->sqlQuote($orderto) . '';
             } else {
-                $join .= 'created_at <= "' . $orderto . '"';
+                $join .= 'created_at <= ' . $this->sqlQuote($orderto) . '';
             }
         }
         if ($filter_srch_val != '') {
             if ($filtercolumn == 'cust_firstname') {
                 if ($filter_srch_type == '1') {
                     if ($join != '') {
-                        $join .= ' AND bill_fname = "' . $filter_srch_val . '"';
+                        $join .= ' AND bill_fname = ' . $this->sqlQuote($filter_srch_val) . '';
                     } else {
-                        $join .= 'bill_fname = "' . $filter_srch_val . '"';
+                        $join .= 'bill_fname = ' . $this->sqlQuote($filter_srch_val) . '';
                     }
                 } else {
                     if ($join != '') {
-                        $join .= ' AND bill_fname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= ' AND bill_fname LIKE ' . $this->sqlLike($filter_srch_val);
                     } else {
-                        $join .= 'bill_fname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= 'bill_fname LIKE ' . $this->sqlLike($filter_srch_val);
                     }
                 }
             } elseif ($filtercolumn == 'cust_lastname') {
                 if ($filter_srch_type == '1') {
                     if ($join != '') {
-                        $join .= ' AND bill_lname = "' . $filter_srch_val . '"';
+                        $join .= ' AND bill_lname = ' . $this->sqlQuote($filter_srch_val) . '';
                     } else {
-                        $join .= 'bill_lname = "' . $filter_srch_val . '"';
+                        $join .= 'bill_lname = ' . $this->sqlQuote($filter_srch_val) . '';
                     }
                 } else {
                     if ($join != '') {
-                        $join .= ' AND bill_lname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= ' AND bill_lname LIKE ' . $this->sqlLike($filter_srch_val);
                     } else {
-                        $join .= 'bill_lname LIKE "%' . $filter_srch_val . '%"';
+                        $join .= 'bill_lname LIKE ' . $this->sqlLike($filter_srch_val);
                     }
                 }
             }
@@ -790,12 +790,7 @@ class OrderController extends Controller
             $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
             #@mail($custemail, $emailsubject, $emailcontent, $headers);
-            Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                $message->to($custemail)
-                    ->subject($emailsubject)
-                    ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->html($emailcontent);
-            });
+            Mail::to($custemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
         }
 
         return redirect('/admin/orders')->with('success', 'Order - Self Collection Successfully Updated!');
@@ -995,12 +990,7 @@ class OrderController extends Controller
                         $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
                         #@mail($custemail, $emailsubject, $emailcontent, $headers);
-                        Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                            $message->to($custemail)
-                                ->subject($emailsubject)
-                                ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                                ->html($emailcontent);
-                        });
+                        Mail::to($custemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
                     }
 
                     /* Send SMS */
@@ -1217,12 +1207,7 @@ class OrderController extends Controller
                 $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
                 #@mail($custemail, $emailsubject, $emailcontent, $headers);
-                Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                    $message->to($custemail)
-                        ->subject($emailsubject)
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->html($emailcontent);
-                });
+                Mail::to($custemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
             }
         }
 

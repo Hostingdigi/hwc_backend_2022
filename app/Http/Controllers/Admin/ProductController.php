@@ -109,30 +109,30 @@ class ProductController extends Controller
         }
 
         if ($status != '') {
-            $join .= ' AND ProdStatus = ' . $status;
+            $join .= ' AND ProdStatus = ' . (int) $status;
         }
         if ($Types != '' && $Types > 0) {
-            $join .= ' AND Types = ' . $Types;
+            $join .= ' AND Types = ' . (int) $Types;
         }
         if ($Brand != '' && $Brand > 0) {
-            $join .= ' AND Brand = ' . $Brand;
+            $join .= ' AND Brand = ' . (int) $Brand;
         }
         if ($EnName != '') {
             if ($Nametype == 1) {
-                $join .= " AND EnName = '" . $EnName . "'";
+                $join .= " AND EnName = " . $this->sqlQuote($EnName) . "";
             } else {
-                $join .= " AND EnName LIKE '%" . $EnName . "%'";
+                $join .= " AND EnName LIKE " . $this->sqlLike($EnName) . "";
             }
         }
         if ($Qty > 0 && $Qty != '') {
             if ($Qtytype == 1) {
-                $join .= ' AND Quantity = ' . $Qty;
+                $join .= ' AND Quantity = ' . (int) $Qty;
             } else {
-                $join .= ' AND Quantity <= ' . $Qty;
+                $join .= ' AND Quantity <= ' . (int) $Qty;
             }
         }
         if ($productcode != '') {
-            $join .= ' AND Code = "' . $productcode . '"';
+            $join .= ' AND Code = ' . $this->sqlQuote($productcode) . '';
         }
 
         if ($barcode != '') {
@@ -147,13 +147,14 @@ class ProductController extends Controller
 
             }
 
-            $product_ids = implode(",", $prod_array);
+            // "0" when no option matches, instead of the invalid SQL "Id in()"
+            $product_ids = $this->sqlIdList($prod_array ?? []);
 
-            $join .= "AND  (barcode LIKE '%" . $barcode . "%' or Id in(" . $product_ids . "))";
+            $join .= "AND  (barcode LIKE " . $this->sqlLike($barcode) . " or Id in(" . $product_ids . "))";
         }
 
         if ($IsPromotion != '') {
-            $join .= ' AND IsPromotion = ' . $IsPromotion;
+            $join .= ' AND IsPromotion = ' . (int) $IsPromotion;
         }
         if ($sortcolumn > 0) {
             if ($sortcolumn == 1) {
@@ -185,7 +186,7 @@ class ProductController extends Controller
             $adminrole = Session::get('priority');
         }
 
-        return view('admin.Product.index', compact('products', 'categories', 'brands', 'status', 'Types', 'Brand', 'Nametype', 'EnName', 'Qty', 'Qtytype', 'productcode', 'barcode', 'IsPromotion', 'sortcolumn', 'moduleaccess', 'adminrole'));
+        return view('admin.product.index', compact('products', 'categories', 'brands', 'status', 'Types', 'Brand', 'Nametype', 'EnName', 'Qty', 'Qtytype', 'productcode', 'barcode', 'IsPromotion', 'sortcolumn', 'moduleaccess', 'adminrole'));
     }
 
     public function exportproducts(Request $request)
@@ -205,33 +206,33 @@ class ProductController extends Controller
         $sortcolumn = $request->sortcolumn;
 
         if ($status != '') {
-            $join .= ' AND ProdStatus = ' . $status;
+            $join .= ' AND ProdStatus = ' . (int) $status;
         }
         if ($Types != '' && $Types > 0) {
-            $join .= ' AND Types = ' . $Types;
+            $join .= ' AND Types = ' . (int) $Types;
         }
         if ($Brand != '' && $Brand > 0) {
-            $join .= ' AND Brand = ' . $Brand;
+            $join .= ' AND Brand = ' . (int) $Brand;
         }
         if ($EnName != '') {
             if ($Nametype == 1) {
-                $join .= " AND EnName = '" . $EnName . "'";
+                $join .= " AND EnName = " . $this->sqlQuote($EnName) . "";
             } else {
-                $join .= " AND EnName LIKE '%" . $EnName . "%'";
+                $join .= " AND EnName LIKE " . $this->sqlLike($EnName) . "";
             }
         }
         if ($Qty > 0 && $Qty != '') {
             if ($Qtytype == 1) {
-                $join .= ' AND Quantity = ' . $Qty;
+                $join .= ' AND Quantity = ' . (int) $Qty;
             } else {
-                $join .= ' AND Quantity <= ' . $Qty;
+                $join .= ' AND Quantity <= ' . (int) $Qty;
             }
         }
         if ($productcode != '') {
-            $join .= ' AND Code = "' . $productcode . '"';
+            $join .= ' AND Code = ' . $this->sqlQuote($productcode) . '';
         }
         if ($IsPromotion != '') {
-            $join .= ' AND IsPromotion = ' . $IsPromotion;
+            $join .= ' AND IsPromotion = ' . (int) $IsPromotion;
         }
         if ($sortcolumn > 0) {
             if ($sortcolumn == 1) {
@@ -325,7 +326,7 @@ class ProductController extends Controller
         if ($prods) {
             $displayorder = $prods->Id + 1;
         }
-        return view('admin/Product.create', compact('brands', 'categories', 'displayorder'));
+        return view('admin/product.create', compact('brands', 'categories', 'displayorder'));
     }
     public function store(Request $request)
     {
@@ -373,14 +374,14 @@ class ProductController extends Controller
             $small_image = time() . '.' . $smallimage->getClientOriginalExtension();
             $filename = $this->safeUploadName($smallimage);
             $destinationPath = public_path('uploads/product');
-            $smallimage->move($destinationPath, $filename);
+            $this->storeUpload($smallimage, $destinationPath, $filename);
         }
         if ($request->hasFile('LargeImage')) {
             $largeimage = $request->file('LargeImage');
             $large_image = time() . '.' . $largeimage->getClientOriginalExtension();
             $largefilename = $this->safeUploadName($largeimage);
             $destinationPath = public_path('uploads/product');
-            $largeimage->move($destinationPath, $largefilename);
+            $this->storeUpload($largeimage, $destinationPath, $largefilename);
         }
 
         if ($request->hasFile('MobileImage')) {
@@ -388,14 +389,14 @@ class ProductController extends Controller
             $small_image = time() . '.' . $smallimage->getClientOriginalExtension();
             $mobilefilename = $this->safeUploadName($smallimage);
             $destinationPath = public_path('uploads/product');
-            $smallimage->move($destinationPath, $mobilefilename);
+            $this->storeUpload($smallimage, $destinationPath, $mobilefilename);
         }
         if ($request->hasFile('MobileLargeImage')) {
             $largeimage = $request->file('MobileLargeImage');
             $large_image = time() . '.' . $largeimage->getClientOriginalExtension();
             $mobilelargefilename = $this->safeUploadName($largeimage);
             $destinationPath = public_path('uploads/product');
-            $largeimage->move($destinationPath, $mobilelargefilename);
+            $this->storeUpload($largeimage, $destinationPath, $mobilelargefilename);
         }
 
         if ($request->hasFile('Tds')) {
@@ -403,14 +404,14 @@ class ProductController extends Controller
             $file_tds = time() . '.' . $filetds->getClientOriginalExtension();
             $tdsfilename = $this->safeUploadName($filetds);
             $destinationPath = public_path('uploads/product');
-            $filetds->move($destinationPath, $tdsfilename);
+            $this->storeUpload($filetds, $destinationPath, $tdsfilename);
         }
         if ($request->hasFile('Sds')) {
             $filesds = $request->file('Sds');
             $file_sds = time() . '.' . $filesds->getClientOriginalExtension();
             $sdsfilename = $this->safeUploadName($filesds);
             $destinationPath = public_path('uploads/product');
-            $filesds->move($destinationPath, $sdsfilename);
+            $this->storeUpload($filesds, $destinationPath, $sdsfilename);
         }
 
         $product->Image = $filename;
@@ -435,7 +436,7 @@ class ProductController extends Controller
         if (Session::has('priority')) {
             $adminrole = Session::get('priority');
         }
-        return view('admin/Product.edit', compact('product', 'brands', 'categories', 'adminrole'));
+        return view('admin/product.edit', compact('product', 'brands', 'categories', 'adminrole'));
     }
     public function update(Request $request)
     {
@@ -457,7 +458,7 @@ class ProductController extends Controller
                 $small_image = time() . '.' . $smallimage->getClientOriginalExtension();
                 $filename = $this->safeUploadName($smallimage);
                 $destinationPath = public_path('uploads/product');
-                $smallimage->move($destinationPath, $filename);
+                $this->storeUpload($smallimage, $destinationPath, $filename);
             } else {
                 $filename = $request->ExistImage;
             }
@@ -466,7 +467,7 @@ class ProductController extends Controller
                 $large_image = time() . '.' . $largeimage->getClientOriginalExtension();
                 $largefilename = $this->safeUploadName($largeimage);
                 $destinationPath = public_path('uploads/product');
-                $largeimage->move($destinationPath, $largefilename);
+                $this->storeUpload($largeimage, $destinationPath, $largefilename);
             } else {
                 $largefilename = $request->ExistLargeImage;
             }
@@ -476,7 +477,7 @@ class ProductController extends Controller
                 $small_image = time() . '.' . $smallimage->getClientOriginalExtension();
                 $mobilefilename = $this->safeUploadName($smallimage);
                 $destinationPath = public_path('uploads/product');
-                $smallimage->move($destinationPath, $mobilefilename);
+                $this->storeUpload($smallimage, $destinationPath, $mobilefilename);
             } else {
                 $mobilefilename = $request->ExistMobileImage;
             }
@@ -485,7 +486,7 @@ class ProductController extends Controller
                 $large_image = time() . '.' . $largeimage->getClientOriginalExtension();
                 $mobilelargefilename = $this->safeUploadName($largeimage);
                 $destinationPath = public_path('uploads/product');
-                $largeimage->move($destinationPath, $mobilelargefilename);
+                $this->storeUpload($largeimage, $destinationPath, $mobilelargefilename);
             } else {
                 $mobilelargefilename = $request->ExistMobileLargeImage;
             }
@@ -495,7 +496,7 @@ class ProductController extends Controller
                 $file_tds = time() . '.' . $filetds->getClientOriginalExtension();
                 $tdsfilename = $this->safeUploadName($filetds);
                 $destinationPath = public_path('uploads/product');
-                $filetds->move($destinationPath, $tdsfilename);
+                $this->storeUpload($filetds, $destinationPath, $tdsfilename);
             } else {
                 $tdsfilename = $request->ExistTds;
             }
@@ -504,7 +505,7 @@ class ProductController extends Controller
                 $file_sds = time() . '.' . $filesds->getClientOriginalExtension();
                 $sdsfilename = $this->safeUploadName($filesds);
                 $destinationPath = public_path('uploads/product');
-                $filesds->move($destinationPath, $sdsfilename);
+                $this->storeUpload($filesds, $destinationPath, $sdsfilename);
             } else {
                 $sdsfilename = $request->ExistSds;
             }
@@ -559,7 +560,7 @@ class ProductController extends Controller
     public function quantity($id)
     {
         $product = Product::find($id);
-        return view('admin/Product.quantity', compact('product'));
+        return view('admin/product.quantity', compact('product'));
     }
 
     public function updatequantity(Request $request)
@@ -581,7 +582,7 @@ class ProductController extends Controller
     {
         $product = Product::where('Id', '=', $id)->first();
         $galleries = ProductGallery::where('ProdId', '=', $id)->get();
-        return view('admin/Product.gallery', compact('galleries', 'product'));
+        return view('admin/product.gallery', compact('galleries', 'product'));
     }
 
     public function addgallery(Request $request)
@@ -594,14 +595,14 @@ class ProductController extends Controller
             $small_image = time() . '.' . $smallimage->getClientOriginalExtension();
             $filename = $this->safeUploadName($smallimage);
             $destinationPath = public_path('uploads/product');
-            $smallimage->move($destinationPath, $filename);
+            $this->storeUpload($smallimage, $destinationPath, $filename);
         }
         if ($request->hasFile('LargeImage')) {
             $largeimage = $request->file('LargeImage');
             $large_image = time() . '.' . $largeimage->getClientOriginalExtension();
             $largefilename = $this->safeUploadName($largeimage);
             $destinationPath = public_path('uploads/product');
-            $largeimage->move($destinationPath, $largefilename);
+            $this->storeUpload($largeimage, $destinationPath, $largefilename);
         }
         $productgallery = new ProductGallery();
         $productgallery->ProdId = $id;
@@ -638,7 +639,7 @@ class ProductController extends Controller
         if (Session::has('priority')) {
             $adminrole = Session::get('priority');
         }
-        return view('admin/Product.options', compact('prodoptions', 'product', 'editoption', 'id', 'adminrole'));
+        return view('admin/product.options', compact('prodoptions', 'product', 'editoption', 'id', 'adminrole'));
     }
 
     public function addoptions(Request $request)
@@ -675,7 +676,7 @@ class ProductController extends Controller
         if (Session::has('priority')) {
             $adminrole = Session::get('priority');
         }
-        return view('admin/Product.options', compact('prodoptions', 'product', 'editoption', 'adminrole'));
+        return view('admin/product.options', compact('prodoptions', 'product', 'editoption', 'adminrole'));
     }
 
     public function updateoptions(Request $request)
@@ -862,7 +863,7 @@ class ProductController extends Controller
         $groupprices = ProductPrices::where('Prod', '=', $id)->get();
         $groups = CustomerGroup::where('Status', '=', '1')->get();
         $editprice = [];
-        return view('admin/Product.groupprice', compact('groupprices', 'product', 'editprice', 'groups'));
+        return view('admin/product.groupprice', compact('groupprices', 'product', 'editprice', 'groups'));
     }
 
     public function addgroupprice(Request $request)
@@ -882,7 +883,7 @@ class ProductController extends Controller
         $groups = CustomerGroup::where('Status', '=', '1')->get();
         $groupprices = ProductPrices::where('Prod', '=', $productid)->get();
         $editprice = ProductPrices::where('Prod', '=', $productid)->where('Id', '=', $id)->first();
-        return view('admin/Product.groupprice', compact('product', 'groups', 'groupprices', 'editprice'));
+        return view('admin/product.groupprice', compact('product', 'groups', 'groupprices', 'editprice'));
     }
 
     public function updategroupprice(Request $request)

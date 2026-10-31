@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AuthorizeAdminModule;
 use App\Http\Middleware\BlockPunchoutRoutes;
 use App\Http\Middleware\CheckStatus;
 use App\Http\Middleware\EnsureAdminIsLoggedIn;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'checkStatus' => CheckStatus::class,
             'admin.session' => EnsureAdminIsLoggedIn::class,
+            'admin.module' => AuthorizeAdminModule::class,
             'integration.key' => VerifyIntegrationApiKey::class,
         ]);
 

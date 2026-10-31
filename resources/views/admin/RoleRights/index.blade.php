@@ -117,7 +117,7 @@
 function chkdelete(id) {
 	var chk = confirm('Are you sure! you want to delete this role and rights?');
 	if(chk) {
-		window.location = "{{ url('/admin/roleandrights') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/roleandrights') }}/"+id+"/destroy");
 	}
 }
 </script>	

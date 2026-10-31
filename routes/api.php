@@ -82,7 +82,6 @@ Route::match(['get', 'post'], '/updateshoppingcart', [CartMobileController::clas
 Route::get('/shippingmethods', [CartMobileController::class, 'shippingmethods']);
 Route::get('/paymethods', [CartMobileController::class, 'paymethods']);
 Route::post('/createorder', [CartMobileController::class, 'createorder']);
-Route::post('createorder-two', [CartMobileController::class, 'createorderTwo']);
 Route::match(['get', 'post'], '/updateorder', [CartMobileController::class, 'updateorder']);
 Route::post('/getshipandpackingprice', [CartMobileController::class, 'getshipandpackingprice']);
 

@@ -49,7 +49,9 @@ class CustomerMobileController extends Controller
         $customer->save();
 
         $data = $customerdata = [];
-        $newcustomers = Customer::where('cust_status', '=', '1')->orderBy('cust_id', 'desc')->skip(0)->take(1)->get();
+        // The customer just created (this used to return "the newest active customer",
+        // which could be another person's details when two people sign up at once)
+        $newcustomers = Customer::where('cust_id', '=', $customer->cust_id)->where('cust_status', '=', '1')->get();
         if ($newcustomers) {
             foreach ($newcustomers as $newcustomer) {
                 $customerdata['cust_id'] = $newcustomer->cust_id;
@@ -104,12 +106,7 @@ class CustomerMobileController extends Controller
 
                 #@mail($request->cust_email, $emailsubject, $emailcontent, $headers);
                 $custemail = $request->cust_email;
-                Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                    $message->to($custemail)
-                        ->subject($emailsubject)
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->html($emailcontent);
-                });
+                Mail::to($custemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
             }
         }
 
@@ -159,10 +156,7 @@ class CustomerMobileController extends Controller
             $html = '<p>Hi ' . trim($user->cust_firstname . ' ' . $user->cust_lastname) . ',</p>';
             $html .= '<p>OTP is <b>' . $otp . '</b>.</p>';
 
-            Mail::html($html, function ($message) use ($uemail) {
-                $message->to($uemail)->subject('OTP for account deactivation')
-                    ->from(env('MAIL_USERNAME'), env('APP_NAME'));
-            });
+            Mail::to($uemail)->send(new \App\Mail\TemplateMail('OTP for account deactivation', $html));
 
         } else {
 
@@ -193,10 +187,7 @@ class CustomerMobileController extends Controller
                 $html = '<p>Hi ' . trim($user->cust_firstname . ' ' . $user->cust_lastname) . '</p>';
                 $html .= '<p>Your account has been deactivated.</p>';
 
-                Mail::html($html, function ($message) use ($uemail) {
-                    $message->to($uemail)->subject('Account Deactivated')
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'));
-                });
+                Mail::to($uemail)->send(new \App\Mail\TemplateMail('Account Deactivated', $html));
 
             } else {
                 $data = [
@@ -781,7 +772,7 @@ class CustomerMobileController extends Controller
                         $prod = Product::where('Id', '=', $orderdetail->prod_id)->select('Image')->first();
                         if ($prod) {
                             if ($prod->Image) {
-                                $orderlist[$o]['products'][$p]['image'] = env('IMG_URL'). '/uploads/product/' . $prod->Image;
+                                $orderlist[$o]['products'][$p]['image'] = config('shop.img_url'). '/uploads/product/' . $prod->Image;
                             } else {
                                 $orderlist[$o]['products'][$p]['image'] = url('/') . '/images/noimage.png';
                             }
@@ -873,12 +864,7 @@ class CustomerMobileController extends Controller
                 $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
                 //@mail($custemail, $emailsubject, $emailcontent, $headers);
-                Mail::send([], [], function ($message) use ($custemail, $emailsubject, $emailcontent) {
-                    $message->to($custemail)
-                        ->subject($emailsubject)
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->html($emailcontent);
-                });
+                Mail::to($custemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
             }
             $data = response()->json(['response' => 'success', 'message' => 'Reset password Link sent']);
         } else {

@@ -90,16 +90,40 @@ it('reuses the customer\'s existing unfulfilled order instead of creating a new 
 
     expect($second)->toBe($first)
         ->and(DB::table('order_master')->where('user_id', $this->customer)->count())->toBe(1)
-        // KNOWN BUG: the order lines are appended again, so the order now lists every item twice
-        ->and(DB::table('order_details')->where('order_id', $first)->count())->toBe(4);
+        // Fixed in Phase 3: the lines are replaced, not appended a second time
+        ->and(DB::table('order_details')->where('order_id', $first)->count())->toBe(2);
 });
 
-it('KNOWN BUG: a retry within the same second fails, because MySQL reports 0 changed rows', function () {
+it('succeeds when retried within the same second', function () {
+    // Fixed in Phase 3: MySQL reports 0 changed rows here, which used to fail checkout
     \Illuminate\Support\Carbon::setTestNow('2026-10-31 10:00:00');
-    app(OrderServices::class)->createOrder();
+    $first = app(OrderServices::class)->createOrder()['orderId'];
 
     $retry = app(OrderServices::class)->createOrder();
 
-    expect($retry['status'])->toBeFalse()
-        ->and($retry['orderId'])->toBeNull();
+    expect($retry['status'])->toBeTrue()
+        ->and($retry['orderId'])->toBe($first);
+});
+
+it('does not take stock a second time when checkout is retried', function () {
+    DB::table('products')->where('Id', $this->drill)->update(['Quantity' => 10]);
+    DB::table('products')->where('Id', $this->bits)->update(['Quantity' => 10]);
+
+    app(OrderServices::class)->createOrder();
+    app(OrderServices::class)->createOrder();
+
+    expect((int) DB::table('products')->where('Id', $this->drill)->value('Quantity'))->toBe(9)
+        ->and((int) DB::table('products')->where('Id', $this->bits)->value('Quantity'))->toBe(8);
+});
+
+it('puts stock back when a retried checkout has fewer items', function () {
+    DB::table('products')->where('Id', $this->bits)->update(['Quantity' => 10]);
+    app(OrderServices::class)->createOrder(); // 2 bits -> 8 left
+
+    $cart = session('cartdata');
+    $cart['cart-token'][1]['qty'] = 1;
+    session(['cartdata' => $cart]);
+    app(OrderServices::class)->createOrder(); // now 1 bit -> 9 left
+
+    expect((int) DB::table('products')->where('Id', $this->bits)->value('Quantity'))->toBe(9);
 });

@@ -25,16 +25,20 @@ class CustomerController extends Controller
 
         $join = 'cust_id > 0';
         if ($status != '') {
-            $join .= ' AND cust_status = ' . $status;
+            $join .= ' AND cust_status = ' . (int) $status;
         }
         if ($cust_type != '') {
-            $join .= ' AND cust_type = ' . $cust_type;
+            $join .= ' AND cust_type = ' . (int) $cust_type;
+        }
+        // The column name comes from the request, so only the form's choices are allowed
+        if (!in_array($filter_column, ['cust_email', 'cust_firstname', 'cust_lastname', 'cust_phone'], true)) {
+            $filter_column = 'cust_email';
         }
         if ($filter_srch_val != '') {
             if ($Nametype == '1') {
-                $join .= ' AND ' . $filter_column . ' = "' . $filter_srch_val . '"';
+                $join .= ' AND ' . $filter_column . ' = ' . $this->sqlQuote($filter_srch_val) . '';
             } else {
-                $join .= ' AND ' . $filter_column . ' LIKE "%' . $filter_srch_val . '%"';
+                $join .= ' AND ' . $filter_column . ' LIKE ' . $this->sqlLike($filter_srch_val);
             }
         }
 

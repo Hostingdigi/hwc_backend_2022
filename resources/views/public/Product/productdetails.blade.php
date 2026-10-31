@@ -46,7 +46,7 @@
 							<div class="tab-content">
 								<div class="tab-pane fade show active" id="sg1" role="tabpanel">
 									@if($productdetail->LargeImage)
-										<img src="{{ env('IMG_URL').('/uploads/product/'.$productdetail->LargeImage) }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
+										<img src="{{ config('shop.img_url').('/uploads/product/'.$productdetail->LargeImage) }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 									@else
 										<img src="{{ url('images/noimage.png') }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 									@endif									
@@ -56,7 +56,7 @@
 									@foreach($galleries as $gallery)
 										<div class="tab-pane" id="sg{{ $g }}" role="tabpanel">
 											@if($gallery->LargeImage)
-												<img src="{{ env('IMG_URL').('/uploads/product/'.$gallery->LargeImage) }}" alt="" class="img-fluid">
+												<img src="{{ config('shop.img_url').('/uploads/product/'.$gallery->LargeImage) }}" alt="" class="img-fluid">
 											@else
 												<img src="{{ url('images/noimage.png') }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 											@endif
@@ -67,7 +67,7 @@
 							</div>
 							<div class="nav d-flex justify-content-between">
 								@if($productdetail->Image)
-									<a class="nav-item nav-link active" data-toggle="tab" href="#sg1"><img src="{{ env('IMG_URL').('/uploads/product/'.$productdetail->Image) }}" alt="{{ $productdetail->EnName }}"></a>
+									<a class="nav-item nav-link active" data-toggle="tab" href="#sg1"><img src="{{ config('shop.img_url').('/uploads/product/'.$productdetail->Image) }}" alt="{{ $productdetail->EnName }}"></a>
 								@else
 									<a class="nav-item nav-link active" data-toggle="tab" href="#sg1"><img src="{{ url('images/noimage.png') }}" alt="{{ $productdetail->EnName }}"></a>
 								@endif
@@ -76,7 +76,7 @@
 									@foreach($galleries as $gallery)
 										<a class="nav-item nav-link" data-toggle="tab" href="#sg{{ $g }}">
 											@if($gallery->Image)
-												<img src="{{ env('IMG_URL').('/uploads/product/'.$gallery->Image) }}" alt="" class="img-fluid">
+												<img src="{{ config('shop.img_url').('/uploads/product/'.$gallery->Image) }}" alt="" class="img-fluid">
 											@else
 												<img src="{{ url('images/noimage.png') }}" class="img-fluid" alt="{{ $productdetail->EnName }}">
 											@endif
@@ -337,10 +337,10 @@
                             </div>
 							<div class="tab-pane" id="tabs-3" role="tabpanel">
 								@if($productdetail->Tds != '' && file_exists(public_path('/uploads/product/'.$productdetail->Tds)))
-									<img src="{{ url('/img/icon-pdf.jpg') }}"> TDS : <a href="{{ env('IMG_URL').('/uploads/product/'.$productdetail->Tds) }}" download>{{ $productdetail->EnName }}</a><br><br>
+									<img src="{{ url('/img/icon-pdf.jpg') }}"> TDS : <a href="{{ config('shop.img_url').('/uploads/product/'.$productdetail->Tds) }}" download>{{ $productdetail->EnName }}</a><br><br>
 								@endif	
 								@if($productdetail->Sds != '' && file_exists(public_path('/uploads/product/'.$productdetail->Sds)))
-									<img src="{{ url('/img/icon-pdf.jpg') }}"> SDS : <a href="{{ urldecode(env('IMG_URL').('/uploads/product/'.$productdetail->Sds)) }}" download>{{ $productdetail->EnName }}</a>
+									<img src="{{ url('/img/icon-pdf.jpg') }}"> SDS : <a href="{{ urldecode(config('shop.img_url').('/uploads/product/'.$productdetail->Sds)) }}" download>{{ $productdetail->EnName }}</a>
 								@endif	
                             </div>
 							<div class="tab-pane" id="tabs-4" role="tabpanel">
@@ -496,7 +496,7 @@
 							<div class="box-Added-product" id="success{{ $relatedproduct->Id }}" style="display:none;"><span class="boxAdjest">Item has been Added into Your Cart</span></div>
 							<a href="{{ url('/prod/'.$relatedproduct->UniqueKey) }}">
 							@if($relatedproduct->Image)
-								<img src="{{ env('IMG_URL').('/uploads/product/'.$relatedproduct->Image) }}" class="card-img-top" alt="{{ $relatedproduct->EnName }}">
+								<img src="{{ config('shop.img_url').('/uploads/product/'.$relatedproduct->Image) }}" class="card-img-top" alt="{{ $relatedproduct->EnName }}">
 							@else
 								<img src="{{ url('images/noimage.png') }}" class="card-img-top" alt="{{ $relatedproduct->EnName }}">
 							@endif

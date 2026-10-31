@@ -38,6 +38,18 @@ return [
             'report' => false,
         ],
 
+        // Admin uploads (product, brand, category, banner images, data sheets).
+        // Served straight from public/uploads as before; move to S3 by changing
+        // this disk only.
+        'uploads' => [
+            'driver' => env('UPLOADS_DISK_DRIVER', 'local'),
+            'root' => public_path('uploads'),
+            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/uploads',
+            'visibility' => 'public',
+            'throw' => true,
+            'report' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

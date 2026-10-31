@@ -1073,13 +1073,7 @@ class ProductController extends Controller
             $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
             #@mail($adminemail, $emailsubject, $emailcontent, $headers);
             #@mail($ccemail, $emailsubject, $emailcontent, $headers);
-            Mail::send([], [], function ($message) use ($adminemail, $ccemail, $emailsubject, $emailcontent) {
-                $message->to($adminemail)
-                    ->cc($ccemail)
-                    ->subject($emailsubject)
-                    ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->html($emailcontent);
-            });
+            Mail::to($adminemail)->cc($ccemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
         }
         echo 'Success';
     }
@@ -1123,13 +1117,7 @@ class ProductController extends Controller
             //@mail('balamurugan.sk@gmail.com', $emailsubject, $emailcontent, $headers);
             #@mail($adminemail, $emailsubject, $emailcontent, $headers);
             #@mail($ccemail, $emailsubject, $emailcontent, $headers);
-            Mail::send([], [], function ($message) use ($adminemail, $ccemail, $emailsubject, $emailcontent) {
-                $message->to($adminemail)
-                    ->cc($ccemail)
-                    ->subject($emailsubject)
-                    ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                    ->html($emailcontent);
-            });
+            Mail::to($adminemail)->cc($ccemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
         }
         echo 'Success';
     }

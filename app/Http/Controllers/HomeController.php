@@ -119,12 +119,7 @@ class HomeController extends Controller
                     $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
                     #@mail($email, $emailsubject, $emailcontent, $headers);
-                    Mail::send([], [], function ($message) use ($email, $emailsubject, $emailcontent) {
-                        $message->to($email)
-                            ->subject($emailsubject)
-                            ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                            ->html($emailcontent);
-                    });
+                    Mail::to($email)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
                 }
 
                 $subscribestatus = 'Success';
@@ -145,7 +140,7 @@ class HomeController extends Controller
     public function contactus(Request $request)
     {
         // Google reCaptcha secret key
-        $secretKey = env('GOOGLE_CAPTCHA_SECRET_KEY', '');
+        $secretKey = config('services.recaptcha.secret', '');
 
         if (!empty($secretKey)) {
 
@@ -199,21 +194,11 @@ class HomeController extends Controller
                 $headers .= "MIME-Version: 1.0\r\n";
                 $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
-                Mail::send([], [], function ($message) use ($adminemail, $emailsubject, $emailcontent) {
-                    $message->to($adminemail)
-                        ->subject($emailsubject)
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->html($emailcontent);
-                });
+                Mail::to($adminemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
 
                 #@mail($adminemail, $emailsubject, $emailcontent, $headers);
                 if ($ccemail != '') {
-                    Mail::send([], [], function ($message) use ($ccemail, $emailsubject, $emailcontent) {
-                        $message->to($ccemail)
-                            ->subject($emailsubject)
-                            ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                            ->html($emailcontent);
-                    });
+                    Mail::to($ccemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
                     #@mail($ccemail, $emailsubject, $emailcontent, $headers);
                 }
             }
@@ -260,20 +245,10 @@ class HomeController extends Controller
                 $headers .= "Content-type: text/html; charset=iso-8859-1\r\n";
 
                 #@mail($adminemail, $emailsubject, $emailcontent, $headers);
-                Mail::send([], [], function ($message) use ($adminemail, $emailsubject, $emailcontent) {
-                    $message->to($adminemail)
-                        ->subject($emailsubject)
-                        ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                        ->html($emailcontent);
-                });
+                Mail::to($adminemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
                 if ($ccemail != '') {
                     #@mail($ccemail, $emailsubject, $emailcontent, $headers);
-                    Mail::send([], [], function ($message) use ($ccemail, $emailsubject, $emailcontent) {
-                        $message->to($ccemail)
-                            ->subject($emailsubject)
-                            ->from(env('MAIL_USERNAME'), env('APP_NAME'))
-                            ->html($emailcontent);
-                    });
+                    Mail::to($ccemail)->send(new \App\Mail\TemplateMail($emailsubject, $emailcontent));
                 }
             }
         }

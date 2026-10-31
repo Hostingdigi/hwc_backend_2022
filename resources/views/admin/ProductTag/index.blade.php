@@ -81,7 +81,7 @@ function chkdelete(id) {
 
 	if(chk) {
 
-		window.location = "{{ url('/admin/producttag') }}/"+id+"/destroy";
+		adminPost("{{ url('/admin/producttag') }}/"+id+"/destroy");
 
 	}
 
@@ -101,7 +101,7 @@ function chkupdatestatus(id, status) {
 
 	if(chk) {
 
-		window.location = "{{ url('/admin/producttag') }}/"+id+"/"+status+"/updatestatus";
+		adminPost("{{ url('/admin/producttag') }}/"+id+"/"+status+"/updatestatus");
 
 	}
 
