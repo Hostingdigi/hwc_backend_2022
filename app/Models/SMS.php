@@ -12,8 +12,12 @@ class SMS extends Model
 	protected $table = 'sms';
 	
 	public function sendSMS($mobile = '', $country = '', $orderid = 0, $status = '') {
-		$sid    = "AC91d9285115dbde467147601bf3018970"; 
-		$token  = "8b016a2dac666a0ed9009f26e1ff183b"; 
+		// From .env (TWILIO_SID / TWILIO_TOKEN); they used to be hardcoded here
+		$sid    = (string) config('services.twilio.sid');
+		$token  = (string) config('services.twilio.token');
+		if ($sid === '' || $token === '') {
+			return;
+		}
 		$twilio = new Client($sid, $token); 
 		
 		$countrycodes = CountryCodes::where('iso', $country)->select('phonecode')->first();
@@ -27,7 +31,7 @@ class SMS extends Model
 		$message = $twilio->messages 
 						  ->create($mobile, // to 
 								   array(  
-									   "messagingServiceSid" => "MGb48a4db006f9739a7b00e1a0d20a194d",      
+									   "messagingServiceSid" => config('services.twilio.messaging_service'),      
 									   "body" => "Your order #".$orderid." status has been updated as ".$status 
 								   ) 
 						  ); 

@@ -5,6 +5,7 @@ use App\Http\Middleware\AuthorizeAdminModule;
 use App\Http\Middleware\BlockPunchoutRoutes;
 use App\Http\Middleware\CheckStatus;
 use App\Http\Middleware\EnsureAdminIsLoggedIn;
+use App\Http\Middleware\LegacyMobileApi;
 use App\Http\Middleware\VerifyIntegrationApiKey;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -44,6 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.session' => EnsureAdminIsLoggedIn::class,
             'admin.module' => AuthorizeAdminModule::class,
             'integration.key' => VerifyIntegrationApiKey::class,
+            'legacy.mobile' => LegacyMobileApi::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [

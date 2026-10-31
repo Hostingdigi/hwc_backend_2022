@@ -122,68 +122,72 @@ Route::middleware([CheckStatus::class])->group(function(){
 
 });
 // Mobile App - Start
+// Original mobile app, replaced by /api/v2 (see App\Http\Middleware\LegacyMobileApi)
+// Still answers when LEGACY_MOBILE_API=off, so the old app can prompt for the update
+Route::get('/mobileversions', [CommonMobileController::class, 'mobileversions'])->middleware('legacy.mobile:always');
 
-Route::post('/storecustomer', [CustomerMobileController::class, 'storecustomer']);
-Route::match(['get', 'post'], '/chkcustomeravailable', [CustomerMobileController::class, 'chkcustomeravailable']);
-Route::post('/customerlogin', [CustomerMobileController::class, 'customerlogin']);
-Route::match(['get', 'post'], '/customerdata', [CustomerMobileController::class, 'customerdata']);
-Route::match(['get', 'post'], '/changecustomerpassword', [CustomerMobileController::class, 'changecustomerpassword']);
-Route::match(['get', 'post'], '/customerforgotpassword', [CustomerMobileController::class, 'customerforgotpassword']);
+Route::middleware('legacy.mobile')->group(function () {
+    Route::post('/storecustomer', [CustomerMobileController::class, 'storecustomer']);
+    Route::match(['get', 'post'], '/chkcustomeravailable', [CustomerMobileController::class, 'chkcustomeravailable']);
+    Route::post('/customerlogin', [CustomerMobileController::class, 'customerlogin']);
+    Route::match(['get', 'post'], '/customerdata', [CustomerMobileController::class, 'customerdata']);
+    Route::match(['get', 'post'], '/changecustomerpassword', [CustomerMobileController::class, 'changecustomerpassword']);
+    Route::match(['get', 'post'], '/customerforgotpassword', [CustomerMobileController::class, 'customerforgotpassword']);
 
-Route::match(['get', 'post'], '/mywishlist', [CustomerMobileController::class, 'mywishlist']);
-Route::match(['get', 'post'], '/addwishlist', [CustomerMobileController::class, 'addwishlist']);
-Route::match(['get', 'post'], '/removefromwishlist', [CustomerMobileController::class, 'removefromwishlist']);
+    Route::match(['get', 'post'], '/mywishlist', [CustomerMobileController::class, 'mywishlist']);
+    Route::match(['get', 'post'], '/addwishlist', [CustomerMobileController::class, 'addwishlist']);
+    Route::match(['get', 'post'], '/removefromwishlist', [CustomerMobileController::class, 'removefromwishlist']);
 
-Route::match(['get', 'post'], '/orderlist', [CustomerMobileController::class, 'orderlist']);
-Route::match(['get', 'post'], '/orderinfo', [CustomerMobileController::class, 'orderinfo']);
+    Route::match(['get', 'post'], '/orderlist', [CustomerMobileController::class, 'orderlist']);
+    Route::match(['get', 'post'], '/orderinfo', [CustomerMobileController::class, 'orderinfo']);
 
-Route::post('/updatecustomerdata', [CustomerMobileController::class, 'updatecustomerdata']);
-Route::get('/allcategory', [CommonMobileController::class, 'allcategory']);
-Route::get('/allbrands', [CommonMobileController::class, 'allbrands']);
-Route::get('/allcountries', [CommonMobileController::class, 'allcountries']);
+    Route::post('/updatecustomerdata', [CustomerMobileController::class, 'updatecustomerdata']);
+    Route::get('/allcategory', [CommonMobileController::class, 'allcategory']);
+    Route::get('/allbrands', [CommonMobileController::class, 'allbrands']);
+    Route::get('/allcountries', [CommonMobileController::class, 'allcountries']);
 
-Route::get('/allbrandswithorder', [CommonMobileController::class, 'allbrandswithorder']);
+    Route::get('/allbrandswithorder', [CommonMobileController::class, 'allbrandswithorder']);
 
-Route::get('/offermessages', [CommonMobileController::class, 'offermessages']);
+    Route::get('/offermessages', [CommonMobileController::class, 'offermessages']);
 
-Route::get('/popularbrands', [CommonMobileController::class, 'popularbrands']);
-Route::get('/brandbyfilter/{filter}', [CommonMobileController::class, 'brandbyfilter']);
-Route::get('/offerCategories', [CommonMobileController::class, 'offerCategories']);
-Route::get('/homebanners', [CommonMobileController::class, 'homebanners']);
-Route::get('/adbanners', [CommonMobileController::class, 'adbanners']);
-Route::get('/terms', [CommonMobileController::class, 'terms']);
-Route::post('/sendfeedback', [CommonMobileController::class, 'sendfeedback']);
-Route::get('/mobileversions', [CommonMobileController::class, 'mobileversions']);
+    Route::get('/popularbrands', [CommonMobileController::class, 'popularbrands']);
+    Route::get('/brandbyfilter/{filter}', [CommonMobileController::class, 'brandbyfilter']);
+    Route::get('/offerCategories', [CommonMobileController::class, 'offerCategories']);
+    Route::get('/homebanners', [CommonMobileController::class, 'homebanners']);
+    Route::get('/adbanners', [CommonMobileController::class, 'adbanners']);
+    Route::get('/terms', [CommonMobileController::class, 'terms']);
+    Route::post('/sendfeedback', [CommonMobileController::class, 'sendfeedback']);
 
-Route::get('/promotionalitems', [ProductMobileController::class, 'promotionalitems']);
-Route::match(['get', 'post'], '/branditems', [ProductMobileController::class, 'branditems']);
-Route::match(['get', 'post'], '/categoryitems', [ProductMobileController::class, 'categoryitems']);
-Route::match(['get', 'post'], '/childcategories', [CommonMobileController::class, 'childcategories']);
-Route::match(['get', 'post'], '/itemdetails', [ProductMobileController::class, 'itemdetails']);
-Route::match(['get', 'post'], '/childcategorywithproducts', [ProductMobileController::class, 'childcategorywithproducts']);
-Route::get('/allitems', [ProductMobileController::class, 'allitems']);
-Route::get('/promotionalitemnames', [ProductMobileController::class, 'promotionalitemnames']);
-Route::get('/allitemnames', [ProductMobileController::class, 'allitemnames']);
-Route::any('/sendqa', [ProductMobileController::class, 'sendqa']);
+    Route::get('/promotionalitems', [ProductMobileController::class, 'promotionalitems']);
+    Route::match(['get', 'post'], '/branditems', [ProductMobileController::class, 'branditems']);
+    Route::match(['get', 'post'], '/categoryitems', [ProductMobileController::class, 'categoryitems']);
+    Route::match(['get', 'post'], '/childcategories', [CommonMobileController::class, 'childcategories']);
+    Route::match(['get', 'post'], '/itemdetails', [ProductMobileController::class, 'itemdetails']);
+    Route::match(['get', 'post'], '/childcategorywithproducts', [ProductMobileController::class, 'childcategorywithproducts']);
+    Route::get('/allitems', [ProductMobileController::class, 'allitems']);
+    Route::get('/promotionalitemnames', [ProductMobileController::class, 'promotionalitemnames']);
+    Route::get('/allitemnames', [ProductMobileController::class, 'allitemnames']);
+    Route::any('/sendqa', [ProductMobileController::class, 'sendqa']);
 
-Route::match(['get', 'post'], '/storeproductrating', [ProductMobileController::class, 'storeproductrating']);
+    Route::match(['get', 'post'], '/storeproductrating', [ProductMobileController::class, 'storeproductrating']);
 
-Route::get('/shoppingcart', [CartMobileController::class, 'shoppingcart']);
-Route::match(['get', 'post'], '/addtoshoppingcart', [CartMobileController::class, 'addtoshoppingcart']);
-Route::get('/clearshoppingcart', [CartMobileController::class, 'clearshoppingcart']);
-Route::get('/removeshoppingcartitem', [CartMobileController::class, 'removeshoppingcartitem']);
-Route::match(['get', 'post'], '/updateshoppingcart', [CartMobileController::class, 'updateshoppingcart']);
-Route::get('/shippingmethods', [CartMobileController::class, 'shippingmethods']);
-Route::get('/paymethods', [CartMobileController::class, 'paymethods']);
-Route::post('/createorder', [CartMobileController::class, 'createorder']);
-Route::match(['get', 'post'], '/updateorder', [CartMobileController::class, 'updateorder']);
-Route::post('/getshipandpackingprice', [CartMobileController::class, 'getshipandpackingprice']);
+    Route::get('/shoppingcart', [CartMobileController::class, 'shoppingcart']);
+    Route::match(['get', 'post'], '/addtoshoppingcart', [CartMobileController::class, 'addtoshoppingcart']);
+    Route::get('/clearshoppingcart', [CartMobileController::class, 'clearshoppingcart']);
+    Route::get('/removeshoppingcartitem', [CartMobileController::class, 'removeshoppingcartitem']);
+    Route::match(['get', 'post'], '/updateshoppingcart', [CartMobileController::class, 'updateshoppingcart']);
+    Route::get('/shippingmethods', [CartMobileController::class, 'shippingmethods']);
+    Route::get('/paymethods', [CartMobileController::class, 'paymethods']);
+    Route::post('/createorder', [CartMobileController::class, 'createorder']);
+    Route::match(['get', 'post'], '/updateorder', [CartMobileController::class, 'updateorder']);
+    Route::post('/getshipandpackingprice', [CartMobileController::class, 'getshipandpackingprice']);
 
-Route::match(['get', 'post'], '/paypalsuccess', [CartMobileController::class, 'paypalsuccess']);
-Route::match(['get', 'post'], '/discountcoupon', [CartMobileController::class, 'discountcoupon']);
+    Route::match(['get', 'post'], '/paypalsuccess', [CartMobileController::class, 'paypalsuccess']);
+    Route::match(['get', 'post'], '/discountcoupon', [CartMobileController::class, 'discountcoupon']);
 
-Route::match(['get', 'post'], '/successorder', [CartMobileController::class, 'successorder']);
-Route::match(['get', 'post'], '/cancelorder', [CartMobileController::class, 'cancelorder']);
+    Route::match(['get', 'post'], '/successorder', [CartMobileController::class, 'successorder']);
+    Route::match(['get', 'post'], '/cancelorder', [CartMobileController::class, 'cancelorder']);
+});
 
 // Route::get('prod_price_update', [HomeController::class, 'prodPriceUpdate']);
 // Route::get('prod_option_price_update', [HomeController::class, 'prodOptionPriceUpdate']);

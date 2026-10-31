@@ -235,5 +235,8 @@ customer to update when it's newer.
 | `paymethods` (included gateway secrets) | `payment-methods` (public keys only) |
 | `hoolah*` | Removed |
 
-Once the v2 app is live and most customers have updated, raise `mobileversions`
-to force the rest, then the v1 endpoints can be removed.
+The v1 endpoints now send `Deprecation: true` (and a `Sunset` date once one is
+set), and the server counts their use. Once the v2 app is live and most
+customers have updated, the server switches v1 off (`LEGACY_MOBILE_API=off`).
+v1 calls then get `410` with `{"response":"failed","message":"..."}`, except
+`mobileversions`. See `docs/cutover.md`, stage D.

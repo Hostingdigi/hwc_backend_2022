@@ -45,6 +45,14 @@ return [
         'mode' => env('PAYMENT_VERIFICATION_MODE', 'enforce'),
     ],
 
+    // Order status SMS (App\Models\SMS). Sending is still switched off in that
+    // class; with no SID the client is not even created.
+    'twilio' => [
+        'sid' => env('TWILIO_SID'),
+        'token' => env('TWILIO_TOKEN'),
+        'messaging_service' => env('TWILIO_MESSAGING_SERVICE'),
+    ],
+
     // Mobile createorder: "enforce" refuses an order whose app-sent total differs
     // from the server quote; "log" accepts it (old behaviour) but logs the mismatch
     'mobile_pricing' => [

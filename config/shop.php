@@ -17,4 +17,16 @@ return [
     // Fuel surcharge percentage shown on the order review page
     'fuel_surcharge_percent' => env('FUEL_SUBCHARGE'),
 
+    /*
+    | The original mobile app endpoints (routes/api.php and their copies in
+    | routes/web.php), replaced by /api/v2. "on" serves them with deprecation
+    | headers and counts the calls (php artisan api:legacy-usage); "off" answers
+    | 410 so the old app tells the customer to update. mobileversions keeps
+    | working either way so the old app can still prompt for the update.
+    */
+    'legacy_mobile_api' => env('LEGACY_MOBILE_API', 'on'),
+
+    // Planned switch-off date (Y-m-d), sent to the old app as a Sunset header
+    'legacy_mobile_api_sunset' => env('LEGACY_MOBILE_API_SUNSET'),
+
 ];

@@ -2,11 +2,18 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// Lets app:preflight see that the cron entry is running
+Artisan::command('app:heartbeat', function () {
+    Cache::forever('scheduler:last_run', now()->timestamp);
+})->purpose('Record that the scheduler ran');
 
 /*
 |--------------------------------------------------------------------------
@@ -32,3 +39,10 @@ Schedule::command('sanctum:prune-expired --hours=24')->daily();
 
 // Failed queue jobs are kept a week for investigation
 Schedule::command('queue:prune-failed --hours=168')->daily();
+
+// Proof of life for app:preflight
+Schedule::command('app:heartbeat')->everyMinute();
+
+// Old mobile API call counts (api:legacy-usage) are kept six months
+Schedule::call(fn () => DB::table('legacy_api_hits')->where('day', '<', now()->subMonths(6)->toDateString())->delete())
+    ->daily()->name('prune-legacy-api-hits');
