@@ -17,6 +17,7 @@ use App\Models\ProductOptions;
 use App\Models\Settings;
 use App\Models\ShippingMethods;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Mail;
 use Session;
@@ -215,7 +216,7 @@ class CustomerMobileController extends Controller
         if ($customer) {
             $password = Hash::check($request->password, $customer->cust_password);
             if ($password) {
-                Session::put('customer_id', $customer->cust_id);
+                Auth::guard('web')->login($customer);
                 Session::put('customer_name', $customer->cust_firstname . ' ' . $customer->cust_lastname);
                 if ($customer) {
                     $customerdata['cust_id'] = $customer->cust_id;

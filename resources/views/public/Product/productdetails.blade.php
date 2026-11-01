@@ -444,7 +444,7 @@
 												<textarea required name="comments" id="comments"></textarea>
 												
 												
-												<input type="hidden" name="custid" id="custid" @if(Session::has('customer_id')) value="{{ Session::get('customer_id') }}" @else value="0" @endif>
+												<input type="hidden" name="custid" id="custid" @if(auth()->check()) value="{{ auth()->id() }}" @else value="0" @endif>
 													
 												<button type="button" name="submit" id="submitreview">Submit</button>
 											</div>

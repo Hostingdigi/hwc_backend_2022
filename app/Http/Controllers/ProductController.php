@@ -128,8 +128,8 @@ class ProductController extends Controller
         }
 
         $favproducts = [];
-        if (Session::has('customer_id')) {
-            $customerid = Session::get('customer_id');
+        if (auth()->check()) {
+            $customerid = auth()->id();
             $fproducts = FavouriteProducts::where('cust_id', '=', $customerid)->select('prod_id')->get();
             if ($fproducts) {
                 foreach ($fproducts as $fproduct) {
@@ -398,8 +398,8 @@ class ProductController extends Controller
         }
 
         $favproducts = [];
-        if (Session::has('customer_id')) {
-            $customerid = Session::get('customer_id');
+        if (auth()->check()) {
+            $customerid = auth()->id();
             $fproducts = FavouriteProducts::where('cust_id', '=', $customerid)->select('prod_id')->get();
             if ($fproducts) {
                 foreach ($fproducts as $fproduct) {
@@ -599,8 +599,8 @@ class ProductController extends Controller
         }
 
         $favproducts = [];
-        if (Session::has('customer_id')) {
-            $customerid = Session::get('customer_id');
+        if (auth()->check()) {
+            $customerid = auth()->id();
             $fproducts = FavouriteProducts::where('cust_id', '=', $customerid)->select('prod_id')->get();
             if ($fproducts) {
                 foreach ($fproducts as $fproduct) {
@@ -691,8 +691,8 @@ class ProductController extends Controller
         }
 
         $favproducts = [];
-        if (Session::has('customer_id')) {
-            $customerid = Session::get('customer_id');
+        if (auth()->check()) {
+            $customerid = auth()->id();
             $fproducts = FavouriteProducts::where('cust_id', '=', $customerid)->select('prod_id')->get();
             if ($fproducts) {
                 foreach ($fproducts as $fproduct) {
@@ -769,8 +769,8 @@ class ProductController extends Controller
         }
 
         $favproducts = [];
-        if (Session::has('customer_id')) {
-            $customerid = Session::get('customer_id');
+        if (auth()->check()) {
+            $customerid = auth()->id();
             $fproducts = FavouriteProducts::where('cust_id', '=', $customerid)->select('prod_id')->get();
             if ($fproducts) {
                 foreach ($fproducts as $fproduct) {
@@ -996,8 +996,8 @@ class ProductController extends Controller
             }
 
             $favproducts = [];
-            if (Session::has('customer_id')) {
-                $customerid = Session::get('customer_id');
+            if (auth()->check()) {
+                $customerid = auth()->id();
                 $fproducts = FavouriteProducts::where('cust_id', '=', $customerid)->select('prod_id')->get();
                 if ($fproducts) {
                     foreach ($fproducts as $fproduct) {

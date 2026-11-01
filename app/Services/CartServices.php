@@ -19,7 +19,7 @@ class CartServices
     public function cartItems($countryCode = null)
     {
         $allowCust = 0;
-        if (Session::has('customer_id')){
+        if (auth()->check()){
             if(empty($countryCode)){
                 $allowCust = 1;
             }/*else if(!Session::has('billinginfo')){
@@ -45,8 +45,8 @@ class CartServices
         $settings = PaymentSettings::where('Id', '1')->select('min_package_fee')->first();
         $packingFee = $cartData['countryCode'] != 'SG' ? $settings->min_package_fee : 0;
 
-        if (Session::has('customer_id') && $allowCust) {
-            $customer = Customer::where('cust_id', Session::get('customer_id'))->first();
+        if (auth()->check() && $allowCust) {
+            $customer = auth()->user();
             
             if (!empty($customer->cust_country)) {
                 

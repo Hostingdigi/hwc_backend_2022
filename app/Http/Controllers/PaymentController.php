@@ -55,8 +55,8 @@ class PaymentController extends Controller
     public function stripe()
     {
 
-        if (Session::get('customer_id') == 30548 || 1 == 1) {
-            $cust_id = Session::get('customer_id');
+        if (auth()->id() == 30548 || 1 == 1) {
+            $cust_id = auth()->id();
             $SesCartObj = SessionCart::where('cust_id', $cust_id)->first();
             $billinginfo = json_decode($SesCartObj->billinginfo, true);
             $paymentmethod = ($SesCartObj->paymentmethod != '') ? $SesCartObj->paymentmethod : 0;
@@ -156,8 +156,8 @@ class PaymentController extends Controller
             return redirect('cancelpayment');
         }
 
-        if (Session::get('customer_id') == 30548 || 1 == 1) {
-            $cust_id = Session::get('customer_id');
+        if (auth()->id() == 30548 || 1 == 1) {
+            $cust_id = auth()->id();
             $SesCartObj = SessionCart::where('cust_id', $cust_id)->first();
             $billinginfo = json_decode($SesCartObj->billinginfo, true);
             $paymentmethod = ($SesCartObj->paymentmethod != '') ? $SesCartObj->paymentmethod : 0;
@@ -326,8 +326,8 @@ class PaymentController extends Controller
         }
 
         //$billinginfo = Session::get('billinginfo');
-        if (Session::get('customer_id') == 30548 || 1 == 1) {
-            $cust_id = Session::get('customer_id');
+        if (auth()->id() == 30548 || 1 == 1) {
+            $cust_id = auth()->id();
             $SesCartObj = SessionCart::where('cust_id', $cust_id)->first();
             $billinginfo = json_decode($SesCartObj->billinginfo, true);
             $paymentmethod = ($SesCartObj->paymentmethod != '') ? $SesCartObj->paymentmethod : 0;
@@ -450,8 +450,8 @@ class PaymentController extends Controller
 
             $couponid = 0;
             $userid = 0;
-            if (Session::has('customer_id')) {
-                $userid = Session::get('customer_id');
+            if (auth()->check()) {
+                $userid = auth()->id();
             } else {
                 $chkcustomer = Customer::where('cust_email', '=', $billinginfo['bill_email'])->select('cust_id')->first();
                 if (!$chkcustomer) {
@@ -648,8 +648,8 @@ class PaymentController extends Controller
             $cartdata = Session::get('cartdata');
         }
 
-        if (Session::get('customer_id') == 30548 || 1 == 1) {
-            $cust_id = Session::get('customer_id');
+        if (auth()->id() == 30548 || 1 == 1) {
+            $cust_id = auth()->id();
             $SesCartObj = SessionCart::where('cust_id', $cust_id)->first();
             $billinginfo = json_decode($SesCartObj->billinginfo, true);
             $paymentmethod = ($SesCartObj->paymentmethod != '') ? $SesCartObj->paymentmethod : 0;
@@ -765,8 +765,8 @@ class PaymentController extends Controller
 
             $couponid = 0;
             $userid = 0;
-            if (Session::has('customer_id')) {
-                $userid = Session::get('customer_id');
+            if (auth()->check()) {
+                $userid = auth()->id();
             } else {
                 $chkcustomer = Customer::where('cust_email', '=', $billinginfo['bill_email'])->select('cust_id')->first();
                 if (!$chkcustomer) {
@@ -1652,7 +1652,7 @@ class PaymentController extends Controller
         $paymentmethod = PaymentMethods::where('id', '5')->first();
         if (!Session::has('billinginfo') || !$paymentmethod) return redirect('/');
 
-        $cust_id = Session::get('customer_id');
+        $cust_id = auth()->id();
         $SesCartObj = SessionCart::where('cust_id',$cust_id)->first();
         $billinginfo = json_decode($SesCartObj->billinginfo,true);
         $fuelcharges =  $SesCartObj->fuelcharges;

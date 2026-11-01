@@ -36,16 +36,8 @@ class HomeController extends Controller
     public function index()
     {
         $favproducts = [];
-        if (Session::has('customer_id')) {
-            $customerid = Session::get('customer_id');
-            $fproducts = FavouriteProducts::where('cust_id', '=', $customerid)->select('prod_id')->get();
-            if ($fproducts) {
-                foreach ($fproducts as $fproduct) {
-                    $favproducts[] = $fproduct->prod_id;
-                }
-            }
-        }
-        $bannerads = Bannerads::where('ban_status', '=', '1')->where('PageId', '=', 'home')->orderBy('display_order', 'asc')->get();
+        if (auth()->check()) $favproducts = FavouriteProducts::where('cust_id', auth()->id())->select('prod_id')->pluck('prod_id');
+        $bannerads = Bannerads::where(['ban_status', '=', '1')->where('PageId', '=', 'home')->orderBy('display_order', 'asc')->get();
 
         return view('welcome', compact('favproducts', 'bannerads'));
     }

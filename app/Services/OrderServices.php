@@ -31,8 +31,8 @@ class OrderServices
             'orderId' => null,
         ];
 
-        if(Session::get('customer_id')==30548 || 1==1){
-			$cust_id = Session::get('customer_id');
+        if(auth()->id()==30548 || 1==1){
+			$cust_id = auth()->id();
 			$SesCartObj = SessionCart::where('cust_id',$cust_id )->first();
 			$billinginfo = json_decode($SesCartObj->billinginfo,true);
 			$paymentmethod = ($SesCartObj->paymentmethod !='') ? $SesCartObj->paymentmethod : 0;
@@ -77,8 +77,8 @@ class OrderServices
         $countrydata = Country::where('countrycode', $billinginfo['bill_country'])->select('countryid')->first();
         $countryid = $countrydata ? $countrydata->countryid : 0;
         $orderid = $userid = null;
-        if (Session::has('customer_id')) {
-            $userid = Session::get('customer_id');
+        if (auth()->check()) {
+            $userid = auth()->id();
         } else {
             $chkcustomer = Customer::where('cust_email', $billinginfo['bill_email'])->select('cust_id')->first();
             if (!$chkcustomer) {

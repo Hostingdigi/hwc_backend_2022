@@ -3,8 +3,8 @@
 use Illuminate\Support\Facades\Hash;
 use Tests\Support\Fixtures;
 
-// Storefront login (CustomerController@logincheck) now logs in on the "web" guard
-// as well as setting the legacy session keys.
+// Storefront login (CustomerController@logincheck) logs in on the "web" guard;
+// the old customer_id session key is no longer written.
 
 beforeEach(function () {
     $this->customer = Fixtures::insert('customer_master', [
@@ -13,10 +13,9 @@ beforeEach(function () {
     ]);
 });
 
-it('logs a customer in on the web guard and keeps the legacy session keys', function () {
+it('logs a customer in on the web guard', function () {
     $this->post('/logincheck', ['username' => 'buyer@example.test', 'password' => 'right-password'])
         ->assertRedirect('/customer/myorders')
-        ->assertSessionHas('customer_id', $this->customer)
         ->assertSessionHas('customer_name', 'Tan Ah Kow');
 
     $this->assertAuthenticated('web');
@@ -24,8 +23,10 @@ it('logs a customer in on the web guard and keeps the legacy session keys', func
 });
 
 it('accepts the username as well as the email', function () {
-    $this->post('/logincheck', ['username' => 'buyer', 'password' => 'right-password'])
-        ->assertSessionHas('customer_id', $this->customer);
+    $this->post('/logincheck', ['username' => 'buyer', 'password' => 'right-password']);
+
+    $this->assertAuthenticated('web');
+    expect(auth('web')->id())->toBe($this->customer);
 });
 
 it('gives the session a new id on login (no session fixation)', function () {
@@ -39,8 +40,7 @@ it('gives the session a new id on login (no session fixation)', function () {
 
 it('rejects a wrong password', function () {
     $this->from('/login')->post('/logincheck', ['username' => 'buyer', 'password' => 'wrong'])
-        ->assertRedirect('/login')
-        ->assertSessionMissing('customer_id');
+        ->assertRedirect('/login');
 
     $this->assertGuest('web');
 });
@@ -48,7 +48,7 @@ it('rejects a wrong password', function () {
 it('logs out of the guard and clears the session keys', function () {
     $this->post('/logincheck', ['username' => 'buyer', 'password' => 'right-password']);
 
-    $this->get('/logout')->assertRedirect('/')->assertSessionMissing('customer_id');
+    $this->get('/logout')->assertRedirect('/');
 
     $this->assertGuest('web');
 });

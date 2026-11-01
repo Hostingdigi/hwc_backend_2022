@@ -87,8 +87,8 @@ class CartController extends Controller
 
         $countryid = 0;
         $country = '';
-        if (Session::has('customer_id')) {
-            $userid = Session::get('customer_id');
+        if (auth()->check()) {
+            $userid = auth()->id();
             $customer = Customer::where('cust_id', '=', $userid)->first();
             $countryid = $customer->cust_country;
             $countrydata = Country::where('countryid', '=', $countryid)->select('countrycode')->first();
@@ -167,8 +167,8 @@ class CartController extends Controller
                                         }
                                     }
 
-                                    if (Session::has('customer_id')) {
-                                        DB::table('cart_details')->where('user_id', '=', Session::get('customer_id'))->where('row_key', '=', $datakey)->where('prod_id', '=', $productid)->update(array('prod_quantity' => $qty));
+                                    if (auth()->check()) {
+                                        DB::table('cart_details')->where('user_id', '=', auth()->id())->where('row_key', '=', $datakey)->where('prod_id', '=', $productid)->update(array('prod_quantity' => $qty));
                                     } else {
                                         DB::table('cart_details')->where('user_token', '=', $sesid)->where('row_key', '=', $datakey)->where('prod_id', '=', $productid)->update(array('prod_quantity' => $qty));
                                     }
@@ -217,8 +217,8 @@ class CartController extends Controller
                 $cart['shippingbox'] = $ShippingBox;
                 $cartdata[$sesid][$cartcount] = $cart;
 
-                if (Session::has('customer_id')) {
-                    DB::table('cart_details')->insert(array('user_id' => Session::get('customer_id'), 'user_token' => Session::get('_token'), 'prod_id' => $productid, 'prod_name' => $ses_productname, 'prod_option' => $prodoption, 'prod_quantity' => $ses_qty, 'prod_unit_price' => $ses_productprice, 'prod_code' => $product->Code, 'Weight' => $product->Weight, 'row_key' => $cartcount, 'prod_option_id' => $optionid));
+                if (auth()->check()) {
+                    DB::table('cart_details')->insert(array('user_id' => auth()->id(), 'user_token' => Session::get('_token'), 'prod_id' => $productid, 'prod_name' => $ses_productname, 'prod_option' => $prodoption, 'prod_quantity' => $ses_qty, 'prod_unit_price' => $ses_productprice, 'prod_code' => $product->Code, 'Weight' => $product->Weight, 'row_key' => $cartcount, 'prod_option_id' => $optionid));
                 } else {
                     DB::table('cart_details')->insert(array('user_token' => Session::get('_token'), 'prod_id' => $productid, 'prod_name' => $ses_productname, 'prod_option' => $prodoption, 'prod_quantity' => $ses_qty, 'prod_unit_price' => $ses_productprice, 'prod_code' => $product->Code, 'Weight' => $product->Weight, 'row_key' => $cartcount, 'prod_option_id' => $optionid));
                 }
@@ -239,9 +239,9 @@ class CartController extends Controller
 
         $cartrow = 1;
 
-        if (Session::has('customer_id')) {
-            DB::table('cart_details')->where('row_key', '=', $key)->where('user_id', '=', Session::get('customer_id'))->delete();
-            $cartdetails = DB::table('cart_details')->where('user_id', '=', Session::get('customer_id'))->get();
+        if (auth()->check()) {
+            DB::table('cart_details')->where('row_key', '=', $key)->where('user_id', '=', auth()->id())->delete();
+            $cartdetails = DB::table('cart_details')->where('user_id', '=', auth()->id())->get();
         } else {
             DB::table('cart_details')->where('row_key', '=', $key)->where('user_token', '=', $sesid)->delete();
             $cartdetails = DB::table('cart_details')->where('user_token', '=', $sesid)->get();
@@ -283,7 +283,7 @@ class CartController extends Controller
         // Clear sessions
         session()->forget(['cartdata', 'discount', 'discounttext', 'couponcode', 'discounttype', 'old_order_id']);
         $sesid = Session::get('_token');
-        DB::table('cart_details')->where(Session::has('customer_id') ? ['user_id' => Session::get('customer_id')] : ['user_token' => $sesid])->delete();
+        DB::table('cart_details')->where(auth()->check() ? ['user_id' => auth()->id()] : ['user_token' => $sesid])->delete();
         return redirect('/');
     }
 
@@ -357,8 +357,8 @@ class CartController extends Controller
                                         } else {
                                             $itemtotal = number_format(($itemqty * $cartdata[$key][$datakey]['price']), 2);
                                         }
-                                        if (Session::has('customer_id')) {
-                                            DB::table('cart_details')->where('user_id', '=', Session::get('customer_id'))->where('prod_id', '=', $prodid)->where('prod_option_id', $optionid)->update(array('prod_quantity' => $itemqty));
+                                        if (auth()->check()) {
+                                            DB::table('cart_details')->where('user_id', '=', auth()->id())->where('prod_id', '=', $prodid)->where('prod_option_id', $optionid)->update(array('prod_quantity' => $itemqty));
                                         } else {
                                             DB::table('cart_details')->where('user_token', '=', $sesid)->where('prod_id', '=', $prodid)->where('prod_option_id', $optionid)->update(array('prod_quantity' => $itemqty));
                                         }
@@ -373,8 +373,8 @@ class CartController extends Controller
                                         $itemtotal = number_format(($itemqty * $cartdata[$key][$datakey]['price']), 2);
                                     }
 
-                                    if (Session::has('customer_id')) {
-                                        DB::table('cart_details')->where('user_id', '=', Session::get('customer_id'))->where('prod_id', '=', $prodid)->update(array('prod_quantity' => $itemqty));
+                                    if (auth()->check()) {
+                                        DB::table('cart_details')->where('user_id', '=', auth()->id())->where('prod_id', '=', $prodid)->update(array('prod_quantity' => $itemqty));
                                     } else {
                                         DB::table('cart_details')->where('user_token', '=', $sesid)->where('prod_id', '=', $prodid)->update(array('prod_quantity' => $itemqty));
                                     }
@@ -392,8 +392,8 @@ class CartController extends Controller
 
         $countryid = 0;
         $country = '';
-        if (Session::has('customer_id')) {
-            $userid = Session::get('customer_id');
+        if (auth()->check()) {
+            $userid = auth()->id();
             $customer = Customer::where('cust_id', '=', $userid)->first();
             $countryid = $customer->cust_country;
             $countrydata = Country::where('countryid', '=', $countryid)->select('countrycode')->first();
@@ -436,7 +436,7 @@ class CartController extends Controller
     public function checkout()
     {
 
-        if (!Session::has('customer_id')) {
+        if (auth()->guest()) {
             Session::put('returnurl', 'checkout');
             return redirect('/login');
         }
@@ -457,7 +457,7 @@ class CartController extends Controller
         $countryid = $cartItems['countryId'];
         $discount = $cartItems['discountDetails']['discountTotal'];
         $discounttext = $cartItems['discountDetails']['title'];
-        $customer = Session::has('customer_id') ? Customer::where('cust_id', Session::get('customer_id'))->first() : [];
+        $customer = auth()->user() ?? [];
 
 
 
@@ -573,8 +573,8 @@ class CartController extends Controller
         $fuelSettings = PaymentSettings::where('Id', '1')->select('fuelcharge_percentage')->first();
         $fuelcharge_percentage = $country != 'SG' ? ($fuelSettings ? $fuelSettings->fuelcharge_percentage : 0) : 0;
 
-        if (Session::get('customer_id') == 30548 || 1 == 1) {
-            $cust_id = Session::get('customer_id');
+        if (auth()->id() == 30548 || 1 == 1) {
+            $cust_id = auth()->id();
             $SesCartObj = SessionCart::where('cust_id', $cust_id)->first();
             $if_items_unavailabel = isset($request->if_items_unavailabel) ? $request->if_items_unavailabel : '';
             $delivery_instructions = isset($request->delivery_instructions) ? $request->delivery_instructions : '';
@@ -629,7 +629,7 @@ class CartController extends Controller
 
         $country = $cartItems['countryCode'];
         $countryid = $cartItems['countryId'];
-        $customer = Session::has('customer_id') ? Customer::where('cust_id', Session::get('customer_id'))->first() : [];
+        $customer = auth()->user() ?? [];
 
         $paymentmethods = PaymentMethods::available()->where('type', '=', '1')->where('status', '=', '1')->get();
         $ordertype = 1;
@@ -641,7 +641,7 @@ class CartController extends Controller
             }
         }
 
-        $sesid = Session::has('customer_id') ? Session::get('customer_id') : '';
+        $sesid = auth()->check() ? auth()->id() : '';
 
         return view('public/Cart.placeorder', compact('cartdata', 'sesid', 'subtotal', 'gst', 'grandtotal', 'paymentmethods', 'taxtitle', 'deliverycost', 'deliverytype', 'packingfee', 'discounttext', 'discount', 'ordertype', 'taxLabelOnly', 'fuelcharges', 'handlingfee'));
     }
@@ -661,7 +661,7 @@ class CartController extends Controller
             $cartdata = Session::get('cartdata');
         }
 
-        if (Session::get('customer_id') == 30548) {
+        if (auth()->id() == 30548) {
             Session::put('billinginfo', json_decode($request->billinginfo, true));
             Session::put('deliverymethod', $request->deliverymethod);
             Session::put('if_unavailable', $request->if_unavailable);
@@ -720,7 +720,7 @@ class CartController extends Controller
             $gst = $cart->getGST($subtotal);
             $grandtotal = $cart->getGrandTotal($subtotal, $gst);
 
-            $userid = Session::get('customer_id');
+            $userid = auth()->id();
 
             $ordermaster = new OrderMaster;
             $ordermaster['user_id'] = $userid;
@@ -969,7 +969,7 @@ class CartController extends Controller
         $countryid = $cartItems['countryId'];
         $discount = $cartItems['discountDetails']['discountTotal'];
         $discounttext = $cartItems['discountDetails']['title'];
-        $customer = Session::has('customer_id') ? Customer::where('cust_id', Session::get('customer_id'))->first() : [];
+        $customer = auth()->user() ?? [];
         $deliverytype = $cartItems['deliveryDetails']['title'];
         $packingfee = $cartItems['packingFees'];
         $deliverycost = $cartItems['deliveryDetails']['deliveryTotal'];
@@ -979,7 +979,7 @@ class CartController extends Controller
         $orderid = $quotationid = 0;
         $deliverymethod = Session::get('deliverymethod');
 
-        $userid = Session::get('customer_id');
+        $userid = auth()->id();
 
         $couponid = 0;
         if (Session::has('couponcode')) {
@@ -1267,7 +1267,7 @@ class CartController extends Controller
             $grandtotal = str_replace(',', '', $grandtotal);
             $discount = str_replace(',', '', $discount);
 
-            $userid = Session::get('customer_id');
+            $userid = auth()->id();
 
             $couponid = 0;
 
@@ -1466,9 +1466,9 @@ class CartController extends Controller
 
     public function invoice($orderid)
     {
-        if (Session::has('customer_id')) {
+        if (auth()->check()) {
             $orders = OrderMaster::where('order_id', '=', $orderid)->first();
-            if ($orders->user_id == Session::get('customer_id')) {
+            if ($orders->user_id == auth()->id()) {
                 $orderdetails = OrderDetails::where('order_id', '=', $orderid)->get();
                 $settings = Settings::where('Id', '=', '1')->first();
                 $bannerads = Bannerads::where('PageId', '=', 'invoice')->where('ban_status', '=', '1')->orderBy('display_order', 'asc')->get();

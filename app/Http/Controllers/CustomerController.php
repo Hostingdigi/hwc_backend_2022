@@ -59,7 +59,6 @@ class CustomerController extends Controller
         $customerid = $customer->cust_id;
 
         Auth::guard('web')->login($customer);
-        Session::put('customer_id', $customerid);
         Session::put('customer_name', $request->cust_firstname . ' ' . $request->cust_lastname);
 
         $settings = Settings::where('id', '=', '1')->first();
@@ -154,7 +153,7 @@ class CustomerController extends Controller
     public function show($id)
     {
         $orders = [];
-        $customerid = Session::get('customer_id');
+        $customerid = auth()->id();
         $groupadmin = Session::get('group_admin');
         $customertype = Session::get('customer_type');
         if ($customerid > 0) {
@@ -205,7 +204,7 @@ class CustomerController extends Controller
     }
 
     /*public function dashboard() {
-    $customerid = Session::get('customer_id');
+    $customerid = auth()->id();
     $customer = Customer::where('cust_id', '=', $customerid)->first();
     return view('public/Customer.dashboard', compact('customer'));
     }*/
@@ -223,10 +222,9 @@ class CustomerController extends Controller
             $password = Hash::check($request->password, $customer->cust_password);
             if ($password) {
                 // Logs in on the "web" guard and regenerates the session id (no session
-                // fixation). The legacy session keys below are still read across the app.
+                // fixation). The customer is read back with auth()->id() / auth()->user().
                 Auth::guard('web')->login($customer);
 
-                Session::put('customer_id', $customer->cust_id);
                 Session::put('customer_name', $customer->cust_firstname . ' ' . $customer->cust_lastname);
                 Session::put('customer_email', $customer->cust_email);
                 Session::put('customer_phone', $customer->cust_phone);
@@ -329,9 +327,9 @@ class CustomerController extends Controller
     public function logout(Request $request)
     {
         //remove entry in log device table
-        if(Session::has('customer_id')){
+        if(auth()->check()){
             UserLoggedDevices::where([
-                ['user_id', '=', Session::get('customer_id')],
+                ['user_id', '=', auth()->id()],
                 ['session_id', '=', $request->session()->getId()],
             ])->delete();
         }
@@ -340,7 +338,6 @@ class CustomerController extends Controller
 
         //Session::flash();
         Session::forget(['punchout','punchout_id','buyer_cookie']);
-        Session::forget('customer_id');
         Session::forget('customer_name');
         Session::forget('cartdata');
         Session::forget('deliverymethod');
@@ -357,7 +354,7 @@ class CustomerController extends Controller
 
     public function updatepersonalinfo(Request $request)
     {
-        $custid = Session::get('customer_id');
+        $custid = auth()->id();
         $firstname = $request->cust_firstname;
         $lastname = $request->cust_lastname;
         $dobdate = $request->dob_date;
@@ -374,7 +371,7 @@ class CustomerController extends Controller
 
     public function updateprofile(Request $request)
     {
-        $id = Session::get('customer_id');
+        $id = auth()->id();
 
         $phone = $request->cust_countrycode . $request->cust_phone;
 
@@ -385,7 +382,7 @@ class CustomerController extends Controller
 
     public function updatepassword(Request $request)
     {
-        $customerid = Session::get('customer_id');
+        $customerid = auth()->id();
         $customer = Customer::where('cust_id', '=', $customerid)->first();
         if ($customer) {
             $password = Hash::check($request->old_password, $customer->cust_password);
@@ -501,8 +498,8 @@ class CustomerController extends Controller
     {
         $customerid = 0;
         $productid = $request->prodid;
-        if (Session::has('customer_id')) {
-            $customerid = Session::get('customer_id');
+        if (auth()->check()) {
+            $customerid = auth()->id();
         }
         if ($customerid > 0) {
             $chkexist = FavouriteProducts::where('cust_id', '=', $customerid)->where('prod_id', '=', $productid)->first();
@@ -518,8 +515,8 @@ class CustomerController extends Controller
     public function removefavproduct($id)
     {
         $customerid = 0;
-        if (Session::has('customer_id')) {
-            $customerid = Session::get('customer_id');
+        if (auth()->check()) {
+            $customerid = auth()->id();
         }
         if ($customerid > 0) {
             FavouriteProducts::where('cust_id', '=', $customerid)->where('prod_id', '=', $id)->delete();
@@ -532,10 +529,10 @@ class CustomerController extends Controller
     public function orderdetails($orderid)
     {
         $id = 'myorders';
-        if (Session::has('customer_id')) {
+        if (auth()->check()) {
             $orders = OrderMaster::where('order_id', '=', $orderid)->first();
-            //echo Session::get('customer_id');
-            if ($orders->user_id == Session::get('customer_id') || Session::get('customer_id') == 30197) {
+            //echo auth()->id();
+            if ($orders->user_id == auth()->id() || auth()->id() == 30197) {
                 $shipCountryData = Country::where('countrycode', $orders->ship_country)->first();
                 $billCountryData = Country::where('countrycode', $orders->bill_country)->first();
                 $orderdetails = OrderDetails::where('order_id', '=', $orderid)->get();
@@ -554,7 +551,7 @@ class CustomerController extends Controller
     {
         $id = 'quotations';
         $showapprove = $showproceed = $showbtn = 1;
-        $customerid = Session::get('customer_id');
+        $customerid = auth()->id();
         $groupadmin = Session::get('group_admin');
         $customertype = Session::get('customer_type');
 

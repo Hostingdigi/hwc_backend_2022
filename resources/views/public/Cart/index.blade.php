@@ -176,8 +176,8 @@ $(document).ready(function() {
 			cartitems = cartitems.join('|');
 		}
 		
-		@if(Session::has('customer_id'))
-			customer = "{{ Session::get('customer_id') }}";
+		@if(auth()->check())
+			customer = "{{ auth()->id() }}";
 		@endif	
 		if(customer != '') {
 			if(couponcode != '') {
@@ -238,8 +238,8 @@ $(document).ready(function() {
 				cartitems = cartitems.join('|');
 			}
 			
-			@if(Session::has('customer_id'))
-				customer = "{{ Session::get('customer_id') }}";
+			@if(auth()->check())
+				customer = "{{ auth()->id() }}";
 			@endif	
 			if(customer != '') {
 				if(couponcode != '') {

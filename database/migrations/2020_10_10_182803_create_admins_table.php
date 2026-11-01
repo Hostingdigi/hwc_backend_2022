@@ -13,11 +13,16 @@ class CreateAdminsTable extends Migration
      */
     public function up()
     {
+        // Guarded: production has this table without a row in `migrations`
+        if (Schema::hasTable('admins')) {
+            return;
+        }
+
         Schema::create('admins', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('username')->unique();
-            $table->string('designation');            
+            $table->string('designation');
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();

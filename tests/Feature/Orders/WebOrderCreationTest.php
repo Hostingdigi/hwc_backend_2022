@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Customer;
 use App\Services\OrderServices;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\Fixtures;
@@ -36,8 +37,9 @@ beforeEach(function () {
         'created_at' => now(), 'updated_at' => now(),
     ]);
 
+    $this->actingAs(Customer::find($this->customer), 'web');
+
     session([
-        'customer_id' => $this->customer,
         'paymentmethod' => 3,
         '_token' => 'cart-token',
         'cartdata' => ['cart-token' => [

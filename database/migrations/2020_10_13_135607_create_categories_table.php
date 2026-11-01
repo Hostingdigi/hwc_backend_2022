@@ -13,6 +13,12 @@ class CreateCategoriesTable extends Migration
      */
     public function up()
     {
+        // Guarded, like the other create-table migrations, for databases that
+        // already have the table without a row in `migrations`
+        if (Schema::hasTable('categories')) {
+            return;
+        }
+
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
             $table->integer('parent_id');

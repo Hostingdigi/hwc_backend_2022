@@ -124,7 +124,7 @@
 							</div>
 						</div>
 					</div>
-					@if( Session::get('customer_id')==30548 || 1==1)
+					@if( auth()->id()==30548 || 1==1)
 						<input type="hidden" name="billinginfo" value="{{Session::has('billinginfo')?json_encode(Session::get('billinginfo')):''}}">
 						<input type="hidden" name="deliverymethod" value="{{Session::has('deliverymethod')?Session::get('deliverymethod'):''}}">
 						<input type="hidden" name="if_unavailable" value="{{Session::has('if_unavailable')?Session::get('if_unavailable'):''}}">

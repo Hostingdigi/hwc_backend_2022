@@ -71,8 +71,8 @@ class Price extends Model
 			
 			$brandgroup = BrandPrice::where('Brand', '=', $product->Brand)->where('GroupId', '=', '1')->where('Status', '=', '1')->first();
 			
-			if(Session::has('customer_id') && $brand_general_dis_included == 1 && $type_allow_global_dis == 1) {
-				$customerid = Session::get('customer_id');
+			if(auth()->check() && $brand_general_dis_included == 1 && $type_allow_global_dis == 1) {
+				$customerid = auth()->id();
 				$customer = Customer::where('cust_id', '=', $customerid)->select('cust_type')->first();
 				
 				if($customer->cust_type == 0) {
@@ -158,8 +158,8 @@ class Price extends Model
 			$displayprice = $product->Price;
 			$standardprice = $product->Price;
 			
-			if(Session::has('customer_id')) {
-				$customerid = Session::get('customer_id');
+			if(auth()->check()) {
+				$customerid = auth()->id();
 				$customer = Customer::where('cust_id', '=', $customerid)->select('cust_type')->first();
 				
 				if($customer->cust_type == 0) {
@@ -175,7 +175,7 @@ class Price extends Model
 			$brandgroup = BrandPrice::where('Brand', '=', $product->Brand)->where('GroupId', '=', $customergroupid)->where('Status', '=', '1')->first();
 
 			$customergroup = CustomerGroup::where('Id', '=', $customergroupid)->where('Status', '=', '1')->first();
-			if($customergroup && Session::has('customer_id')) {				
+			if($customergroup && auth()->check()) {				
 				if($customergroup->type == 1) {
 					if($customergroup->DiscountType == 1) { // $ 						
 						$displayprice = $standardprice + $customergroup->DiscountValue;
