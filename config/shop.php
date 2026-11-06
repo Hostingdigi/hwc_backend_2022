@@ -9,7 +9,7 @@
 return [
 
     // Base URL for product/brand images in mobile API responses
-    'img_url' => env('IMG_URL'),
+    'img_url' => env('APP_ENV') === 'production' ? env('APP_URL') : env('IMG_URL'),
 
     // Overseas handling fee per kg (CartServices::getHandlingFee)
     'handling_per_kg' => env('HANDLING_PER'),
@@ -29,4 +29,5 @@ return [
     // Planned switch-off date (Y-m-d), sent to the old app as a Sunset header
     'legacy_mobile_api_sunset' => env('LEGACY_MOBILE_API_SUNSET'),
 
+    'fallback_img' => (env('APP_ENV') === 'production' ? env('APP_URL') : env('IMG_URL')) . '/images/noimage.png'
 ];

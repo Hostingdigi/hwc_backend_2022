@@ -41,20 +41,7 @@
 							
                         </div> 
 											
-						@if(count($producttags) > 0)
-						<div class="pro-tag">
-							<div class="sec-title">
-								<h6>Product Tag</h6>
-							</div>
-							<div class="tag-box">
-								@foreach($producttags as $producttag)
-									@if($producttag->ProdTags != '')
-										<a href="javascript:void(0);">{{ $producttag->ProdTags }}</a>
-									@endif
-								@endforeach                                
-							</div>
-						</div>
-						@endif
+						@includeIf('includes.tags',['tags' => $producttags])
 						
                         @if($adbanners)
 							@php 

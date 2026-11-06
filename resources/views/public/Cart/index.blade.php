@@ -111,7 +111,7 @@
 				
 				<div class="crt-sumry" style="background:none; padding:23px 10px 30px;">
 					<div class="cart-btns text-right">
-						<button type="button" class="up-cart" style="margin-right:10px;" id="clearcart">Clear Cart</button>
+						<button type="button" class="up-cart" style="margin-right:10px;" onclick="window.location='{{ url('clearcart') }}'">Clear Cart</button>
 						<!--button type="button" class="up-cart" id="updatecart">Update Cart</button-->						
 					</div>
 				</div>
@@ -151,11 +151,7 @@
 @include('footer')
 <script type="text/javascript">
 $(document).ready(function() {
-    
-	$('#clearcart').click(function() {
-		window.location = "{{ url('/clearcart') }}";
-	});
-	
+
 	$('#updatecart').click(function() {
 		$('#updatecartfrm').submit();
 	});

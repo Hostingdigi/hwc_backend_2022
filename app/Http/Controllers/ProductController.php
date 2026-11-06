@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models as HWCModel;
 use App\Models\Bannerads;
 use App\Models\Brand;
 use App\Models\BrandPrice;
 use App\Models\Category;
 use App\Models\EmailTemplate;
-use App\Models\FavouriteProducts;
 use App\Models\PageContent;
 use App\Models\PaymentSettings;
 use App\Models\Price;
@@ -19,8 +19,8 @@ use App\Models\Promotions;
 use App\Models\Settings;
 use DB;
 use Illuminate\Http\Request;
-use Mail;
-use Session;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Session;
 
 class ProductController extends Controller
 {
@@ -41,24 +41,18 @@ class ProductController extends Controller
      */
     public function index($category, Request $request)
     {
-        $show = 20;
-        $page = 1;
-        $sortby = 'DisplayOrder';
-        if (isset($request->page)) {
-            $page = $request->page;
-        }
-        if (isset($request->show)) {
-            $show = $request->show;
-        }
-        if (isset($request->sortby)) {
-            $sortby = $request->sortby;
-        }
+        $page = $request->input('page',1);
+        $show = $request->input('show',20);
+        $sortby = $request->input('sortby','DisplayOrder');
+
         $categoryid = $parentlevel = $parentcategoryid = $grandparentcategoryid = 0;
         $products = $brands = $categories = $brandids = [];
         $catids = $producttags = [];
         $parentname = $parenturl = $categoryname = $urlkey = $grandparentname = $grandparenturl = '';
-        $categorydata = Category::where('UniqueKey', '=', $category)->first();
-        if ($categorydata) {
+        $categorydata = Category::whereRaw("LOWER(UniqueKey) = '".trim($category)."'")->first();
+        
+        if ($categorydata)
+        {
             $categoryid = $categorydata->TypeId;
             $parentlevel = $categorydata->ParentLevel;
             $categoryname = $categorydata->EnName;
@@ -101,10 +95,10 @@ class ProductController extends Controller
             if ($join != '') {
                 $products = Product::where('Types', '=', $categoryid)->where('ProdStatus', '=', '1')->whereRaw($join)->orderBy($sortby, 'desc')->paginate($show);
 
-                $producttags = Product::where('Types', '=', $categoryid)->where('ProdStatus', '=', '1')->whereRaw($join)->select('ProdTags')->orderBy($sortby, 'asc')->groupBy('ProdTags')->get();
+                $producttags = Product::where('Types', '=', $categoryid)->where('ProdStatus', '=', '1')->whereRaw($join)->select('ProdTags')->orderBy('ProdTags')->groupBy('ProdTags')->get();
             } else {
                 $products = Product::where('Types', '=', $categoryid)->where('ProdStatus', '=', '1')->orderBy($sortby, 'desc')->paginate($show);
-                $producttags = Product::where('Types', '=', $categoryid)->where('ProdStatus', '=', '1')->select('ProdTags')->orderBy($sortby, 'asc')->groupBy('ProdTags')->get();
+                $producttags = Product::where('Types', '=', $categoryid)->where('ProdStatus', '=', '1')->select('ProdTags')->orderBy('ProdTags')->groupBy('ProdTags')->get();
             }
             if ($catids) {
                 $catproducts = Product::whereIn('Types', $catids)->where('ProdStatus', '=', '1')->select('Brand')->get();
@@ -127,18 +121,8 @@ class ProductController extends Controller
             }
         }
 
-        $favproducts = [];
-        if (auth()->check()) {
-            $customerid = auth()->id();
-            $fproducts = FavouriteProducts::where('cust_id', '=', $customerid)->select('prod_id')->get();
-            if ($fproducts) {
-                foreach ($fproducts as $fproduct) {
-                    $favproducts[] = $fproduct->prod_id;
-                }
-            }
-        }
-
-        $adbanners = Bannerads::where('PageId', '=', 'types')->where('ban_status', '=', '1')->orderBy('display_order', 'asc')->get();
+        $favproducts = getFavProductsIds();
+        $adbanners = getBanners('types');
 
         return view('public/Product.index', compact('products', 'parentname', 'parenturl', 'parentlevel', 'categoryname', 'grandparenturl', 'grandparentname', 'page', 'show', 'sortby', 'urlkey', 'brands', 'categories', 'bid', 'favproducts', 'producttags', 'adbanners', 'categoryid'));
     }
@@ -189,19 +173,6 @@ class ProductController extends Controller
                     }
                 }
             }
-
-            /*if($categoryids) {
-        $products = Product::whereIn('Types', $categoryids)->where('ProdStatus', '=', '1')->get();
-        if($products) {
-        foreach($products as $product) {
-        $brandids[] = $product->Brand;
-        }
-        }
-        if($brandids) {
-        $brandids = array_unique($brandids);
-        $brands = Brand::where('BrandStatus', '=', '1')->whereIn('BrandId', $brandids)->orderBy('DisplayOrder', 'asc')->get();
-        }
-        }*/
         }
 
         if ($types) {
@@ -397,17 +368,7 @@ class ProductController extends Controller
             }
         }
 
-        $favproducts = [];
-        if (auth()->check()) {
-            $customerid = auth()->id();
-            $fproducts = FavouriteProducts::where('cust_id', '=', $customerid)->select('prod_id')->get();
-            if ($fproducts) {
-                foreach ($fproducts as $fproduct) {
-                    $favproducts[] = $fproduct->prod_id;
-                }
-            }
-        }
-
+        $favproducts = getFavProductsIds();
         $adbanners = Bannerads::where('PageId', '=', 'brands')->where('ban_status', '=', '1')->orderBy('display_order', 'asc')->get();
 
         return view('public/Product.branditems', compact('products', 'categories', 'brand', 'sortby', 'show', 'page', 'catid', 'bid', 'favproducts', 'adbanners', 'producttags'));
@@ -489,19 +450,9 @@ class ProductController extends Controller
 
     public function promotions(Request $request)
     {
-
-        $show = 20;
-        $page = 1;
-        $sortby = 'DisplayOrder';
-        if (isset($request->page)) {
-            $page = $request->page;
-        }
-        if (isset($request->show)) {
-            $show = $request->show;
-        }
-        if (isset($request->sortby)) {
-            $sortby = $request->sortby;
-        }
+        $page = $request->input('page',1);
+        $show = $request->input('show',20);
+        $sortby = $request->input('sortby','DisplayOrder');
 
         $categories = $brands = $adbanners = [];
         $catid = $bid = '';
@@ -514,60 +465,21 @@ class ProductController extends Controller
                 $join->on('types.TypeId', '=', 'products.Types');
             })->select('types.TypeId', 'types.ParentLevel')->get();
 
-        $catids = [0];
-        if ($typecategories) {
-            foreach ($typecategories as $typecategory) {
-                /*if($typecategory->ParentLevel == 0) {
-                $catids[] = $typecategory->TypeId;
-                } else {
-                $topcategory = Category::where('TypeId', '=', $typecategory->ParentLevel)->where('TypeStatus', '=', '1')->select('TypeId', 'ParentLevel')->first();
-                if($topcategory) {
-                $grandtopcategory = Category::where('TypeId', '=', $topcategory->ParentLevel)->where('TypeStatus', '=', '1')->select('TypeId', 'ParentLevel')->first();
-                if($grandtopcategory) {
-                $catids[] = $grandtopcategory->TypeId;
-                } else {
-                $catids[] = $topcategory->TypeId;
-                }
-                }
-                }*/
-                $catids[] = $typecategory->TypeId;
-            }
-        }
+        $catids = [];
+        foreach ($typecategories as $typecategory) $catids[] = $typecategory->TypeId;
 
-        if ($catids) {
-            $categories = Category::where('TypeStatus', '=', '1')->whereIn('TypeId', $catids)->orderBy('DisplayOrder', 'asc')->get();
-            $typebrands = DB::table('products')->select('Brand')->where('isPromotion', '=', '1')->where('ProdStatus', '=', '1')->whereIn('Types', $catids)->groupBy('Brand');
-        } else {
-            $typebrands = DB::table('products')->select('Brand')->where('isPromotion', '=', '1')->where('ProdStatus', '=', '1')->groupBy('Brand');
-        }
+        $categories = Category::select('TypeId','EnName')->where('TypeStatus', 1)
+            ->when($catids, fn($q) => $q->whereIn('TypeId', $catids))
+            ->orderBy('DisplayOrder')->get();
 
-        $brands = DB::table('brands')
-            ->joinSub($typebrands, 'products', function ($join) {
-                $join->on('brands.BrandId', '=', 'products.Brand');
-            })->get();
+        $brands = HWCModel\Brand::select('BrandId','EnName')
+            ->whereHas('products', fn ($q) => $q->where(['isPromotion' => 1, 'ProdStatus' => 1])
+                ->when($catids, fn($q1) => $q1->whereIn('Types', $catids)))
+            ->orderBy('EnName')
+            ->get();
 
         $join = $parentcategory = '';
         $producttags = [];
-
-        /*if(isset($request->cid)) {
-        $catid = $this->sqlIdList($request->cid);
-        $join .= 'Types = '.$catid;
-
-        $pcategory = Category::where('TypeId', '=', $catid)->select('TypeId','ParentLevel')->first();
-        if($pcategory->ParentLevel == 0) {
-        $parentcategory = $catid;
-        } else {
-        $scategory = Category::where('TypeId', '=', $pcategory->ParentLevel)->select('TypeId','ParentLevel')->first();
-        if($scategory) {
-        $sscategory = Category::where('TypeId', '=', $scategory->ParentLevel)->select('TypeId','ParentLevel')->first();
-        if($sscategory) {
-        $parentcategory = $sscategory->TypeId;
-        } else {
-        $parentcategory = $scategory->TypeId;
-        }
-        }
-        }
-        }*/
 
         if (isset($request->cid)) {
             $catid = $this->sqlIdList($request->cid);
@@ -587,47 +499,27 @@ class ProductController extends Controller
             }
         }
 
-        if ($join) {
+        $producttags = Product::select('ProdTags')->where(['ProdStatus' => 1, 'isPromotion' => 1])
+            ->whereNotNull('ProdTags')
+            ->when($join, fn($q) => $q->whereRaw($join))
+            ->groupBy('ProdTags')->orderBy('ProdTags')->get();
 
-            $producttags = Product::where('isPromotion', '=', '1')->where('ProdStatus', '=', '1')->whereRaw($join)->select('ProdTags')->groupBy('ProdTags')->orderBy($sortby, 'asc')->get();
+        $promoproducts = Product::select(['Id', 'UniqueKey', 'Image', 'EnName', 'Quantity', 'Price'])
+            ->where(['ProdStatus' => 1, 'isPromotion' => 1])
+            ->when($join, fn($q) => $q->whereRaw($join))
+            ->orderByDesc($sortby)->paginate($show);
 
-            $promoproducts = Product::where('isPromotion', '=', '1')->where('ProdStatus', '=', '1')->whereRaw($join)->orderBy($sortby, 'desc')->paginate($show);
-        } else {
-            $promoproducts = Product::where('isPromotion', '=', '1')->where('ProdStatus', '=', '1')->orderBy($sortby, 'desc')->paginate($show);
-
-            $producttags = Product::where('isPromotion', '=', '1')->where('ProdStatus', '=', '1')->select('ProdTags')->groupBy('ProdTags')->orderBy($sortby, 'asc')->get();
-        }
-
-        $favproducts = [];
-        if (auth()->check()) {
-            $customerid = auth()->id();
-            $fproducts = FavouriteProducts::where('cust_id', '=', $customerid)->select('prod_id')->get();
-            if ($fproducts) {
-                foreach ($fproducts as $fproduct) {
-                    $favproducts[] = $fproduct->prod_id;
-                }
-            }
-        }
-
-        $adbanners = Bannerads::where('PageId', '=', 'promotions')->where('ban_status', '=', '1')->orderBy('display_order', 'asc')->get();
+        $favproducts = getFavProductsIds();
+        $adbanners = Bannerads::where(['PageId' => 'promotions', 'ban_status' => 1])->orderBy('display_order')->get();
 
         return view('public/Product.promotions', compact('promoproducts', 'categories', 'brands', 'page', 'show', 'sortby', 'catid', 'bid', 'parentcategory', 'favproducts', 'producttags', 'adbanners'));
     }
 
     public function newarrivals(Request $request)
     {
-        $show = 60;
-        $page = 1;
-        $sortby = 'Id';
-        if (isset($request->page)) {
-            $page = $request->page;
-        }
-        if (isset($request->show)) {
-            $show = $request->show;
-        }
-        if (isset($request->sortby)) {
-            $sortby = $request->sortby;
-        }
+        $page = $request->input('page',1);
+        $show = $request->input('show',(app()->environment('local') ? 20 : 60));
+        $sortby = $request->input('sortby','Id');
 
         $categories = $brands = $adbanners = [];
         $catid = $bid = '';
@@ -641,12 +533,7 @@ class ProductController extends Controller
             })->select('types.TypeId', 'types.ParentLevel')->get();
 
         $catids = [0];
-        if ($typecategories) {
-            foreach ($typecategories as $typecategory) {
-
-                $catids[] = $typecategory->TypeId;
-            }
-        }
+        foreach ($typecategories as $typecategory) $catids[] = $typecategory->TypeId;
 
         if ($catids) {
             $categories = Category::where('TypeStatus', '=', '1')->whereIn('TypeId', $catids)->orderBy('DisplayOrder', 'asc')->get();
@@ -681,28 +568,18 @@ class ProductController extends Controller
             }
         }
 
-        if ($join) {
-            $producttags = Product::where('isPromotion', '=', '1')->where('ProdStatus', '=', '1')->whereRaw($join)->select('ProdTags')->groupBy('ProdTags')->orderBy($sortby, 'asc')->get();
+        $producttags = Product::select('ProdTags')->where('ProdStatus', 1)
+            ->whereNotNull('ProdTags')
+            ->when($join, fn($q) => $q->where('isPromotion',  1)->whereRaw($join))
+            ->groupBy('ProdTags')->orderBy('ProdTags')->get();
 
-            $newproducts = Product::where('isPromotion', '=', '1')->where('ProdStatus', '=', '1')->whereRaw($join)->orderBy($sortby, 'desc')->paginate($show);
-        } else {
-            $newproducts = Product::where('ProdStatus', '=', '1')->orderBy($sortby, 'desc')->paginate($show);
-            $producttags = Product::where('ProdStatus', '=', '1')->select('ProdTags')->groupBy('ProdTags')->orderBy($sortby, 'asc')->get();
-        }
+        $newproducts = Product::select(['Id', 'UniqueKey', 'Image', 'EnName', 'Quantity', 'Price'])
+            ->where('ProdStatus', 1)
+            ->when($join, fn($q) => $q->where('isPromotion', 1)->whereRaw($join))
+            ->orderByDesc($sortby)->paginate($show);
 
-        $favproducts = [];
-        if (auth()->check()) {
-            $customerid = auth()->id();
-            $fproducts = FavouriteProducts::where('cust_id', '=', $customerid)->select('prod_id')->get();
-            if ($fproducts) {
-                foreach ($fproducts as $fproduct) {
-                    $favproducts[] = $fproduct->prod_id;
-                }
-            }
-        }
-
-        $adbanners = Bannerads::where('PageId', '=', 'newarrivals')->where('ban_status', '=', '1')->orderBy('display_order', 'asc')->get();
-
+        $favproducts = getFavProductsIds();
+        $adbanners = Bannerads::select('Video','ban_link', 'EnBanimage', 'ban_name')->where(['PageId' => 'newarrivals', 'ban_status' => 1])->orderBy('display_order')->get();
         return view('public/Product.newarrivals', compact('newproducts', 'categories', 'brands', 'page', 'show', 'sortby', 'catid', 'bid', 'parentcategory', 'favproducts', 'producttags', 'adbanners'));
     }
 
@@ -768,17 +645,7 @@ class ProductController extends Controller
             $products = Product::where('ProdStatus', '=', '1')->orderBy($sortby, 'desc')->paginate($show);
         }
 
-        $favproducts = [];
-        if (auth()->check()) {
-            $customerid = auth()->id();
-            $fproducts = FavouriteProducts::where('cust_id', '=', $customerid)->select('prod_id')->get();
-            if ($fproducts) {
-                foreach ($fproducts as $fproduct) {
-                    $favproducts[] = $fproduct->prod_id;
-                }
-            }
-        }
-
+        $favproducts = getFavProductsIds();
         $content = '';
         if ($products) {
             
@@ -995,16 +862,7 @@ class ProductController extends Controller
                 $producttags = Product::whereRaw($search)->where('ProdStatus', '=', '1')->select('ProdTags')->orderBy($sortby, 'asc')->groupBy('ProdTags')->get();
             }
 
-            $favproducts = [];
-            if (auth()->check()) {
-                $customerid = auth()->id();
-                $fproducts = FavouriteProducts::where('cust_id', '=', $customerid)->select('prod_id')->get();
-                if ($fproducts) {
-                    foreach ($fproducts as $fproduct) {
-                        $favproducts[] = $fproduct->prod_id;
-                    }
-                }
-            }
+            $favproducts = getFavProductsIds();
 
             return view('public/Product.search', compact('promoproducts', 'categories', 'brands', 'page', 'show', 'sortby', 'catid', 'bid', 'parentcategory', 'searchkey', 'favproducts', 'producttags'));
         } else {

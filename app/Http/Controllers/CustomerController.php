@@ -187,12 +187,8 @@ class CustomerController extends Controller
                 return view('public/Customer.changepassword', compact('id'));
             } else if ($id == 'favouriteproducts') {
                 $productids = $products = [];
-                $favproducts = FavouriteProducts::where('cust_id', '=', $customerid)->get();
-                if ($favproducts) {
-                    foreach ($favproducts as $favproduct) {
-                        $productids[] = $favproduct->prod_id;
-                    }
-                }
+                $productids = getFavProductsIds();
+
                 if (is_array($productids) && !empty($productids)) {
                     $products = Product::whereIn('Id', $productids)->where('ProdStatus', '=', '1')->get();
                 }

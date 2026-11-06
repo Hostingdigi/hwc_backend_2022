@@ -1,173 +1,128 @@
 @include('header')
 
-<section id="breadcrumbs" class="breadcrumbs">
-  <div class="container">
-	<ol>
-		<li><a href="{{ url('/') }}">Home</a></li>		
-		<li><div class="pageheading">New Arrivals</div></li>
-	</ol>
-  </div>
-</section>
+@includeIf('includes.breadcrumb', ['page_title' => 'New Arrivals'])
+
 @php 
 	$currenturl = \Request::url();
 	$roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
 @endphp
-
 
 <!-- Category Area -->
         <section class="category">
             <div class="container">
                 <div class="row">
                     <div class="d-none d-sm-block col-md-3">
-                        
-						
-                       
-                        @if(count($producttags) > 0)
-                        <div class="pro-tag">
-                            <div class="sec-title">
-                                <h6>Product Tag</h6>
-                            </div>
-                            <div class="tag-box">
-								@foreach($producttags as $producttag)
-									@if($producttag->ProdTags != '')
-										<a href="javascript:void(0);">{{ $producttag->ProdTags }}</a>
-									@endif
-								@endforeach                                
-                            </div>
-                        </div>
-						@endif
-						
-						@if($adbanners)
-							@php 
-								$x = 0;
-							@endphp
-							@foreach($adbanners as $adbanner)
-								<div class="add-box" @if($x > 0) style="margin-top:10px;" @endif>
-									@if($adbanner->Video != '')
-										{!! $adbanner->Video !!}
-									@else
-										<a href="{{ $adbanner->ban_link }}"><img src="{{ url('/uploads/bannerads/'.$adbanner->	EnBanimage)}}" alt="{{ $adbanner->ban_name }}" class="img-fluid"></a>
-									@endif
-								</div>
-								@php
-									++$x;
-								@endphp
-							@endforeach
-						@endif
+						@includeIf('includes.tags',['tags' => $producttags])
+						@includeIf('includes.banner', ['banners' => $adbanners]);
                     </div>
 					
                     <div class="col-md-9">
                         <div class="product-box">
-                            
                             <!-- Tab panes -->
-							@if($newproducts->total() == 0)
+							@if($newproducts->isEmpty())
 								<div class="" align="center">No Promotional Products Found!</div>
-							@endif	
+							@endif
                             <div class="tab-content">
                                 <div class="tab-pane fade show active" id="grid" role="tabpanel">
                                     <div class="row" id="productslist">	
-										@if($newproducts)
-											@foreach($newproducts as $product)
-												@php
-													$options = 0;
-												@endphp	
-												<div class="col-lg-3 col-md-6 col-6">
-													<div class="tab-item">
-														<div class="tab-img">
-															@if($product->Quantity <= 0)
-																<div class="box-no-product"><span class="boxAdjest">Out of Stock</span></div>
-															@endif
-															<div class="box-Added-product" id="success{{ $product->Id }}" style="display:none;"><span class="boxAdjest">Item has been Added into Your Cart</span></div>
-															<div class="box-Added-product" id="setfav{{ $product->Id }}" style="display:none;"><span class="boxAdjest">Item has been Added into Your Favourite List</span></div>
-															<div class="box-no-product" id="setfaverror{{ $product->Id }}" style="display:none;"><span class="boxAdjest">Please Login to Add Favourite</span></div>
-															<div class="img-box">
-															<a href="{{ url('/prod/'.$product->UniqueKey) }}">
-															@if($product->Image != '')
-																<img class="main-img img-fluid" src="{{ url('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
-																<img class="sec-img img-fluid" src="{{ url('/uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
-															@else
-																<img class="main-img img-fluid" src="{{ url('/images/noimage.png') }}" style="height:286px; width:100%;" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
-															@endif
-															</a>
-															</div>
-															@if(in_array($product->Id, $favproducts))
-																<div class="heartIcon"><i class="fa fa-heart-o" aria-hidden="true" style="padding: 10px 15px; color: #999; font-size: 21px;"></i></div>
-															@else
-																<div class="layer-box" id="heart{{ $product->Id }}">
-																<a href="javascript:void(0);" class="it-fav" data-toggle="tooltip" data-placement="left" title="Favourite" onclick="setfavorite('{{ $product->Id }}')"><img src="{{ url('/images/it-fav.png') }}" alt=""></a>
-																</div>
-															@endif
+									@foreach($newproducts as $product)
+										@php
+											$options = 0;
+										@endphp	
+										<div class="col-lg-3 col-md-6 col-6">
+											<div class="tab-item">
+												<div class="tab-img">
+													@if($product->Quantity <= 0)
+														<div class="box-no-product"><span class="boxAdjest">Out of Stock</span></div>
+													@endif
+													<div class="box-Added-product" id="success{{ $product->Id }}" style="display:none;"><span class="boxAdjest">Item has been Added into Your Cart</span></div>
+													<div class="box-Added-product" id="setfav{{ $product->Id }}" style="display:none;"><span class="boxAdjest">Item has been Added into Your Favourite List</span></div>
+													<div class="box-no-product" id="setfaverror{{ $product->Id }}" style="display:none;"><span class="boxAdjest">Please Login to Add Favourite</span></div>
+													<div class="img-box">
+													<a href="{{ url('prod/'.$product->UniqueKey) }}">
+													@if($product->Image != '')
+														<img loading="lazy" onerror="this.onerror=null;this.src='{{config('shop.fallback_img')}}';" class="main-img img-fluid" src="{{ url('uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
+														<img loading="lazy" onerror="this.onerror=null;this.src='{{config('shop.fallback_img')}}';" class="sec-img img-fluid" src="{{ url('uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
+													@else
+														<img loading="lazy" onerror="this.onerror=null;this.src='{{config('shop.fallback_img')}}';" class="main-img img-fluid" src="{{ url('images/noimage.png') }}" style="height:286px; width:100%;" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
+													@endif
+													</a>
+													</div>
+													@if(in_array($product->Id, $favproducts))
+														<div class="heartIcon"><i class="fa fa-heart-o" aria-hidden="true" style="padding: 10px 15px; color: #999; font-size: 21px;"></i></div>
+													@else
+														<div class="layer-box" id="heart{{ $product->Id }}">
+														<a href="javascript:void(0);" class="it-fav" data-toggle="tooltip" data-placement="left" title="Favourite" onclick="setfavorite('{{ $product->Id }}')">
+															<img loading="lazy" src="{{ url('images/it-fav.png') }}" alt=""></a>
 														</div>
-														<div class="tab-heading">
-															<p><a href="{{ url('/prod/'.$product->UniqueKey) }}" title="{{ $product->EnName }}" alt="{{ $product->EnName }}">
-															@if(strlen($product->EnName) > 32){{ substr($product->EnName, 0, 32) }}...@else {{ $product->EnName }} @endif</a></p>
-														</div>
-														
-														<div class="img-content d-flex justify-content-between">
-															<div class="wid_full">
-																@if($product->Price >0)
-																	<ul class="list-unstyled list-inline price">
-																		@php	
-																			$displayprice = $product->Price;
-																			$price = new \App\Models\Price();
-																			//$displayprice = $price->getPrice($product->Id);
-																			$actualprice = $price->getGroupPrice($product->Id);
-																			$displayprice = $price->getDiscountPrice($product->Id);
-																			$installmentPrice = $price->getInstallmentPrice($displayprice);
-																			
-																			$actualprice = $roundObj->roundDecimal($price->getGSTPrice($actualprice, 'SG'));
-																			$displayprice = $roundObj->roundDecimal($price->getGSTPrice($displayprice, 'SG'));
-																			$installmentPrice = $roundObj->roundDecimal($price->getInstallmentPrice($displayprice));
-																		@endphp
-																		
-																		@if($displayprice < $actualprice)
-																			<li class="list-inline-item">
-																				S${{ number_format($displayprice, 2) }}
-																			</li>
-																			<li class="list-inline-item strikeoutprice">S${{ number_format($actualprice, 2) }}</li>
-																		@else
-																			<li class="list-inline-item text-center">
-																				S${{ number_format($displayprice, 2) }}
-																			</li>
-																		@endif
-																	</ul>
+													@endif
+												</div>
+												<div class="tab-heading">
+													<p><a href="{{ url('prod/'.$product->UniqueKey) }}" title="{{ $product->EnName }}" alt="{{ $product->EnName }}">
+													@if(strlen($product->EnName) > 32){{ substr($product->EnName, 0, 32) }}...@else {{ $product->EnName }} @endif</a></p>
+												</div>
+												
+												<div class="img-content d-flex justify-content-between">
+													<div class="wid_full">
+														@if($product->Price >0)
+															<ul class="list-unstyled list-inline price">
+																@php	
+																	$displayprice = $product->Price;
+																	$price = new \App\Models\Price();
+																	//$displayprice = $price->getPrice($product->Id);
+																	$actualprice = $price->getGroupPrice($product->Id);
+																	$displayprice = $price->getDiscountPrice($product->Id);
+																	$installmentPrice = $price->getInstallmentPrice($displayprice);
+																	
+																	$actualprice = $roundObj->roundDecimal($price->getGSTPrice($actualprice, 'SG'));
+																	$displayprice = $roundObj->roundDecimal($price->getGSTPrice($displayprice, 'SG'));
+																	$installmentPrice = $roundObj->roundDecimal($price->getInstallmentPrice($displayprice));
+																@endphp
+																
+																@if($displayprice < $actualprice)
+																	<li class="list-inline-item">
+																		S${{ number_format($displayprice, 2) }}
+																	</li>
+																	<li class="list-inline-item strikeoutprice">S${{ number_format($actualprice, 2) }}</li>
 																@else
-																	<div class="text-center mt-3">
-																		<div class="prod-price-col-red">COMING SOON</div>	
-																	</div>
-																	<div class="text-center mt-3" style="margin-top:2.8rem!important;">
-																		Stay Tuned
-																	</div>
+																	<li class="list-inline-item text-center">
+																		S${{ number_format($displayprice, 2) }}
+																	</li>
 																@endif
-																 <div class="text-center mt-3">
-																@if($product->Quantity > 0)
-																	@php																	
-																		$options = \App\Models\ProductOptions::where('Prod', '=', $product->Id)->count();
-																	@endphp
-																	 
-																	@if($options > 0 || $product->Price ==0)
-																		<a href="{{ url('/prod/'.$product->UniqueKey) }}" class="site-btn bg-dark mx-auto textyellow">More Details</a>
-																	@else
-																		<a href="javascript:void(0);" onclick="addtocart('{{ $product->Id }}');" class="site-btn bg-dark mx-auto textyellow">Add to Cart</a>
-																	@endif
-																@else
-																	<a href="javascript:void(0);" class="site-btn bg-dark mx-auto textyellow">Out of Stock</a>
-																@endif
-																 </div>
+															</ul>
+														@else
+															<div class="text-center mt-3">
+																<div class="prod-price-col-red">COMING SOON</div>	
 															</div>
-															
-														</div>
+															<div class="text-center mt-3" style="margin-top:2.8rem!important;">
+																Stay Tuned
+															</div>
+														@endif
+															<div class="text-center mt-3">
+														@if($product->Quantity > 0)
+															@php																	
+																$options = \App\Models\ProductOptions::where('Prod', '=', $product->Id)->count();
+															@endphp
+																
+															@if($options > 0 || $product->Price ==0)
+																<a href="{{ url('prod/'.$product->UniqueKey) }}" class="site-btn bg-dark mx-auto textyellow">More Details</a>
+															@else
+																<a href="javascript:void(0);" onclick="addtocart('{{ $product->Id }}');" class="site-btn bg-dark mx-auto textyellow">Add to Cart</a>
+															@endif
+														@else
+															<a href="javascript:void(0);" class="site-btn bg-dark mx-auto textyellow">Out of Stock</a>
+														@endif
+															</div>
 													</div>
 												</div>
-											@endforeach
-										@endif
+											</div>
+										</div>
+									@endforeach
                                     </div>
                                 </div>
-                                
                             </div>
 							<div class="pagination-box" style="float:right;">
 								@if ($newproducts->hasPages())
-								
 									<ul class="list-unstyled list-inline text-center">
 										{{-- Previous Page Link --}}
 										@if ($newproducts->onFirstPage())
@@ -206,31 +161,19 @@
 										@endif
 									</ul>
 								@endif
-								
-								
 								<input type="hidden" id="pagenum" value="1">
-								
 							</div>
-							
-							
-							
                         </div>
                     </div>
                 </div>
             </div>
         </section>
         <!-- End Category Area -->
-
-
 @include('footer')
     </body>
 </html>
-<script type="text/javascript">
-$(document).ready(function() {
-	
-	
-});
 
+<script type="text/javascript">
 function setbrand(brandid) {	
 	var cid = "{{ $catid }}";
 	var bid = "{{ $bid }}";
@@ -250,7 +193,7 @@ function setbrand(brandid) {
 	}
 	var sortby = $('#sortby').val();
 	var showrecord = $('#showrecord').val();
-	window.location = "{{ url('/promotions/') }}"+"?sortby="+sortby+"&show="+showrecord+"&cid="+cid+"&bid="+bid;
+	window.location = "{{ url('promotions/') }}"+"?sortby="+sortby+"&show="+showrecord+"&cid="+cid+"&bid="+bid;
 }
 
 /*function setcategory(catid) {
@@ -258,7 +201,7 @@ function setbrand(brandid) {
 	var showrecord = $('#showrecord').val();	
 	var bid = "{{ $bid }}";
 	if(sortby != '' && showrecord != '') {
-		window.location = "{{ url('/promotions/') }}"+"?sortby="+sortby+"&show="+showrecord+"&cid="+catid+"&bid="+bid;
+		window.location = "{{ url('promotions/') }}"+"?sortby="+sortby+"&show="+showrecord+"&cid="+catid+"&bid="+bid;
 	}
 }*/
 
@@ -284,7 +227,7 @@ function setcategory(catagoryid) {
 	}
 	
 	//if(sortby != '' && showrecord != '') {
-		window.location = "{{ url('/promotions/') }}"+"?sortby="+sortby+"&show="+showrecord+"&cid="+catid+"&bid="+bid;
+		window.location = "{{ url('promotions/') }}"+"?sortby="+sortby+"&show="+showrecord+"&cid="+catid+"&bid="+bid;
 	//}
 }
 
@@ -293,7 +236,7 @@ function addtocart(ProdId) {
 	var token = "{!! csrf_token() !!}";
 	$.ajax({
 		type: "POST",
-		url: '{{ url("/") }}/addtocart',				
+		url: '{{ url("addtocart")}}',				
 		data: {'prodid': ProdId},
 		headers: {'X-CSRF-TOKEN': token},		
 		success: function(response) {
@@ -303,20 +246,18 @@ function addtocart(ProdId) {
 				$('#mcartcount').html(response);
 				$('#success'+ProdId).show();
 				$('.box-Added-product').delay(5000).fadeOut('fast');
-				//window.location = "{{ url('/addtocartstatus/?returnurl=') }}"+redirecturl+"&pid="+ProdId+"&status=success";
-			} else {
-				//window.location = "{{ url('/addtocartstatus/?returnurl=') }}"+redirecturl+"&pid="+ProdId+"&status=failed";
 			}
 		},error: function(ts) {				
 			console.log("Error:"+ts.responseText);  
 		}
 	});
 }
+
 function setfavorite(ProdId) {
 	var token = "{!! csrf_token() !!}";
 	$.ajax({
 		type: "POST",
-		url: '{{ url("/") }}/addtofavorite',				
+		url: '{{ url("addtofavorite")}}',				
 		data: {'prodid': ProdId},
 		headers: {'X-CSRF-TOKEN': token},		
 		success: function(response) {
@@ -334,7 +275,4 @@ function setfavorite(ProdId) {
 		}
 	});
 }
-
-
-
 </script>

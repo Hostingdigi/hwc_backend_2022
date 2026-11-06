@@ -306,12 +306,8 @@ class CustomerMobileController extends Controller
         $productid = $request->productid;
         if ($customerid && $productid) {
             FavouriteProducts::insert(array('cust_id' => $customerid, 'prod_id' => $productid));
-            $favproducts = FavouriteProducts::where('cust_id', '=', $customerid)->get();
-            if ($favproducts) {
-                foreach ($favproducts as $favproduct) {
-                    $productids[] = $favproduct->prod_id;
-                }
-            }
+            $productids = getFavProductsIds();
+
             if (is_array($productids) && !empty($productids)) {
                 $products = Product::whereIn('Id', $productids)->where('ProdStatus', '=', '1')->get();
             }
@@ -395,12 +391,7 @@ class CustomerMobileController extends Controller
         $data = $favitems = [];
         $productids = $products = [];
         if ($customerid > 0) {
-            $favproducts = FavouriteProducts::where('cust_id', '=', $customerid)->get();
-            if ($favproducts) {
-                foreach ($favproducts as $favproduct) {
-                    $productids[] = $favproduct->prod_id;
-                }
-            }
+            $productids = getFavProductsIds();
             if (is_array($productids) && !empty($productids)) {
                 $products = Product::whereIn('Id', $productids)->where('ProdStatus', '=', '1')->get();
             }
@@ -488,12 +479,7 @@ class CustomerMobileController extends Controller
         $productid = $request->productid;
         if ($customerid && $productid) {
             FavouriteProducts::where('cust_id', '=', $customerid)->where('prod_id', '=', $productid)->delete();
-            $favproducts = FavouriteProducts::where('cust_id', '=', $customerid)->get();
-            if ($favproducts) {
-                foreach ($favproducts as $favproduct) {
-                    $productids[] = $favproduct->prod_id;
-                }
-            }
+            $productids = getFavProductsIds();
             if (is_array($productids) && !empty($productids)) {
                 $products = Product::whereIn('Id', $productids)->where('ProdStatus', '=', '1')->get();
             }

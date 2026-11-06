@@ -45,43 +45,9 @@
 									</ul>
 								</div>
 							</div>
-                        
-                        
-							@if(count($producttags) > 0)
-							<div class="pro-tag">
-								<div class="sec-title">
-									<h6>Product Tag</h6>
-								</div>
-								<div class="tag-box">
-									@foreach($producttags as $producttag)
-										@if($producttag->ProdTags != '')
-											<a href="javascript:void(0);">{{ $producttag->ProdTags }}</a>
-										@endif
-									@endforeach                                
-								</div>
-							</div>
-							@endif
+							@includeIf('includes.tags',['tags' => $producttags])
 						@endif
-                        
-						@if($adbanners)
-							@php 
-								$x = 0;
-							@endphp
-							@foreach($adbanners as $adbanner)
-								<div class="add-box" @if($x > 0) style="margin-top:10px;" @endif>
-									@if($adbanner->Video != '')
-										{!! $adbanner->Video !!}
-									@else
-										<a href="{{ $adbanner->ban_link }}"><img src="{{ url('/uploads/bannerads/'.$adbanner->	EnBanimage)}}" alt="{{ $adbanner->ban_name }}" class="img-fluid"></a>
-									@endif
-								</div>
-								@php
-									++$x;
-								@endphp
-							@endforeach
-						@endif
-						
-						
+						@includeIf('includes.banner', ['banners' => $adbanners]);
                     </div>
 					
                     <div class="col-md-9">

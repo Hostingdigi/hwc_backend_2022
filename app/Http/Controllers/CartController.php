@@ -26,7 +26,7 @@ use App\Models\Bannerads;
 use App\Models\InternationalShipping;
 use App\Models\SessionCart;
 
-use Session;
+use Illuminate\Support\Facades\Session;
 use DB;
 use App\Models\PageContent;
 use Mail;
@@ -280,7 +280,6 @@ class CartController extends Controller
 
     public function clearcart()
     {
-        // Clear sessions
         session()->forget(['cartdata', 'discount', 'discounttext', 'couponcode', 'discounttype', 'old_order_id']);
         $sesid = Session::get('_token');
         DB::table('cart_details')->where(auth()->check() ? ['user_id' => auth()->id()] : ['user_token' => $sesid])->delete();

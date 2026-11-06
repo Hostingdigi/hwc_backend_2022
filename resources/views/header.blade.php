@@ -1,4 +1,4 @@
-@php		
+@php
 	$seo = \App\Models\PageContent::where('UniqueKey', '=', 'home')->select('meta_title', 'meta_keywords', 'meta_description')->first();
 	use Illuminate\Support\Facades\Route;
 	$actionname = \Route::currentRouteAction();
@@ -102,113 +102,103 @@
 		  <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
 	  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 	<![endif]-->
+	@env('production')
 	<!--Start of Zendesk Chat Script-->
-<script type="text/javascript">
-window.$zopim||(function(d,s){var z=$zopim=function(c){
-z._.push(c)},$=z.s=
-d.createElement(s),e=d.getElementsByTagName(s)[0];z.set=function(o){z.set.
-_.push(o)};z._=[];z.set._=[];$.async=!0;$.setAttribute('charset','utf-8');
-$.src='https://v2.zopim.com/?6FIVDCXQheiWd7dUCPAWf1Dli5JgiPcD';z.t=+new Date;$.
-type='text/javascript';e.parentNode.insertBefore($,e)})(document,'script');
-</script>
+	<script type="text/javascript">
+	window.$zopim||(function(d,s){var z=$zopim=function(c){
+	z._.push(c)},$=z.s=
+	d.createElement(s),e=d.getElementsByTagName(s)[0];z.set=function(o){z.set.
+	_.push(o)};z._=[];z.set._=[];$.async=!0;$.setAttribute('charset','utf-8');
+	$.src='https://v2.zopim.com/?6FIVDCXQheiWd7dUCPAWf1Dli5JgiPcD';z.t=+new Date;$.
+	type='text/javascript';e.parentNode.insertBefore($,e)})(document,'script');
+	</script>	
 
-<!-- Global site tag (gtag.js) - Google Analytics -->
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script>
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config', 'UA-142468295-1');
+	</script>
 
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'UA-142468295-1');
- 
-</script>
 	{{-- No purchase conversion while the payment is still unverified (pendingverification view) --}}
 	@if($seourl == 'success' && empty($paymentPending))
-	@php
-	$billemail = '';
-	if(isset($_REQUEST['orderid'])) {
-	$lastorderid = $_REQUEST['orderid'];
-	$ordermastertbl = \App\Models\OrderMaster::where('order_id', '=', $lastorderid)->select('order_id','payable_amount','bill_email')->first();
-	if($ordermastertbl) {
-	$billemail = $ordermastertbl->bill_email;
-	}
-	}
-	@endphp
-<script>
-  var enhanced_conversion_data = {
-    "email": @php echo "'".$billemail."'" @endphp
-    
-  };
-</script>
+		@php
+		$billemail = '';
+		if(isset($_REQUEST['orderid'])) {
+			$lastorderid = $_REQUEST['orderid'];
+			$ordermastertbl = \App\Models\OrderMaster::where('order_id', '=', $lastorderid)->select('order_id','payable_amount','bill_email')->first();
+			if($ordermastertbl) $billemail = $ordermastertbl->bill_email;
+		}
+		@endphp
+		<script>
+		var enhanced_conversion_data = {email:'{{$billemail}}'};
+		</script>
+	@endif
 
-@endif
-<!-- Global site tag (gtag.js) - Google Ads: 762150370 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=AW-762150370"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config','AW-762150370', {'allow_enhanced_conversions':true});
-</script>
+	<!-- Global site tag (gtag.js) - Google Ads: 762150370 -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=AW-762150370"></script>
+	<script>
+	window.dataLayer = window.dataLayer || [];
+	function gtag(){dataLayer.push(arguments);}
+	gtag('js', new Date());
+	gtag('config','AW-762150370', {'allow_enhanced_conversions':true});
+	</script>
+	@if($seourl == 'success' && empty($paymentPending))
+	<!-- Event snippet for Purchase conversion page -->
+	<script>
+	gtag('event', 'conversion', {
+		'send_to': 'AW-762150370/kTlHCKKpqrADEOL7tesC',
+		'value' : "{{$ordermastertbl->payable_amount}}",
+		'currency': 'SGD',
+		'transaction_id': ''
+	});
+	</script>
+	@endif
 
-@if($seourl == 'success' && empty($paymentPending))
-<!-- Event snippet for Purchase conversion page -->
-<script>
-  gtag('event', 'conversion', {
-      'send_to': 'AW-762150370/kTlHCKKpqrADEOL7tesC',
-	  'value' : @php echo $ordermastertbl->payable_amount @endphp,
-	  'currency': 'SGD',
-      'transaction_id': ''
-  });
-</script>
-
-@endif
-
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-P32L9TZQ');</script>
-<!-- End Google Tag Manager -->
-
-</head><body>
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P32L9TZQ"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
-<div id="preloder--">
+	<!-- Google Tag Manager -->
+	<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+	new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+	j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+	'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+	})(window,document,'script','dataLayer','GTM-P32L9TZQ');</script>
+	<!-- End Google Tag Manager -->
+	@endenv
+	</head>
+<body>
+	@env('production')
+	<!-- Google Tag Manager (noscript) -->
+	<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P32L9TZQ"
+	height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+	<!-- End Google Tag Manager (noscript) -->
+	@endenv
+	<div id="preloder--">
 		<div class="loader--"></div>
 	</div>
 	<div class="bg-white topmenuadj" style="background-color:#e5e5e5!important;" >
 		<div class="container">
 			<div class="row">								
 			@php
-				$settings = \App\Models\Settings::first();
-				$announcements = \App\Models\Announcements::where('status', '=', '1')->orderBy('display_order', 'asc')->get();
-				$marquetxt = '';
 			@endphp					
-					<div class="col-md-8 col-sm-12">
-						<div class="texttop2">
-							@if(count($announcements) > 0)
-								
-								@foreach($announcements as $announcement)
-									@php
-										$marquetxt .= strip_tags($announcement->message);
-									@endphp
-								@endforeach
-								<marquee direction="left" width="100%">
-								{{ $marquetxt }}
-								</marquee>
-							@else	
-							<i class="fa fa-truck" aria-hidden="true" style="color:#999;"></i>&nbsp Free delivery for orders above S$88.00. For international shipping select country at checkout.
-							@endif
-						</div>
+				<div class="col-md-8 col-sm-12">
+					<div class="texttop2">								
+						@empty($marqueTXT)
+						<i class="fa fa-truck" aria-hidden="true" style="color:#999;"></i>&nbsp Free delivery for orders above S$88.00. For international shipping select country at checkout.
+						@else
+						<marquee direction="left" width="100%">
+						{{ $marqueTXT }}
+						</marquee>
+						@endif
 					</div>
-					<div class="col-md-4 col-sm-12 no-pm pad-35" >
-						<div class="texttop hidemob"><a href="#" style="color:#000;"> <i class="fa fa-phone-square" aria-hidden="true" style="color:#999;"></i>&nbsp; {{ $settings->company_phone }}</a> &nbsp; |  &nbsp; <a href="mailto:{{ $settings->admin_email }}" style="color:#000;"> <i class="fa fa-envelope" aria-hidden="true" style="color:#999;"></i>&nbsp {{ $settings->admin_email }}</a></div>
+				</div>
+				@if($settings)
+				<div class="col-md-4 col-sm-12 no-pm pad-35" >
+					<div class="texttop hidemob">
+						<a href="javascript::(0);" style="color:#000;"><i class="fa fa-phone-square" aria-hidden="true" style="color:#999;"></i>&nbsp; {{ $settings->company_phone }}</a> &nbsp; |  &nbsp; <a href="mailto:{{ $settings->admin_email }}" style="color:#000;"> <i class="fa fa-envelope" aria-hidden="true" style="color:#999;"></i>&nbsp {{ $settings->admin_email }}</a>
 					</div>
-					</div>
+				</div>
+				@endif
+			</div>
 		</div>
 	</div>
 	@include('topmenu')
