@@ -67,7 +67,7 @@ Route::middleware([CheckStatus::class])->group(function(){
     
     Route::get('/encryptpassword', [CustomerController::class, 'encryptpassword']);
     
-    Route::get('category/{category}', [ProductController::class, 'index']);
+    Route::get('category/{category}', [ProductController::class, 'productsByCategory']);
     Route::get('/type/{category}', [ProductController::class, 'types']);
     Route::get('/types', [ProductController::class, 'alltypes']);
     

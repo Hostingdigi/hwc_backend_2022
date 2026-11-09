@@ -1,8 +1,8 @@
-@include('header')
+@extends('layouts.app')
+@section('content')
 @includeIf('includes.breadcrumb',['grand_parent_name' => $grandparentname, 'grand_parent_url' => $grandparenturl, 
 	'parent_name' => $parentname, 'parent_url' => $parenturl, 'page_title' => $categoryname])
-@php 
-	$currenturl = \Request::url(); 	
+@php
     $roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
 @endphp
 <!-- Category Area -->
@@ -66,10 +66,8 @@
 	</div>
 </section>
 <!-- End Category Area -->
-
-@include('footer')
-    </body>
-</html>
+ @endsection
+ @push('child-scripts')
 <script type="text/javascript">
 $(document).ready(function() {
 	$('#sortby').change(function() {
@@ -136,7 +134,7 @@ function setbrand(brandid) {
 }
 
 function addtocart(ProdId) {
-	var redirecturl = '{{ $currenturl }}';
+	var redirecturl = '{{ \Request::url() }}';
 	var token = "{!! csrf_token() !!}";
 	$.ajax({
 		type: "POST",
@@ -182,5 +180,5 @@ function setfavorite(ProdId) {
 		}
 	});
 }
-
 </script>
+@endpush

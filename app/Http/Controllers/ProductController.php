@@ -39,7 +39,7 @@ class ProductController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function index($category, Request $request)
+    public function productsByCategory($category, Request $request)
     {
         $page = $request->input('page',1);
         $show = $request->input('show',20);
@@ -116,7 +116,7 @@ class ProductController extends Controller
         $favproducts = getFavProductsIds();
         $adbanners = getBanners('types');
 
-        return view('public/Product.index', compact('products', 'parentname', 'parenturl', 'parentlevel', 'categoryname', 'grandparenturl', 'grandparentname', 'page', 'show', 'sortby', 'urlkey', 'brands', 'bid', 'favproducts', 'producttags', 'adbanners', 'categoryid'));
+        return view('frontend.products_by_category', compact('products', 'parentname', 'parenturl', 'parentlevel', 'categoryname', 'grandparenturl', 'grandparentname', 'page', 'show', 'sortby', 'urlkey', 'brands', 'bid', 'favproducts', 'producttags', 'adbanners', 'categoryid'));
     }
 
     public function types($category, Request $request)
@@ -170,7 +170,7 @@ class ProductController extends Controller
         if ($types) {
             $adbanners = Bannerads::where('PageId', '=', 'types')->where('ban_status', '=', '1')->orderBy('display_order', 'asc')->get();
 
-            return view('public/Product.types', compact('types', 'categoryname', 'page', 'show', 'sortby', 'urlkey', 'parentlevel', 'products', 'brands', 'categories', 'parenturl', 'parentname', 'adbanners'));
+            return view('frontend.product.types', compact('types', 'categoryname', 'page', 'show', 'sortby', 'urlkey', 'parentlevel', 'products', 'brands', 'categories', 'parenturl', 'parentname', 'adbanners'));
         } else {
             return redirect('/category/' . $category);
         }
@@ -194,7 +194,7 @@ class ProductController extends Controller
 
         $types = Category::where('TypeStatus', '=', '1')->where('ParentLevel', '=', '0')->orderBy($sortby, 'asc')->paginate($show);
 
-        return view('public/Product.alltypes', compact('types', 'page', 'show', 'sortby'));
+        return view('frontend.product.alltypes', compact('types', 'page', 'show', 'sortby'));
 
     }
 
@@ -334,7 +334,7 @@ class ProductController extends Controller
         $favproducts = getFavProductsIds();
         $adbanners = Bannerads::where('PageId', '=', 'brands')->where('ban_status', '=', '1')->orderBy('display_order', 'asc')->get();
 
-        return view('public/Product.branditems', compact('products', 'categories', 'brand', 'sortby', 'show', 'page', 'catid', 'bid', 'favproducts', 'adbanners', 'producttags'));
+        return view('frontend.product.branditems', compact('products', 'categories', 'brand', 'sortby', 'show', 'page', 'catid', 'bid', 'favproducts', 'adbanners', 'producttags'));
     }
 
     public function productdetails($product, Request $request)
@@ -402,7 +402,7 @@ class ProductController extends Controller
                 }
 
                 $relatedproducts = Product::where('Types', '=', $typeid)->where('UniqueKey', '!=', $product)->where('ProdStatus', '=', '1')->orderByRaw('RAND()')->take(6)->get();
-                return view('public/Product.productdetails', compact('productdetail', 'category', 'categoryurl', 'subcategory', 'subcategoryurl', 'childcategory', 'childcategoryurl', 'relatedproducts', 'options', 'galleries', 'reviews', 'rating'));
+                return view('frontend.product.productdetails', compact('productdetail', 'category', 'categoryurl', 'subcategory', 'subcategoryurl', 'childcategory', 'childcategoryurl', 'relatedproducts', 'options', 'galleries', 'reviews', 'rating'));
             } else {
                 $staticpage = PageContent::where('UniqueKey', '=', 'page-not-found')->first();
                 $bannerads = Bannerads::where('ban_status', '=', '1')->where('PageId', '=', 'page-not-found')->orderBy('display_order', 'asc')->get();
@@ -477,7 +477,7 @@ class ProductController extends Controller
         $favproducts = getFavProductsIds();
         $adbanners = Bannerads::where(['PageId' => 'promotions', 'ban_status' => 1])->orderBy('display_order')->get();
 
-        return view('public/Product.promotions', compact('products', 'categories', 'brands', 'page', 'show', 'sortby', 'catid', 'bid', 'parentcategory', 'favproducts', 'producttags', 'adbanners'));
+        return view('frontend.product.promotions', compact('products', 'categories', 'brands', 'page', 'show', 'sortby', 'catid', 'bid', 'parentcategory', 'favproducts', 'producttags', 'adbanners'));
     }
 
     public function newarrivals(Request $request)
@@ -549,7 +549,7 @@ class ProductController extends Controller
         $favproducts = getFavProductsIds();
         $adbanners = Bannerads::select('Video','ban_link', 'EnBanimage', 'ban_name')->where(['PageId' => 'newarrivals', 'ban_status' => 1])->orderBy('display_order')->get();
         
-        return view('public/Product.newarrivals', compact('products', 'categories', 'brands', 'page', 'show', 'sortby', 'catid', 'bid', 'parentcategory', 'favproducts', 'producttags', 'adbanners'));
+        return view('frontend.product.newarrivals', compact('products', 'categories', 'brands', 'page', 'show', 'sortby', 'catid', 'bid', 'parentcategory', 'favproducts', 'producttags', 'adbanners'));
     }
 
     public function getproductslist(Request $request)
@@ -833,7 +833,7 @@ class ProductController extends Controller
 
             $favproducts = getFavProductsIds();
 
-            return view('public/Product.search', compact('promoproducts', 'categories', 'brands', 'page', 'show', 'sortby', 'catid', 'bid', 'parentcategory', 'searchkey', 'favproducts', 'producttags'));
+            return view('frontend.product.search', compact('promoproducts', 'categories', 'brands', 'page', 'show', 'sortby', 'catid', 'bid', 'parentcategory', 'searchkey', 'favproducts', 'producttags'));
         } else {
             return redirect('/');
         }

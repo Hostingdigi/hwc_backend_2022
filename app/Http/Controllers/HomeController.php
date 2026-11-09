@@ -38,15 +38,17 @@ class HomeController extends Controller
     public function index()
     {
         $favproducts = getFavProductsIds();
-        $bannerads = HWCModel\Bannerads::select('Video','ban_link','EnBanimage','ban_name')->where(['ban_status' => '1', 'PageId' => 'home'])->orderBy('display_order')->get();
-		$promoitems = HWCModel\Product::select('Id','EnName','Image','Price','Quantity','UniqueKey')->where(['IsPromotion' => '1','ProdStatus' => '1'])->where('Quantity', '>', '0')->orderByRaw('RAND()')->take(12)->get();
+        $bannerads = HWCModel\Bannerads::select('Video','ban_link','EnBanimage','ban_name')->where(['ban_status' => 1, 'PageId' => 'home'])->orderBy('display_order')->get();
+		$promoitems = HWCModel\Product::select('Id','EnName','Image','Price','Quantity','UniqueKey','enquiryProduct','onlineExclusive')->where(['IsPromotion' => 1,'ProdStatus' => 1])
+            ->where('Quantity', '>', '0')->orderByRaw('RAND()')->take(12)->get();
 	    $homecategories = HWCModel\Category::select('TypeId','UniqueKey','EnName','Image')
-            ->where(['TypeStatus' => '1','offerCategory' => '1','ParentLevel' => '0'])
-            ->withCount(['products' => fn ($q) => $q->where('ProdStatus', '1')])
+            ->where(['TypeStatus' => 1,'offerCategory' => 1,'ParentLevel' => 0])
+            ->withCount(['products' => fn ($q) => $q->where('ProdStatus', 1)])
             ->with(['children' => function ($query) {
                     $query->select('TypeId', 'ParentLevel')
                         ->where('TypeStatus', 1)
-                        ->withCount(['products' => fn ($q) => $q->where('ProdStatus', '1')]);
+                        ->orderBy('EnName')
+                        ->withCount(['products' => fn ($q) => $q->where('ProdStatus', 1)]);
             }])
             ->orderBy('DisplayOrder')->skip(0)->take(8)->get();
 	    $homebrands = HWCModel\Brand::select('UniqueKey','Image', 'EnName')->where(['BrandStatus' => '1','ParentLevel' => '0','PopularBrand' => '1'])->orderBy('DisplayOrder')->skip(0)->take(18)->get();

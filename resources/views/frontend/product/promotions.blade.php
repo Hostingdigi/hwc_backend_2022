@@ -1,7 +1,7 @@
-@include('header')
+@extends('layouts.app')
+@section('content')
 @includeIf('includes.breadcrumb', ['page_title' => 'Promotional Products'])
-@php 
-	$currenturl = \Request::url();
+@php
 	$roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
 @endphp
 <!-- Category Area -->
@@ -69,9 +69,8 @@
 	</div>
 </section>
 <!-- End Category Area -->
-@include('footer')
-    </body>
-</html>
+ @endsection
+ @push('child-scripts')
 <script type="text/javascript">
 $(document).ready(function() {
 	$('#sortby').change(function() {
@@ -174,7 +173,7 @@ function setcategory(catagoryid) {
 }
 
 function addtocart(ProdId) {
-	var redirecturl = '{{ $currenturl }}';
+	var redirecturl = '{{ \Request::url() }}';
 	var token = "{!! csrf_token() !!}";
 	$.ajax({
 		type: "POST",
@@ -219,7 +218,5 @@ function setfavorite(ProdId) {
 		}
 	});
 }
-
-
-
 </script>
+@endpush
