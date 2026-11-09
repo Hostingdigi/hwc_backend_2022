@@ -33,7 +33,7 @@ class CartServices
         $cartData = [
             'countryCode' => !empty($countryCode) ? $countryCode : 'SG',
             'countryId' => 189,
-            'cartItems' => null,
+            'cartItems' => [],
             'subTotal' => 0,
             'taxDetails' => null,
             'discountDetails' => null,

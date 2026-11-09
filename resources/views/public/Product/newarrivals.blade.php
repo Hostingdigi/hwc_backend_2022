@@ -4,6 +4,7 @@
 
 @php 
 	$currenturl = \Request::url();
+	echo $currenturl;
 	$roundObj = new \App\Services\OrderServices(new \App\Services\CartServices());
 @endphp
 
@@ -18,148 +19,46 @@
 					
                     <div class="col-md-9">
                         <div class="product-box">
+							<div class="cat-box d-flex justify-content-between">
+								<div class="sortby">
+									<span>Sort By</span>
+									<select class="sort-box" id="sortby" @if($products->isEmpty()) disabled="disabled" @endif name="sortby">
+										@foreach (config('app.data_sort') as $ds)
+										<option value="{{$ds['key']}}" @if($sortby == $ds['key']) selected @endif>{{$ds['name']}}</option>
+										@endforeach
+									</select>
+								</div>
+								<div class="show-item">
+									<span>Show</span>
+									<select class="show-box" id="showrecord" @if($products->isEmpty()) disabled="disabled" @endif name="showrecord">
+										@foreach (config('app.data_length') as $length)
+										<option value="{{$length}}" @if($show == $length) selected @endif>{{$length}}</option>
+										@endforeach
+									</select>
+								</div>
+								
+								<div class="page" style="display:none;">
+									@if($products->total() == 0)
+										<p>Page 0 of 0</p>
+									@else
+										<p>Page {{ $page }} of {{ $products->lastPage() }}</p>
+									@endif
+								</div>
+							</div>
                             <!-- Tab panes -->
-							@if($newproducts->isEmpty())
-								<div class="" align="center">No Promotional Products Found!</div>
+							@if($products->isEmpty())
+								<div align="center">No Promotional Products Found!</div>
 							@endif
                             <div class="tab-content">
                                 <div class="tab-pane fade show active" id="grid" role="tabpanel">
                                     <div class="row" id="productslist">	
-									@foreach($newproducts as $product)
-										@php
-											$options = 0;
-										@endphp	
-										<div class="col-lg-3 col-md-6 col-6">
-											<div class="tab-item">
-												<div class="tab-img">
-													@if($product->Quantity <= 0)
-														<div class="box-no-product"><span class="boxAdjest">Out of Stock</span></div>
-													@endif
-													<div class="box-Added-product" id="success{{ $product->Id }}" style="display:none;"><span class="boxAdjest">Item has been Added into Your Cart</span></div>
-													<div class="box-Added-product" id="setfav{{ $product->Id }}" style="display:none;"><span class="boxAdjest">Item has been Added into Your Favourite List</span></div>
-													<div class="box-no-product" id="setfaverror{{ $product->Id }}" style="display:none;"><span class="boxAdjest">Please Login to Add Favourite</span></div>
-													<div class="img-box">
-													<a href="{{ url('prod/'.$product->UniqueKey) }}">
-													@if($product->Image != '')
-														<img loading="lazy" onerror="this.onerror=null;this.src='{{config('shop.fallback_img')}}';" class="main-img img-fluid" src="{{ url('uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
-														<img loading="lazy" onerror="this.onerror=null;this.src='{{config('shop.fallback_img')}}';" class="sec-img img-fluid" src="{{ url('uploads/product/'.$product->Image) }}" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
-													@else
-														<img loading="lazy" onerror="this.onerror=null;this.src='{{config('shop.fallback_img')}}';" class="main-img img-fluid" src="{{ url('images/noimage.png') }}" style="height:286px; width:100%;" alt="{{ $product->EnName }}" title="{{ $product->EnName }}">
-													@endif
-													</a>
-													</div>
-													@if(in_array($product->Id, $favproducts))
-														<div class="heartIcon"><i class="fa fa-heart-o" aria-hidden="true" style="padding: 10px 15px; color: #999; font-size: 21px;"></i></div>
-													@else
-														<div class="layer-box" id="heart{{ $product->Id }}">
-														<a href="javascript:void(0);" class="it-fav" data-toggle="tooltip" data-placement="left" title="Favourite" onclick="setfavorite('{{ $product->Id }}')">
-															<img loading="lazy" src="{{ url('images/it-fav.png') }}" alt=""></a>
-														</div>
-													@endif
-												</div>
-												<div class="tab-heading">
-													<p><a href="{{ url('prod/'.$product->UniqueKey) }}" title="{{ $product->EnName }}" alt="{{ $product->EnName }}">
-													@if(strlen($product->EnName) > 32){{ substr($product->EnName, 0, 32) }}...@else {{ $product->EnName }} @endif</a></p>
-												</div>
-												
-												<div class="img-content d-flex justify-content-between">
-													<div class="wid_full">
-														@if($product->Price >0)
-															<ul class="list-unstyled list-inline price">
-																@php	
-																	$displayprice = $product->Price;
-																	$price = new \App\Models\Price();
-																	//$displayprice = $price->getPrice($product->Id);
-																	$actualprice = $price->getGroupPrice($product->Id);
-																	$displayprice = $price->getDiscountPrice($product->Id);
-																	$installmentPrice = $price->getInstallmentPrice($displayprice);
-																	
-																	$actualprice = $roundObj->roundDecimal($price->getGSTPrice($actualprice, 'SG'));
-																	$displayprice = $roundObj->roundDecimal($price->getGSTPrice($displayprice, 'SG'));
-																	$installmentPrice = $roundObj->roundDecimal($price->getInstallmentPrice($displayprice));
-																@endphp
-																
-																@if($displayprice < $actualprice)
-																	<li class="list-inline-item">
-																		S${{ number_format($displayprice, 2) }}
-																	</li>
-																	<li class="list-inline-item strikeoutprice">S${{ number_format($actualprice, 2) }}</li>
-																@else
-																	<li class="list-inline-item text-center">
-																		S${{ number_format($displayprice, 2) }}
-																	</li>
-																@endif
-															</ul>
-														@else
-															<div class="text-center mt-3">
-																<div class="prod-price-col-red">COMING SOON</div>	
-															</div>
-															<div class="text-center mt-3" style="margin-top:2.8rem!important;">
-																Stay Tuned
-															</div>
-														@endif
-															<div class="text-center mt-3">
-														@if($product->Quantity > 0)
-															@php																	
-																$options = \App\Models\ProductOptions::where('Prod', '=', $product->Id)->count();
-															@endphp
-																
-															@if($options > 0 || $product->Price ==0)
-																<a href="{{ url('prod/'.$product->UniqueKey) }}" class="site-btn bg-dark mx-auto textyellow">More Details</a>
-															@else
-																<a href="javascript:void(0);" onclick="addtocart('{{ $product->Id }}');" class="site-btn bg-dark mx-auto textyellow">Add to Cart</a>
-															@endif
-														@else
-															<a href="javascript:void(0);" class="site-btn bg-dark mx-auto textyellow">Out of Stock</a>
-														@endif
-															</div>
-													</div>
-												</div>
-											</div>
-										</div>
-									@endforeach
+										@includeWhen($products->isNotEmpty(), 'includes.products', $products)
                                     </div>
                                 </div>
                             </div>
 							<div class="pagination-box" style="float:right;">
-								@if ($newproducts->hasPages())
-									<ul class="list-unstyled list-inline text-center">
-										{{-- Previous Page Link --}}
-										@if ($newproducts->onFirstPage())
-											<li class="disabled list-inline-item"><span><<</span></li>
-										@else
-											<li class="list-inline-item"><a href="{{ $newproducts->appends($_GET)->previousPageUrl() }}" rel="prev"><<</a></li>
-										@endif
-
-										@if($newproducts->currentPage() > 3)
-											<li class="hidden-xs list-inline-item"><a href="{{ $newproducts->appends($_GET)->url(1) }}">1</a></li>
-										@endif
-										@if($newproducts->currentPage() > 4)
-											<li class="list-inline-item"><span>...</span></li>
-										@endif
-										@foreach(range(1, $newproducts->lastPage()) as $i)
-											@if($i >= $newproducts->currentPage() - 2 && $i <= $newproducts->currentPage() + 2)
-												@if ($i == $newproducts->currentPage())
-													<li class="active list-inline-item"><a href="">{{ $i }}</a></li>
-												@else
-													<li class="list-inline-item"><a href="{{ $newproducts->appends($_GET)->url($i) }}">{{ $i }}</a></li>
-												@endif
-											@endif
-										@endforeach
-										@if($newproducts->currentPage() < $newproducts->lastPage() - 3)
-											<li class="list-inline-item"><span>...</span></li>
-										@endif
-										@if($newproducts->currentPage() < $newproducts->lastPage() - 2)
-											<li class="hidden-xs list-inline-item"><a href="{{ $newproducts->appends($_GET)->url($newproducts->lastPage()) }}">{{ $newproducts->lastPage() }}</a></li>
-										@endif
-
-										{{-- Next Page Link --}}
-										@if ($newproducts->hasMorePages())
-											<li class="list-inline-item"><a href="{{ $newproducts->appends($_GET)->nextPageUrl() }}" rel="next">>></a></li>
-										@else
-											<li class="disabled  list-inline-item"><span>>></span></li>
-										@endif
-									</ul>
+								@if($products->total() > 20)
+								<a href="javascript:void(0);" id="loadmore" class="loadmorebtn mx-auto">Load More</a>
 								@endif
 								<input type="hidden" id="pagenum" value="1">
 							</div>
@@ -174,6 +73,33 @@
 </html>
 
 <script type="text/javascript">
+	$(document).ready(function(){
+		$('#loadmore').click(function() {
+			var sortby = $('#sortby').val();
+			var showrecord = $('#showrecord').val();
+			var cid = "{{ $catid }}";
+			var bid = "{{ $bid }}";
+			var pagenum = $('#pagenum').val();
+			pagenum = parseInt(pagenum) + 1;
+			$('#pagenum').val(pagenum);
+			var token = "{!! csrf_token() !!}";
+			$.ajax({
+				type: "POST",
+				url: '{{ url("getproductslist") }}',				
+				data: {'page': pagenum, 'IsPromotion': '1', 'cid': cid, 'bid': bid, 'sortby': sortby, 'show': showrecord, 'searchkey': ''},
+				headers: {'X-CSRF-TOKEN': token},		
+				success: function(response) {
+					if(response != '') {
+						$('#productslist').append(response);
+					} else {
+						$('#loadmore').hide();
+					}
+				},error: function(ts) {				
+					console.log("Error:"+ts.responseText);  
+				}
+			});
+		});	
+	});
 function setbrand(brandid) {	
 	var cid = "{{ $catid }}";
 	var bid = "{{ $bid }}";

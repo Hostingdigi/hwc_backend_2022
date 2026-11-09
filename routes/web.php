@@ -24,32 +24,26 @@ use Illuminate\Support\Facades\Route;
 |
  */
 
-/*Route::get('/', function () {
-return view('welcome');
-});*/
-
-//Route::resource('/', HomeController::class)->only(['index']);
-
-//Auth::routes();
 Route::middleware([CheckStatus::class])->group(function(){
     
     Route::post('/punchout/setup', [PunchoutController::class, 'setup']);
     Route::get('/punchout/login', [PunchoutController::class, 'login']);
     Route::get('/punchout/checkout', [PunchoutController::class, 'checkout']);
     Route::get('/punchout/final_cxml', [PunchoutController::class, 'checkoutTest']);
-    
 
-    Route::resource('/', HomeController::class)->only(['index']);
+    Route::get('/', [HomeController::class, 'index']);
+    
     Route::match(['get', 'post'], '/newslettersubscribe', [HomeController::class, 'newslettersubscribe']);
     Route::get('/unsubscribe/{email}', [HomeController::class, 'unsubscribe'])->name('unsubscribe');
-    Route::match(['get', 'post'], '/contactus', [HomeController::class, 'contactus']);
-    Route::match(['get', 'post'], '/submitfeedback', [HomeController::class, 'submitfeedback']);
+    
+    Route::match(['get', 'post'], 'contactus', [HomeController::class, 'contactus']);
+    Route::match(['get', 'post'], 'submitfeedback', [HomeController::class, 'submitfeedback']);
     
     Route::resource('/customer', CustomerController::class)->except(['create', 'edit']);
     Route::post('/chkcustomerexist', [CustomerController::class, 'chkcustomerexist']);
     
     Route::get('/login', [CustomerController::class, 'login'])->name('login');
-    Route::match(['get', 'post'], '/logincheck', [CustomerController::class, 'logincheck']);
+    Route::post('/logincheck', [CustomerController::class, 'logincheck'])->name('logincheck');
     Route::get('/logout', [CustomerController::class, 'logout'])->name('logout');
     
     Route::get('/register', [CustomerController::class, 'register'])->name('register');
@@ -79,11 +73,11 @@ Route::middleware([CheckStatus::class])->group(function(){
     
     Route::get('/prod/{product}', [ProductController::class, 'productdetails']);
     
-    Route::get('/promotions', [ProductController::class, 'promotions'])->name('promotions');
-    Route::get('/new-arrival', [ProductController::class, 'newarrivals'])->name('newarrivals');
+    Route::get('promotions', [ProductController::class, 'promotions'])->name('promotions');
+    Route::get('new-arrival', [ProductController::class, 'newarrivals'])->name('newarrivals');
     
     Route::match(['get', 'post'], '/brands', [ProductController::class, 'brands']);
-    Route::match(['get', 'post'], '/brand/{brand}', [ProductController::class, 'branditems']);
+    Route::match(['get', 'post'], 'brand/{brand}', [ProductController::class, 'branditems']);
     Route::post('/setOptionPrice', [ProductController::class, 'setOptionPrice']);
     Route::match(['get', 'post'], '/search', [ProductController::class, 'search'])->name('search');
     Route::post('/productrating', [ProductController::class, 'productrating']);
@@ -194,8 +188,6 @@ Route::middleware('legacy.mobile')->group(function () {
 
 //Mobile App - End
 
-//Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-
 Route::prefix('/admin')->group(function () {
 
 //Route::get('/', 'App\Http\Controllers\Auth\AdminLoginController@showLoginForm')->name('admin.login');
@@ -284,7 +276,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['admin.session', 'admin.mod
     Route::post('/static_pages/{id}/{status}/updatestatus', [Admin\PageContentController::class, 'updatestatus']);
     Route::post('/static_pages/bulkupdate', [Admin\PageContentController::class, 'bulkupdate']);
 
-    Route::resource('/promotions', Admin\PromotionsController::class);
+    Route::resource('promotions', Admin\PromotionsController::class);
     Route::post('/promotions/{id}/destroy', [Admin\PromotionsController::class, 'destroy']);
     Route::post('/promotions/{id}/{status}/updatestatus', [Admin\PromotionsController::class, 'updatestatus']);
     Route::post('/promotions/bulkupdate', [Admin\PromotionsController::class, 'bulkupdate']);

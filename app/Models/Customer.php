@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -10,6 +11,8 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * Storefront / mobile-app customer. Also the user model of the "web" auth guard
  * (config/auth.php); the legacy column names are mapped below.
+ *
+ * @property-read string $full_name
  */
 class Customer extends Authenticatable
 {
@@ -44,6 +47,16 @@ class Customer extends Authenticatable
         return '';
     }
 
+    /**
+     * "First Last", e.g. $customer->full_name. Skips a missing first or last name.
+     */
+    protected function fullName(): Attribute
+    {
+        return Attribute::get(fn (): string => trim(
+            trim((string) $this->cust_firstname) . ' ' . trim((string) $this->cust_lastname)
+        ));
+    }
+
     // Password resets (App\Services\PasswordResets) key tokens by this address
     public function getEmailForPasswordReset()
     {
@@ -53,6 +66,11 @@ class Customer extends Authenticatable
     public function orders(): HasMany
     {
         return $this->hasMany(OrderMaster::class, 'user_id', 'cust_id');
+    }
+
+    public function cartDetails(): HasMany
+    {
+        return $this->hasMany(CartDetail::class, 'user_id', 'cust_id');
     }
 
     public function favouriteProducts(): HasMany

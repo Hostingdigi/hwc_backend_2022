@@ -46,27 +46,38 @@ class ProductController extends Controller
         $sortby = $request->input('sortby','DisplayOrder');
 
         $categoryid = $parentlevel = $parentcategoryid = $grandparentcategoryid = 0;
-        $products = $brands = $categories = $brandids = [];
-        $catids = $producttags = [];
+        $brandids = $catids = $producttags = [];
         $parentname = $parenturl = $categoryname = $urlkey = $grandparentname = $grandparenturl = '';
-        $categorydata = Category::whereRaw("LOWER(UniqueKey) = '".trim($category)."'")->first();
-        
+        $categorydata = Category::select('TypeId','ParentLevel','EnName','UniqueKey')->whereRaw("LOWER(UniqueKey) = '".trim($category)."'")->first();
+        $bid = $join = '';
+
+        if (!$categorydata)
+        {
+            $brands = Brand::select('BrandId as id','EnName as name')->where('BrandStatus', 1)->orderBy('DisplayOrder')->get();
+        }
+
         if ($categorydata)
         {
             $categoryid = $categorydata->TypeId;
             $parentlevel = $categorydata->ParentLevel;
             $categoryname = $categorydata->EnName;
             $urlkey = $categorydata->UniqueKey;
+            $parentname = $categorydata->EnName;
+            $parenturl = $categorydata->UniqueKey;
+            $categoryname = $categorydata->EnName;
             $catids[] = $categoryid;
-            if ($categorydata->ParentLevel > 0) {
+            
+            if ($categorydata->ParentLevel > 0) 
+            {
                 $parentcategory = Category::where('TypeId', '=', $categorydata->ParentLevel)->first();
-                if ($parentcategory) {
+                if ($parentcategory)
+                {
                     $parentname = $parentcategory->EnName;
                     $parenturl = $parentcategory->UniqueKey;
                     $parentcategoryid = $categorydata->ParentLevel;
                     $catids[] = $parentcategoryid;
                     if ($parentcategory->ParentLevel > 0) {
-                        $grandparentcategory = Category::where('TypeId', '=', $parentcategory->ParentLevel)->first();
+                        $grandparentcategory = Category::select('EnName','UniqueKey')->where('TypeId', $parentcategory->ParentLevel)->first();
                         if ($grandparentcategory) {
                             $grandparentname = $grandparentcategory->EnName;
                             $grandparenturl = $grandparentcategory->UniqueKey;
@@ -75,56 +86,37 @@ class ProductController extends Controller
                         }
                     }
                 }
-            } else {
-                //$parents = Category::where('TypeId', '=', $categorydata->ParentLevel)->where('TypeStatus', '=', '1')->orderBy('DisplayOrder', 'asc')->get();
-                $parentname = $categorydata->EnName;
-                $parenturl = $categorydata->UniqueKey;
-                $categoryname = $categorydata->EnName;
             }
-            $bid = '';
-            $join = '';
 
-            if (isset($request->bid)) {
+            if ($request->filled('bid'))
+            {
                 $bid = $this->sqlIdList($request->bid);
-                if ($join != '') {
-                    $join .= ' AND Brand IN (' . $bid . ')';
-                } else {
-                    $join .= 'Brand IN (' . $bid . ')';
-                }
+                $join .= $join != '' ? ' AND Brand IN (' . $bid . ')' : 'Brand IN (' . $bid . ')';
             }
-            if ($join != '') {
-                $products = Product::where('Types', '=', $categoryid)->where('ProdStatus', '=', '1')->whereRaw($join)->orderBy($sortby, 'desc')->paginate($show);
-
-                $producttags = Product::where('Types', '=', $categoryid)->where('ProdStatus', '=', '1')->whereRaw($join)->select('ProdTags')->orderBy('ProdTags')->groupBy('ProdTags')->get();
-            } else {
-                $products = Product::where('Types', '=', $categoryid)->where('ProdStatus', '=', '1')->orderBy($sortby, 'desc')->paginate($show);
-                $producttags = Product::where('Types', '=', $categoryid)->where('ProdStatus', '=', '1')->select('ProdTags')->orderBy('ProdTags')->groupBy('ProdTags')->get();
-            }
-            if ($catids) {
-                $catproducts = Product::whereIn('Types', $catids)->where('ProdStatus', '=', '1')->select('Brand')->get();
-                if ($catproducts) {
-                    foreach ($catproducts as $catproduct) {
-                        $brandids[] = $catproduct->Brand;
-                    }
-                }
-                if ($brandids) {
-                    $brandids = array_unique($brandids);
-                    $brands = Brand::where('BrandStatus', '=', '1')->whereIn('BrandId', $brandids)->orderBy('DisplayOrder', 'asc')->get();
-                }
-            }
-            if ($grandparentcategoryid > 0) {
-                $categories = Category::where('TypeStatus', '=', '1')->where('TypeId', '=', $grandparentcategoryid)->where('ParentLevel', '=', '0')->orderBy('DisplayOrder', 'asc')->get();
-            } elseif ($parentcategoryid > 0) {
-                $categories = Category::where('TypeStatus', '=', '1')->where('TypeId', '=', $parentcategoryid)->where('ParentLevel', '=', '0')->orderBy('DisplayOrder', 'asc')->get();
-            } else {
-                $categories = Category::where('TypeStatus', '=', '1')->where('TypeId', '=', $categoryid)->where('ParentLevel', '=', '0')->orderBy('DisplayOrder', 'asc')->get();
-            }
+            
+            $brandids = Product::whereIn('Types', $catids)->where('ProdStatus', 1)
+                ->distinct()->pluck('Brand')->toArray();
+            $brands = Brand::select('BrandId as id','EnName as name')->where('BrandStatus',1)
+                ->when($brandids, fn($q) => $q->whereIn('BrandId', $brandids))
+                ->orderBy('DisplayOrder')->get();
         }
+
+        $producttags = Product::where(['Types' => $categoryid, 'ProdStatus' => 1])
+            ->whereNotNull('ProdTags')
+            ->where('ProdTags', '<>', '')
+            ->when($join, fn($q) => $q->whereRaw($join))
+            ->distinct()
+            ->orderBy('ProdTags')
+            ->pluck('ProdTags');
+        
+        $products = Product::where(['Types' => $categoryid, 'ProdStatus' => 1])
+            ->when($join, fn($q) => $q->whereRaw($join))
+            ->orderByDesc($sortby)->paginate($show);
 
         $favproducts = getFavProductsIds();
         $adbanners = getBanners('types');
 
-        return view('public/Product.index', compact('products', 'parentname', 'parenturl', 'parentlevel', 'categoryname', 'grandparenturl', 'grandparentname', 'page', 'show', 'sortby', 'urlkey', 'brands', 'categories', 'bid', 'favproducts', 'producttags', 'adbanners', 'categoryid'));
+        return view('public/Product.index', compact('products', 'parentname', 'parenturl', 'parentlevel', 'categoryname', 'grandparenturl', 'grandparentname', 'page', 'show', 'sortby', 'urlkey', 'brands', 'bid', 'favproducts', 'producttags', 'adbanners', 'categoryid'));
     }
 
     public function types($category, Request $request)
@@ -296,25 +288,13 @@ class ProductController extends Controller
 
     public function branditems($brand, Request $request)
     {
-
-        $show = 20;
-        $page = 1;
-        $sortby = 'DisplayOrder';
-
-        $join = '';
-
-        $parentlevel = $catid = $bid = '';
-        $products = $categories = $categoryids = $producttags = $parentcats = $subcats = [];
-
-        if (isset($request->page)) {
-            $page = $request->page;
-        }
-        if (isset($request->show)) {
-            $show = $request->show;
-        }
-        if (isset($request->sortby)) {
-            $sortby = $request->sortby;
-        }
+        $page = $request->input('page',1);
+        $show = $request->input('show',20);
+        $sortby = $request->input('sortby','DisplayOrder');
+        
+        $join = $parentlevel = $catid = $bid = '';
+        $producttags = $parentcats = $subcats = [];
+        $categories = collect();
 
         if (isset($request->cid)) {
             $catid = $this->sqlIdList($request->cid);
@@ -327,46 +307,29 @@ class ProductController extends Controller
             }
         }
 
-        $branddata = Brand::where('UniqueKey', '=', $brand)->first();
+        $branddata = Brand::whereRaw("LOWER(UniqueKey) = '".trim($brand)."'")->first();
+
         if ($branddata) {
             $bid = $branddata->BrandId;
-            if ($join != '') {
+            $categoryids = Product::where('Brand', $bid)->select('Types')->pluck('Types');
 
-                $products = Product::where('Brand', '=', $bid)->whereRaw($join)->where('ProdStatus', '=', '1')->orderBy($sortby, 'DESC')->paginate($show);
-                $producttags = Product::where('Brand', '=', $bid)->whereRaw($join)->where('ProdStatus', '=', '1')->select('ProdTags')->groupBy('ProdTags')->orderBy($sortby, 'ASC')->get();
-            } else {
-
-                $products = Product::where('Brand', '=', $bid)->where('ProdStatus', '=', '1')->orderBy($sortby, 'DESC')->paginate($show);
-                $producttags = Product::where('Brand', '=', $bid)->where('ProdStatus', '=', '1')->select('ProdTags')->groupBy('ProdTags')->orderBy($sortby, 'ASC')->get();
-            }
-            $prodcategories = Product::where('Brand', '=', $bid)->select('Types')->get();
-            if ($prodcategories) {
-                foreach ($prodcategories as $prodcategory) {
-
-                    $categoryids[] = $prodcategory->Types;
-
-                    /*$parentcats = Category::where('TypeId', '=', $prodcategory->Types)->where('TypeStatus', '=', '1')->select('ParentLevel')->first();
-                if($parentcats) {
-                $parentcatid = $parentcats->ParentLevel;
-                $subcats = Category::where('TypeId', '=', $parentcatid)->where('TypeStatus', '=', '1')->select('ParentLevel')->first();
-                if($subcats) {
-                if($subcats->ParentLevel > 0) {
-                $categoryids[] = $subcats->ParentLevel;
-                } else {
-                $categoryids[] = $parentcats->ParentLevel;
-                }
-                } else {
-                $categoryids[] = $parentcats->ParentLevel;
-                }
-                }*/
-
-                }
-            }
-
-            if (!empty($categoryids) && count($categoryids) > 0) {
-                $categories = Category::whereIn('TypeId', $categoryids)->where('TypeStatus', '=', '1')->get();
-            }
+            if (!empty($categoryids)) $categories = Category::select('TypeId as id','EnName as name')->whereIn('TypeId', $categoryids)->where('TypeStatus', '=', '1')->get();
         }
+
+        $producttags = Product::when($branddata, fn($q) => $q->where(['Brand' => $bid, 'ProdStatus' => 1]),
+                fn($q) => $q->whereRaw('1=2'))
+            ->whereNotNull('ProdTags')
+            ->where('ProdTags', '<>', '')
+            ->when($join, fn($q) => $q->whereRaw($join))
+            ->distinct()
+            ->orderBy('ProdTags')
+            ->pluck('ProdTags');
+
+        $products = Product::select('Id','UniqueKey','Image','EnName','Price','Quantity')
+            ->when($branddata, fn($q) => $q->where(['Brand' => $bid, 'ProdStatus' => 1]),
+                fn($q) => $q->whereRaw('1=2'))
+            ->when($join, fn($q) => $q->whereRaw($join))
+            ->orderByDesc($sortby)->paginate($show);
 
         $favproducts = getFavProductsIds();
         $adbanners = Bannerads::where('PageId', '=', 'brands')->where('ban_status', '=', '1')->orderBy('display_order', 'asc')->get();
@@ -468,18 +431,17 @@ class ProductController extends Controller
         $catids = [];
         foreach ($typecategories as $typecategory) $catids[] = $typecategory->TypeId;
 
-        $categories = Category::select('TypeId','EnName')->where('TypeStatus', 1)
+        $categories = Category::select('TypeId as id','EnName as name')->where('TypeStatus', 1)
             ->when($catids, fn($q) => $q->whereIn('TypeId', $catids))
             ->orderBy('DisplayOrder')->get();
 
-        $brands = HWCModel\Brand::select('BrandId','EnName')
+        $brands = HWCModel\Brand::select('BrandId as id','EnName as name')
             ->whereHas('products', fn ($q) => $q->where(['isPromotion' => 1, 'ProdStatus' => 1])
                 ->when($catids, fn($q1) => $q1->whereIn('Types', $catids)))
             ->orderBy('EnName')
             ->get();
 
         $join = $parentcategory = '';
-        $producttags = [];
 
         if (isset($request->cid)) {
             $catid = $this->sqlIdList($request->cid);
@@ -499,12 +461,15 @@ class ProductController extends Controller
             }
         }
 
-        $producttags = Product::select('ProdTags')->where(['ProdStatus' => 1, 'isPromotion' => 1])
+        $producttags = Product::where(['isPromotion' => 1, 'ProdStatus' => 1])
             ->whereNotNull('ProdTags')
+            ->where('ProdTags', '<>', '')
             ->when($join, fn($q) => $q->whereRaw($join))
-            ->groupBy('ProdTags')->orderBy('ProdTags')->get();
+            ->distinct()
+            ->orderBy('ProdTags')
+            ->pluck('ProdTags');
 
-        $promoproducts = Product::select(['Id', 'UniqueKey', 'Image', 'EnName', 'Quantity', 'Price'])
+        $products = Product::select(['Id', 'UniqueKey', 'Image', 'EnName', 'Quantity', 'Price'])
             ->where(['ProdStatus' => 1, 'isPromotion' => 1])
             ->when($join, fn($q) => $q->whereRaw($join))
             ->orderByDesc($sortby)->paginate($show);
@@ -512,7 +477,7 @@ class ProductController extends Controller
         $favproducts = getFavProductsIds();
         $adbanners = Bannerads::where(['PageId' => 'promotions', 'ban_status' => 1])->orderBy('display_order')->get();
 
-        return view('public/Product.promotions', compact('promoproducts', 'categories', 'brands', 'page', 'show', 'sortby', 'catid', 'bid', 'parentcategory', 'favproducts', 'producttags', 'adbanners'));
+        return view('public/Product.promotions', compact('products', 'categories', 'brands', 'page', 'show', 'sortby', 'catid', 'bid', 'parentcategory', 'favproducts', 'producttags', 'adbanners'));
     }
 
     public function newarrivals(Request $request)
@@ -568,19 +533,23 @@ class ProductController extends Controller
             }
         }
 
-        $producttags = Product::select('ProdTags')->where('ProdStatus', 1)
+        $producttags = Product::where('ProdStatus', 1)
             ->whereNotNull('ProdTags')
+            ->where('ProdTags', '<>', '')
             ->when($join, fn($q) => $q->where('isPromotion',  1)->whereRaw($join))
-            ->groupBy('ProdTags')->orderBy('ProdTags')->get();
+            ->distinct()
+            ->orderBy('ProdTags')
+            ->pluck('ProdTags');
 
-        $newproducts = Product::select(['Id', 'UniqueKey', 'Image', 'EnName', 'Quantity', 'Price'])
+        $products = Product::select(['Id', 'UniqueKey', 'Image', 'EnName', 'Quantity', 'Price'])
             ->where('ProdStatus', 1)
             ->when($join, fn($q) => $q->where('isPromotion', 1)->whereRaw($join))
             ->orderByDesc($sortby)->paginate($show);
 
         $favproducts = getFavProductsIds();
         $adbanners = Bannerads::select('Video','ban_link', 'EnBanimage', 'ban_name')->where(['PageId' => 'newarrivals', 'ban_status' => 1])->orderBy('display_order')->get();
-        return view('public/Product.newarrivals', compact('newproducts', 'categories', 'brands', 'page', 'show', 'sortby', 'catid', 'bid', 'parentcategory', 'favproducts', 'producttags', 'adbanners'));
+        
+        return view('public/Product.newarrivals', compact('products', 'categories', 'brands', 'page', 'show', 'sortby', 'catid', 'bid', 'parentcategory', 'favproducts', 'producttags', 'adbanners'));
     }
 
     public function getproductslist(Request $request)

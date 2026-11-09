@@ -2,41 +2,28 @@
 	<div class="m-menu">Main Menu</div>
 		<a href="javascript:void(0)" class="closebtn" id="close_nav">&times;</a>
 		<div id="category_menu">
-			@if($sideNavs['categories']->isNotEmpty())
+			@if($topBar['categories']->isNotEmpty())
 				<ul class="sub-menu" >
-				@foreach($sideNavs['categories'] as $category)
-					@php
-						$subcategories = [];
-					@endphp
-					@php
-						$subcategories = \App\Models\Category::selectRaw('TypeId,LOWER(UniqueKey) as UniqueKey,EnName')->where(['ParentLevel' => $category->TypeId, 'TypeStatus' => 1])->orderBy('DisplayOrder')->get();
-					@endphp
-					@if($subcategories->isNotEmpty())
-						<li><a href="{{ url($category->UniqueKey) }}">{{ $category->EnName }}<i class="fa fa-caret-right" aria-hidden="true" style="color:#ffff00"></i></a>
+				@foreach($topBar['categories'] as $category)
+					@if($category['subcategories']->isNotEmpty())
+						<li><a href="{{ url($category['unique_key']) }}">{{ $category['name'] }}<i class="fa fa-caret-right" aria-hidden="true" style="color:#ffff00"></i></a>
 							<ul>
-								@foreach($subcategories as $subcategory)
-									@php
-										$subsubcategories = [];
-									@endphp
-									@php
-										$subsubcategories = \App\Models\Category::selectRaw('TypeId,LOWER(UniqueKey) as UniqueKey,EnName')
-											->where(['ParentLevel' => $subcategory->TypeId, 'TypeStatus' => 1])->orderBy('DisplayOrder')->get(); 
-									@endphp
-									@if($subsubcategories->isNotEmpty())
-										<li><a href="{{ url($subcategory->UniqueKey) }}">{{ $subcategory->EnName }}<i class="fa fa-caret-right" aria-hidden="true" style="color:#ffff00"></i></a>
+								@foreach($category['subcategories'] as $subcategory)
+									@if($subcategory['subcategories']->isNotEmpty())
+										<li><a href="{{ url($subcategory['unique_key']) }}">{{ $subcategory['name'] }}<i class="fa fa-caret-right" aria-hidden="true" style="color:#ffff00"></i></a>
 											<ul>
-											@foreach($subsubcategories as $subsubcategory)
-												<li><a href="{{ url('category/'.$subsubcategory->UniqueKey) }}">{{ $subsubcategory->EnName }}</a></li>@endforeach
+											@foreach($subcategory['subcategories'] as $subsubcategory)
+												<li><a href="{{ url('category/'.$subsubcategory['unique_key']) }}">{{ $subsubcategory['name'] }}</a></li>@endforeach
 											</ul>
 										</li>
 									@else
-										<li><a href="{{ url('category/'.$subcategory->UniqueKey) }}">{{ $subcategory->EnName }}</a></a></li>@endif
+										<li><a href="{{ url('category/'.$subcategory['unique_key']) }}">{{ $subcategory['name'] }}</a></a></li>@endif
 									</li>
 								@endforeach
 							</ul>
 						</li>
 						@else
-							<li><a href="{{ url('category/'.$category->UniqueKey) }}">{{ $category->EnName }}</a></li>
+							<li><a href="{{ url('category/'.$category['unique_key']) }}">{{ $category['name'] }}</a></li>
 						@endif
 					@endforeach
 					</ul>
@@ -44,11 +31,11 @@
 				</div>
 				</div>
 				<div class="sidenav" id="by_brand">	<a href="javascript:void(0)" class="closebtn" id="close_nav">&times;</a>	<div id="brand_menu">	
-				@if($sideNavs['brands']->isNotEmpty())
+				@if($topBar['brands']->isNotEmpty())
 					<div class="container">
 						<div class="row"><div class="col-md-12"><h1>Featured Brands</h1></div></div>
 						<div class="row">
-						@foreach($sideNavs['brands'] as $brand)
+						@foreach($topBar['brands'] as $brand)
 							@if(file_exists(public_path('/uploads/brands/'.$brand->Image)))
 								<div class="col-md-4">
 									<a href="{{ url('brand/'.$brand->UniqueKey) }}">

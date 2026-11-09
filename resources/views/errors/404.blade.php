@@ -1,4 +1,5 @@
-@include('header')
+@extends('layouts.app')
+@section('content')
 @php
     $staticpage = \App\Models\PageContent::where('UniqueKey', 'page-not-found')->first();
     $bannerads = \App\Models\Bannerads::where([['ban_status', '=', '1'],['PageId', '=', 'page-not-found']])->orderBy('display_order', 'asc')->get();
@@ -49,7 +50,4 @@
 	</div>
 	@endif
 </div>
-@include('footer')
-    </body>
-</html>
-
+@endsection

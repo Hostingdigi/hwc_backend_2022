@@ -123,4 +123,33 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'data_length' => [20, 28, 36],
+    'data_sort' => [
+        [
+            'key' => 'EnName',
+            'name' => 'Name'
+        ],
+        [
+            'key' => 'DisplayOrder',
+            'name' => 'Position'
+        ],
+        [
+            'key' => 'StandardPrice',
+            'name' => 'Price'
+        ]
+    ],
+
+    'salutations' => ['Mr','Miss','Mrs','Ms','Dr'],
+
+    'enquiry_types' => [
+        'Compliments',
+        'General Enquiry',
+        'General Feedback',
+        "Members' Program",
+        'Order Information',
+        'Product Information',
+        'Program/Promotion Feedback'
+    ],
+    
+    'google_captcha_secret' => env('GOOGLE_CAPTCHA_SECRET_KEY',null)
 ];

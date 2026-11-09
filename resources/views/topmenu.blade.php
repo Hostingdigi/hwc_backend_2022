@@ -38,7 +38,7 @@
 							<a href="{{ url('/cart') }}"><i class="fa fa-shopping-cart shopppingcartIcon" aria-hidden="true" ></i></a>
 						</div>
 						<div class="topicons">
-							@if(auth()->check() && Session::has('customer_name'))
+							@if(auth()->check())
 								<a href="{{ url('/customer/favouriteproducts') }}">
 							@else
 								<a href="{{ url('/login') }}">
@@ -47,10 +47,10 @@
 						</div>
 						
 						<div class="topicons">
-							@if(auth()->check() && Session::has('customer_name'))
-								<a href="{{ url(!session()->has('punchout') ? '/customer/myorders' : '/customer/personalinfo') }}" class="text-sm text-gray-700 underline">
+							@if(auth()->check())
+								<a href="{{ url(!session()->has('punchout') ? 'customer/myorders' : 'customer/personalinfo') }}" class="text-sm text-gray-700 underline">
 							@else
-								<a href="{{ url('/login') }}" class="text-sm text-gray-700 underline">
+								<a href="{{ url('login') }}" class="text-sm text-gray-700 underline">
 							@endif
 							<i class="fa fa-user userIcontop" aria-hidden="true"></i></a>								
 						</div>
@@ -83,28 +83,28 @@
 							<a href="{{ url('/cart') }}"><i class="fa fa-shopping-cart shopppingcartIcon" aria-hidden="true" ></i></a>
 						</div>
 						<div class="topicons">
-							@if(auth()->check() && Session::has('customer_name'))
-								<a href="{{ url('/customer/favouriteproducts') }}">
+							@if(auth()->check())
+								<a href="{{ url('customer/favouriteproducts') }}">
 							@else
-								<a href="{{ url('/login') }}">
+								<a href="{{ url('login') }}">
 							@endif
 							<i class="fa fa-heart-o heartIcontop" aria-hidden="true" ></i></a>
 						</div>
 						<div class="topicons">
-							@if(auth()->check() && Session::has('customer_name'))
-								<a href="{{ url('/customer/myorders') }}" class="text-sm text-gray-700 underline">
+							@if(auth()->check())
+								<a href="{{ url('customer/myorders') }}" class="text-sm text-gray-700 underline">
 							@else
-								<a href="{{ url('/login') }}" class="text-sm text-gray-700 underline">
+								<a href="{{ url('login') }}" class="text-sm text-gray-700 underline">
 							@endif
 							<i class="fa fa-user userIcontop" aria-hidden="true"></i></a>
 						</div>
-						@if($settings)
+						@if($topBar['settings'])
 						<div class="topicons hidedesk">								
-							<a href="tel:{{ $settings->company_phone }}" class="text-sm text-gray-700 underline">
+							<a href="tel:{{ $topBar['settings']['company_phone'] }}" class="text-sm text-gray-700 underline">
 							<i class="fa fa-phone-square userIcontop" aria-hidden="true"></i></a>
 						</div>
 						<div class="topicons hidedesk">								
-							<a href="mailto:{{ $settings->admin_email }}" class="text-sm text-gray-700 underline">
+							<a href="mailto:{{ $topBar['settings']['admin_email'] }}" class="text-sm text-gray-700 underline">
 							<i class="fa fa-envelope userIcontop" aria-hidden="true"></i></a>
 						</div>
 						@endif
@@ -116,11 +116,11 @@
 				<div class="row">
 					<div class="col-12">							
 						<div class="usernewtext">							
-						@if(Session::has('customer_name'))
-							Hi {{ Session::get('customer_name') }}!
+						@auth
+							Hi {{ auth()->user()->full_name }}!
 						@else
 							Hi Guest!
-						@endif
+						@endauth
 						</div>
 					</div>
 				</div>
@@ -132,17 +132,21 @@
 			<!-- menu -->
 			<div class="row">
 			<div class="col-12">
-			<ul class="main-menu">					
-					@foreach($menus as $m)
-						@if(in_array($m->UniqueKey,['types','brands']))
-							<li><a href="javascript::(0);" id="{{'by_'.$m->UniqueKey.'_nav'}}" style="text-transform:uppercase;">
-								{{ $m->EnTitle }} <i class="fa fa-caret-down" aria-hidden="true" style="color:#ffff00"></i>
-								</a>
-							</li>
-						@else
-							<li><a href="{{ url($m->UniqueKey) }}" style="text-transform:uppercase;">{{ $m->EnTitle }}</a></li>
-						@endif
-					@endforeach
+			<ul class="main-menu">	
+				@php
+					$topMenuType = [
+						'types' => 'by_category_nav',
+						'brands' => 'by_brand_nav'
+					];
+				@endphp
+				@foreach($topBar['main_menus'] as $menu)
+				<li>
+					<a href="{{ isset($topMenuType[$menu->UniqueKey]) ? 'javascript:(0);' : url($menu->UniqueKey) }}" id="{{$topMenuType[$menu->UniqueKey] ?? 'topMenu_'.($menu->UniqueKey)}}" 
+						style="text-transform:uppercase;">{{ $menu->EnTitle }} 
+						<i class="fa fa-caret-down {{ isset($topMenuType[$menu->UniqueKey]) ? '' : 'd-none'}}" aria-hidden="true" style="color:#ffff00"></i>
+					</a>
+				</li>
+				@endforeach	
 			</ul>
 			</div>
 			</div>

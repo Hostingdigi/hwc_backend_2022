@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CustomerLoginRequest;
+use App\Models as HWCModel;
 use App\Models\Bannerads;
 use App\Models\Country;
 use App\Models\Customer;
@@ -16,10 +18,9 @@ use App\Models\OrderMaster;
 use App\Models\PageContent;
 use App\Models\PaymentSettings;
 use App\Models\Product;
-use App\Models\ProductOptions;
 use App\Models\Settings;
 use App\Models\UserLoggedDevices;
-use DB;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Mail;
@@ -150,12 +151,13 @@ class CustomerController extends Controller
         echo $exist;
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
+        $user = $request->user();
         $orders = [];
         $customerid = auth()->id();
-        $groupadmin = Session::get('group_admin');
-        $customertype = Session::get('customer_type');
+        $groupadmin = $user->group_admin;
+        $customertype = $user->cust_type;
         if ($customerid > 0) {
             if ($id == 'dashboard' || $id == 'personalinfo') {
                 $customer = Customer::where('cust_id', '=', $customerid)->first();
@@ -199,119 +201,82 @@ class CustomerController extends Controller
         }
     }
 
-    /*public function dashboard() {
-    $customerid = auth()->id();
-    $customer = Customer::where('cust_id', '=', $customerid)->first();
-    return view('public/Customer.dashboard', compact('customer'));
-    }*/
-
     public function login()
     {
         return view('public/Customer.login');
     }
 
-    public function logincheck(Request $request)
+    public function logincheck(CustomerLoginRequest $request): RedirectResponse
     {
-        $username = $request->username;
-        $customer = Customer::where('cust_username', '=', $username)->orWhere('cust_email', '=', $username)->first();
-        if ($customer) {
-            $password = Hash::check($request->password, $customer->cust_password);
-            if ($password) {
-                // Logs in on the "web" guard and regenerates the session id (no session
-                // fixation). The customer is read back with auth()->id() / auth()->user().
-                Auth::guard('web')->login($customer);
+        // Guest cart rows are keyed by the CSRF token; read it before the session changes.
+        $guestCartToken = $request->session()->token();
 
-                Session::put('customer_name', $customer->cust_firstname . ' ' . $customer->cust_lastname);
-                Session::put('customer_email', $customer->cust_email);
-                Session::put('customer_phone', $customer->cust_phone);
-                Session::put('group_admin', $customer->group_admin);
-                Session::put('customer_type', $customer->cust_type);
+        $request->authenticate();
 
-                $sesid = Session::get('_token');
+        // New session id (prevents session fixation). The CSRF token is kept, so the
+        // guest cart stays linked to this session.
+        $request->session()->regenerate();
 
-                DB::table('cart_details')->where('user_token', '=', $sesid)->update(array('user_id' => $customer->cust_id));
+        /** @var Customer $customer */
+        $customer = $request->user();
+        
+        UserLoggedDevices::firstOrCreate([
+            'user_id' => $customer->cust_id,
+            'session_id' => $request->session()->getId(),
+        ]);
 
-                $cartdetails = DB::table('cart_details')->where('user_id', '=', $customer->cust_id)->get();
+        $this->restoreCart($request, $customer, $guestCartToken);
 
-                $cart = $cartdata = [];
-                $cartcount = 1;
+        if ($returnUrl = $request->session()->pull('returnurl')) return redirect('/' . ltrim($returnUrl, '/'));
+        return redirect()->intended($request->session()->has('cartdata') ? '/cart' : '/customer/myorders');
+    }
 
-                $prodoption = '';
-                
-                //create entry in log device table
-                UserLoggedDevices::firstOrCreate([
-                    'user_id' => $customer->cust_id,
-                    'session_id' => $request->session()->getId(),
-                ]);
+    /**
+     * Attach the guest cart to the customer, then rebuild the session cart from cart_details.
+     */
+    private function restoreCart(Request $request, Customer $customer, string $guestCartToken): void
+    {
+        // One line per product + option: duplicates are merged and their quantities summed.
+        HWCModel\CartDetail::mergeGuestCart($customer->cust_id, $guestCartToken);
 
-                if (count($cartdetails) > 0) {
-                    foreach ($cartdetails as $orderdetail) {
-                        $product = Product::where('Id', '=', $orderdetail->prod_id)->first();
-                        $optionprice = 0;
-                        if ($product->Quantity > 0) {
-                            $ses_productid = $orderdetail->prod_id;
-                            $productid = $orderdetail->prod_id;
-                            $ses_productname = $product->EnName;
-                            $ses_qty = $orderdetail->prod_quantity;
-                            $optionid = $orderdetail->prod_option_id;
+        $cartRows = $customer->cartDetails()->with(['product', 'option'])->get();
+        if ($cartRows->isEmpty()) return;
 
-                            $price = new \App\Models\Price();
-                            $productprice = $price->getDiscountPrice($productid);
-                            if ($optionid > 0) {
-                                $options = ProductOptions::where('Id', '=', $optionid)->first();
-                                $optionprice = $options->Price;
-                                $optionprice = $price->getOptionPrice($productid, $optionid);
-                                $prodoption = $options->Title;
-                                $ShippingBox = $options->ShippingBox;
-                                $Weight = $options->Weight;
-                            } else {
-                                $ShippingBox = $product->ShippingBox;
-                                $Weight = $product->Weight;
-                            }
+        $price = new \App\Models\Price();
+        $sessionToken = $request->session()->token();
+        $cartdata = [];
+        $cartcount = 1;
 
-                            $productprice = $productprice + $optionprice;
+        foreach ($cartRows as $row) {
+            $product = $row->product;
+            if (! $product || $product->Quantity <= 0) continue;
 
-                            $ses_productprice = $productprice;
-                            $ses_total = $ses_qty * $productprice;
-                            $cart['productId'] = $ses_productid;
-                            $cart['productName'] = $ses_productname;
-                            $cart['qty'] = $ses_qty;
-                            $cart['price'] = $ses_productprice;
-                            $cart['total'] = $ses_total;
-                            $cart['image'] = $product->Image;
-                            $cart['productoption'] = $prodoption;
-                            $cart['option_id'] = $optionid;
-                            $cart['weight'] = $Weight;
-                            $cart['productWeight'] = $Weight;
-                            $cart['productcode'] = $product->Code;
-                            $cart['color'] = $product->Color;
-                            $cart['size'] = $product->Size;
-                            $cart['shippingbox'] = $ShippingBox;
-                            $cartdata[$sesid][$cartcount] = $cart;
-                            ++$cartcount;
-                        }
-                    }
-                    Session::put('cartdata', $cartdata);
-                }
+            $optionId = $row->prod_option_id;
+            $option = $optionId > 0 ? $row->option : null;
 
-                //return redirect('/customer/myorders');
-                if (Session::has('returnurl')) {
-                    $returnurl = Session::get('returnurl');
-                    Session::forget('returnurl');
-                    return redirect('/' . $returnurl);
-                } else {
-                    if (Session::has('cartdata')) {
-                        return redirect('/cart');
-                    } else {
-                        return redirect('/customer/myorders');
-                    }
-                }
-            } else {
-                return redirect()->back()->withInput($request->only('username', 'remember'))->with('message', 'Invalid Login Credentials!');
-            }
-        } else {
-            return redirect()->back()->withInput($request->only('username', 'remember'))->with('message', 'Invalid Login Credentials!');
+            $unitPrice = $price->getDiscountPrice($row->prod_id)
+                + ($option ? $price->getOptionPrice($row->prod_id, $optionId) : 0);
+            $weight = $option ? $option->Weight : $product->Weight;
+
+            $cartdata[$sessionToken][$cartcount++] = [
+                'productId' => $row->prod_id,
+                'productName' => $product->EnName,
+                'qty' => $row->prod_quantity,
+                'price' => $unitPrice,
+                'total' => $row->prod_quantity * $unitPrice,
+                'image' => $product->Image,
+                'productoption' => $option ? $option->Title : '',
+                'option_id' => $optionId,
+                'weight' => $weight,
+                'productWeight' => $weight,
+                'productcode' => $product->Code,
+                'color' => $product->Color,
+                'size' => $product->Size,
+                'shippingbox' => $option ? $option->ShippingBox : $product->ShippingBox,
+            ];
         }
+
+        $request->session()->put('cartdata', $cartdata);
     }
 
     public function register()
@@ -543,13 +508,14 @@ class CustomerController extends Controller
         }
     }
 
-    public function quotationdetails($orderid)
+    public function quotationdetails(Request $request, $orderid)
     {
+        $user = $request->user();
         $id = 'quotations';
         $showapprove = $showproceed = $showbtn = 1;
-        $customerid = auth()->id();
-        $groupadmin = Session::get('group_admin');
-        $customertype = Session::get('customer_type');
+        $customerid = $user->cust_id;
+        $groupadmin = $user->group_admin;
+        $customertype = $user->cust_type;
 
         $orders = OrderMaster::where('order_id', '=', $orderid)->first();
         if ($orders->user_id == $customerid && $groupadmin == 0) {

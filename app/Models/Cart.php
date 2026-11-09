@@ -94,7 +94,6 @@ class Cart extends Model
 		return $deliverytype;
 	}
 	
-	
 	public function getPackagingFee($countrycode = '', $totalweight = '', $subtotal = 0, $gst = 0, $deliverymethod = 0, $shippingbox = '', $quantity = 1) {
 		$countryid = $packingfee = $addamount = $minimumpackagefee = $free_shipping_amount = $shipamt = $shipweightamt = $tmppackingfee = 0;
 		
